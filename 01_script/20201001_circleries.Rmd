@@ -137,8 +137,6 @@ grep "${header}" -A 1 ${outputFolderName}/genomes/tmp_wide_all.fasta) > ${output
 
 done
 
-
-
 ```
 
   
@@ -153,8 +151,12 @@ Therefore I first create a dnaA database.
 ##create dnaA DB
 ##================================
 
-
-
+mkdir -p 99_OrthoDB
+cd 99_OrthoDB
+wget https://v101.orthodb.org/download/odb10v1_OGs.tab.gz
+wget https://v101.orthodb.org/download/odb10v1_OG2genes.tab.gz
+wget https://v101.orthodb.org/download/odb10v1_genes.tab.gz
+gunzip *.gz
 ##================================
 ##header
 ##================================
