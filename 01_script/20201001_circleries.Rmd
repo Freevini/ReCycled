@@ -1,0 +1,131 @@
+---
+title: "Circleries"
+author: "Vincent Somerville"
+date: "02/10/2020"
+output: html_document
+---
+
+```{r setup ,echo=FALSE}
+knitr::opts_chunk$set(message=FALSE, echo=FALSE, eval=FALSE)
+```
+
+
+## Circleries steps
+1. check if bacterial contig
+  - blast bacterial housekeeping genes
+  - contig size
+2. check if potentially circler
+  - mask contig except first 2000 and last 2000bp + map raw reads and look for PE reads that map at either side
+3. circleries
+  - PROKKA annotate
+  - check if no genes are on reverse strand
+  - check for presence of DNAa 
+  - check for DNAa orientation
+  - cut and shift fasta start
+4. Polish the newly stitched region
+
+## Dependencies
+
+```{bash}
+
+PROKKA --version
+bwa --version
+fasta_shift --help
+
+
+```
+
+
+
+## 1. check if bacterial contig
+
+```{bash}
+
+```
+
+## 2. show circlarity
+
+```{bash}
+
+```
+
+## 3. Circleries
+
+use [fasta_shift](https://github.com/b-brankovics/fasta_tools).
+
+```{bash}
+##===========
+##PROKKA annotation
+##===========
+
+rm -r /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/
+#mkdir -p /data/Project/2020_StarterCultureDiversity/06_PROKKA/${speciesss}/${culture}_${strainzzz}
+
+/usr/bin/perl /usr/bin/prokka --cpus 5 --outdir /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/ --locustag ${sample} --proteins proteins.faa --evalue 0.001 --addgenes /data/Project/2020_StarterCultureDiversity/09_flye/Polishing_woCirclator/${sample}/08_fourthFreebayes/freebayesOuput/8_fourthFreebayes.fasta
+
+
+##===========
+##QC
+##===========
+
+
+seq_length.py /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/*.fna
+
+
+grep "dnaA" /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/*gff |awk -F "\t" '{if($3=="gene")print $0}'
+
+
+##===========
+##start align
+##===========
+
+
+
+ echo ${sample}
+ 
+ grep "dnaA" /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/*gff |awk -F "\t" '{if($3=="gene")print $0}'
+ 
+ 
+ orientation=$(grep "dnaA" /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/*gff |awk -F "\t" '{if($3=="gene")print $0}' |cut -f 7)
+ contigName=$(grep "dnaA" /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/*gff |awk -F "\t" '{if($3=="gene")print $0}' |cut -f 1)
+ samtools faidx /data/Project/2020_StarterCultureDiversity/09_flye/Polishing_woCirclator/${sample}/08_fourthFreebayes/freebayesOuput/8_fourthFreebayes.fasta ${contigName} > \
+        /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/bac_genome.fna
+  rm -r /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/aligned
+  mkdir -p /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/aligned
+  if [ $orientation == "+" ]
+    then              
+      echo "forward oriented"
+      startAlign=$(grep "dnaA" /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/*gff |awk -F "\t" '{if($3=="gene")print $0}' |awk -F "\t" '{print $4-5}')
+      echo -e "start align at:  "${startAlign}
+      /home/vincent/apps/fasta_tools/bin/fasta_shift -i /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/bac_genome.fna -p ${startAlign} > \
+              /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/aligned/8_fourthFreebayes_startAligned.fasta
+  else              
+      echo "reverse oriented"
+      startAlign=$(grep "dnaA" /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/*gff |awk -F "\t" '{if($3=="gene")print $0}' |awk -F "\t" '{print $5+5}')
+      echo -e "start align at:  "${startAlign}
+      /home/vincent/apps/fasta_tools/bin/fasta_shift -i /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/bac_genome.fna -p ${startAlign} > \
+      /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/aligned/tmp.fasta
+      revseq -sequence /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/aligned/tmp.fasta -outseq \
+          /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/aligned/8_fourthFreebayes_startAligned.fasta -notag
+  fi  
+  
+###-------------------QC if DNA is really at first position
+  
+
+samtools faidx /data/Project/2020_StarterCultureDiversity/09_flye/Polishing_woCirclator/${sample}/08_fourthFreebayes/freebayesOuput/8_fourthFreebayes.fasta ${non_bac} >> \
+        /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/aligned/8_fourthFreebayes_startAligned.fasta
+
+
+###-------------------QC if DNA is really at first position
+
+rm -r /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/aligned/ProkkaAfter n/perl /usr/bin/prokka --cpus 35 --outdir /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/aligned/ProkkaAfter --locustag ${sample} --proteins s.faa --evalue 0.001 --addgenes /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/aligned/8_fourthFreebayes_startAligned.fasta
+
+
+
+echo ${sample}
+grep "dnaA" /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/aligned/ProkkaAfter/*gff |awk -F "\t" '{if($3=="gene")print $0}'
+
+```
+
+## 4 polish edge
+
