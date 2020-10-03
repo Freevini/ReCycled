@@ -374,24 +374,42 @@ summary {
 <div id="circleries-steps" class="section level2">
 <h2>Circleries steps</h2>
 <ol style="list-style-type: decimal">
-<li>check if bacterial contig</li>
+<li>check (bacterial) contig</li>
 </ol>
 <ul>
-<li>blast bacterial housekeeping genes</li>
+<li>blast for plasmid
+<ul>
+<li>OriC</li>
+</ul></li>
+<li>blast/diamond bacterial housekeeping genes
+<ul>
+<li>16S</li>
+</ul></li>
+<li>BUSCO (maybe very generic…which contig is what)</li>
 <li>contig size</li>
+<li>check for presence of dnaA (diammond/PROKKA) ==&gt; Take home: contig originates from?</li>
 </ul>
 <ol start="2" style="list-style-type: decimal">
 <li>check if potentially circler</li>
 </ol>
 <ul>
-<li>mask contig except first 2000 and last 2000bp + map raw reads and look for PE reads that map at either side</li>
+<li>map ends (10kb) onto eachother (minimap2) –&gt; overlap or not</li>
+<li>merge contig ends and map raw reads+ look for:
+<ul>
+<li>even coverage (output: X coverage–&gt; is this in the range)</li>
+<li>spanning reads (number of reads)
+<ul>
+<li>PE (are pairs mapping)</li>
+<li>ONT/Pacbio (is read spanning) ==&gt; Take home: contig is circler or not!</li>
+</ul></li>
+</ul></li>
 </ul>
 <ol start="3" style="list-style-type: decimal">
 <li>circleries</li>
 </ol>
 <ul>
-<li>PROKKA annotate</li>
-<li>check if no genes are on reverse strand</li>
+<li>take dnaA diamond mapping (+prodigal)</li>
+<li>check if no genes are on reverse strand (prodigal)</li>
 <li>check for presence of DNAa</li>
 <li>check for DNAa orientation</li>
 <li>cut and shift fasta start</li>
@@ -399,6 +417,10 @@ summary {
 <ol start="4" style="list-style-type: decimal">
 <li>Polish the newly stitched region</li>
 </ol>
+<ul>
+<li>QC how many locations have change!</li>
+<li>advise if additional polishing is required!</li>
+</ul>
 </div>
 <div id="dependencies" class="section level2">
 <h2>Dependencies</h2>
@@ -408,6 +430,12 @@ summary {
 </div>
 <div id="show-circlarity" class="section level2">
 <h2>2. show circlarity</h2>
+<div id="map-ends" class="section level4">
+<h4>2.1 map ends</h4>
+</div>
+<div id="align-reads" class="section level4">
+<h4>2.3 align reads</h4>
+</div>
 </div>
 <div id="circleries" class="section level2">
 <h2>3. Circleries</h2>

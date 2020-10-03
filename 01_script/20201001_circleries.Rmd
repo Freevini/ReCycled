@@ -11,33 +11,57 @@ knitr::opts_chunk$set(message=FALSE, echo=FALSE, eval=FALSE)
 
 
 ## Circleries steps
-1. check if bacterial contig
-  - blast bacterial housekeeping genes
+1. check (bacterial) contig
+  - blast for plasmid
+    - OriC
+  - blast/diamond bacterial housekeeping genes
+    - 16S
+  - BUSCO (maybe very generic...which contig is what)
   - contig size
+  - check for presence of dnaA (diammond/PROKKA)
+  ==> Take home: contig originates from?
 2. check if potentially circler
-  - mask contig except first 2000 and last 2000bp + map raw reads and look for PE reads that map at either side
+  - map ends (10kb) onto eachother (minimap2) --> overlap or not
+  - merge contig ends and map raw reads+ look for:
+    - even coverage (output: X coverage--> is this in the range)
+    - spanning reads (number of reads)
+      - PE (are pairs mapping)
+      - ONT/Pacbio (is read spanning)
+    ==> Take home: contig is circler or not! 
 3. circleries
-  - PROKKA annotate
-  - check if no genes are on reverse strand
+  - take dnaA diamond mapping (+prodigal)
+  - check if no genes are on reverse strand (prodigal)
   - check for presence of DNAa 
   - check for DNAa orientation
   - cut and shift fasta start
 4. Polish the newly stitched region
+  - QC how many locations have change!
+  - advise if additional polishing is required!
 
 ## Dependencies
 
 ```{bash}
 
 PROKKA --version
-bwa --version
+#bwa --version
 fasta_shift --help
+prodigal --version
+minimap2 --version
 
 
 ```
 
 
-
 ## 1. check if bacterial contig
+
+  - blast for plasmid
+    - OriC
+  - blast/diamond bacterial housekeeping genes
+    - 16S
+  - BUSCO (maybe very generic...which contig is what)
+  - contig size
+  - check for presence of dnaA (diammond/PROKKA)
+  ==> Take home: contig originates from?
 
 ```{bash}
 
@@ -45,9 +69,21 @@ fasta_shift --help
 
 ## 2. show circlarity
 
+#### 2.1 map ends
 ```{bash}
 
+
+
+
 ```
+#### 2.3 align reads
+
+```{bash}
+
+
+
+```
+
 
 ## 3. Circleries
 
@@ -70,8 +106,6 @@ rm -r /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/
 
 
 seq_length.py /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/*.fna
-
-
 grep "dnaA" /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/*gff |awk -F "\t" '{if($3=="gene")print $0}'
 
 
