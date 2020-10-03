@@ -42,11 +42,36 @@ knitr::opts_chunk$set(message=FALSE, echo=FALSE, eval=FALSE)
 
 ```{bash}
 
-PROKKA --version
-#bwa --version
+
+#conda activate circleries
+
+
+###---------------------------------
+## Part 1. 
+###---------------------------------
+
+busco
+
+###---------------------------------
+## Part 2. 
+###---------------------------------
+
+minimap2 --version
+
+
+###---------------------------------
+## Part 3. 
+###---------------------------------
+
 fasta_shift --help
 prodigal --version
-minimap2 --version
+
+###---------------------------------
+## Part 4. 
+###---------------------------------
+
+#PROKKA --version
+#bwa --version
 
 
 ```
@@ -56,7 +81,7 @@ minimap2 --version
 Here, I start defining necessary bash variables.
 ```{bash}
 circleriesPATH=/home/vincent/Desktop/Projects/2020_circleries
-genomeFASTAname=test_streptococcus_polished_dnaA-pos-1526474_nonOVERLAPING.fasta
+genomeFASTAname=03_test_Data/test_streptococcus_polished_dnaA-pos-1526474_nonOVERLAPING.fasta
 outputFolderName=04_OUTPUTTest
 ```
 
@@ -83,25 +108,97 @@ cd ${circleriesPATH}
 ##================================
 
 mkdir -p ${outputFolderName}
-
+mkdir -p ${outputFolderName}/genomes
 ##================================
-##script
+##contig length
 ##================================
 
-###-----------------------fasta length
-cat 03_test_Data/${genomeFASTAname} | awk '$0 ~ ">" {if (NR > 1) {print c;} c=0;printf substr($0,2,100) "\t"; } $0 !~ ">" {c+=length($0);} END { print c; }' > ${outputFolderName}/genome.log
-
+cat ${genomeFASTAname} | awk '$0 ~ ">" {if (NR > 1) {print c;} c=0;printf substr($0,2,100) "\t"; } $0 !~ ">" {c+=length($0);} END { print c; }' > ${outputFolderName}/genome.log
 cat ${outputFolderName}/genome.log
 
-###-----------------------fasta change sequence onto one line
+##================================
+##change fasta sequence onto one line
+##this is useful in order to easly and quickly extract one contig after enother
+##here we also change the fasta header to contain no whitespaces or tabs
+##================================
 
-sed '/>/s/$/\t/g'  03_test_Data/${genomeFASTAname} | tr -d '\n' | sed 's/\t/\n/g' > ${outputFolderName}/tmp_long.fasta
 
+ sed '/>/s/\t/_/g' 03_test_Data/${genomeFASTAname}|sed '/>/s/ /_/g'|sed '/>/s/$/\t/g' | tr -d '\n' | sed 's/\t/\n/g' > ${outputFolderName}/genomes/tmp_wide_all.fasta
 
-###-----------------------fasta change sequence onto one line
+##================================
+##split every contig into one row
+##================================
+
+for header in $(grep ">" ${outputFolderName}/genomes/tmp_wide_all.fasta)
+do
+
+header_short=$(echo ${header}|sed 's/>//g' )
+grep "${header}" -A 1 ${outputFolderName}/genomes/tmp_wide_all.fasta) > ${outputFolderName}/genomes/${header_short}.fasta)
+
+done
+
 
 
 ```
+
+  
+#### 1.2 dnaA search
+
+Here, I try to diammond dnaA
+Therefore I first create a dnaA database. 
+
+```{bash}
+
+##================================
+##create dnaA DB
+##================================
+
+
+
+##================================
+##header
+##================================
+
+cd ${circleriesPATH}
+
+##================================
+##create output folders
+##================================
+
+mkdir -p ${outputFolderName}
+mkdir -p ${outputFolderName}/genomes
+##================================
+##contig length
+##================================
+
+cat ${genomeFASTAname} | awk '$0 ~ ">" {if (NR > 1) {print c;} c=0;printf substr($0,2,100) "\t"; } $0 !~ ">" {c+=length($0);} END { print c; }' > ${outputFolderName}/genome.log
+cat ${outputFolderName}/genome.log
+
+##================================
+##change fasta sequence onto one line
+##this is useful in order to easly and quickly extract one contig after enother
+##here we also change the fasta header to contain no whitespaces or tabs
+##================================
+
+
+ sed '/>/s/\t/_/g' 03_test_Data/${genomeFASTAname}|sed '/>/s/ /_/g'|sed '/>/s/$/\t/g' | tr -d '\n' | sed 's/\t/\n/g' > ${outputFolderName}/genomes/tmp_wide_all.fasta
+
+##================================
+##split every contig into one row
+##================================
+
+for header in $(grep ">" ${outputFolderName}/genomes/tmp_wide_all.fasta)
+do
+
+header_short=$(echo ${header}|sed 's/>//g' )
+grep "${header}" -A 1 ${outputFolderName}/genomes/tmp_wide_all.fasta) > ${outputFolderName}/genomes/${header_short}.fasta)
+
+done
+
+
+```
+
+
 
 
 
@@ -109,9 +206,6 @@ sed '/>/s/$/\t/g'  03_test_Data/${genomeFASTAname} | tr -d '\n' | sed 's/\t/\n/g
     - OriC
   - blast/diamond bacterial housekeeping genes
     - 16S
-  - BUSCO (maybe very generic...which contig is what)
-  - contig size
-  - check for presence of dnaA (diammond/PROKKA)
  
 
 ```{bash}
@@ -215,4 +309,40 @@ grep "dnaA" /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPo
 ```
 
 ## 4 polish edge
+
+
+## appendix
+
+
+#### 1.x BUSCO 
+
+Here, I implement the usage of BUSCO in order to see what the contigs are. 
+
+I have been having many dependencie issues with busco. therefore I currently but it aside. 
+
+```{bash}
+
+
+##================================
+##header
+##================================
+
+cd ${circleriesPATH}
+
+##================================
+##create output folders
+##================================
+
+mkdir -p ${outputFolderName}/busco
+cd ${outputFolderName}/busco
+
+##================================
+##script
+##================================
+
+#busco -i [SEQUENCE_FILE] -l [LINEAGE] -o [OUTPUT_NAME] -m [MODE] [OTHER OPTIONS]
+busco -i ${genomeFASTAname} -l [LINEAGE] -o [OUTPUT_NAME] -m genome [OTHER OPTIONS]
+
+```
+
 
