@@ -51,8 +51,59 @@ minimap2 --version
 
 ```
 
+## parameter
+
+Here, I start defining necessary bash variables.
+```{bash}
+circleriesPATH=/home/vincent/Desktop/Projects/2020_circleries
+genomeFASTAname=test_streptococcus_polished_dnaA-pos-1526474_nonOVERLAPING.fasta
+outputFolderName=04_OUTPUTTest
+```
+
+
+
 
 ## 1. check if bacterial contig
+
+#### 1.1 contig description
+
+Here, I quickly look for the number, name and length of contigs in the file. 
+Therefore I worked on a nice onliner from [Daniel Cook](https://www.danielecook.com/generate-fasta-sequence-lengths/)
+
+```{bash}
+
+##================================
+##header
+##================================
+
+cd ${circleriesPATH}
+
+##================================
+##create output folders
+##================================
+
+mkdir -p ${outputFolderName}
+
+##================================
+##script
+##================================
+
+###-----------------------fasta length
+cat 03_test_Data/${genomeFASTAname} | awk '$0 ~ ">" {if (NR > 1) {print c;} c=0;printf substr($0,2,100) "\t"; } $0 !~ ">" {c+=length($0);} END { print c; }' > ${outputFolderName}/genome.log
+
+cat ${outputFolderName}/genome.log
+
+###-----------------------fasta change sequence onto one line
+
+sed '/>/s/$/\t/g'  03_test_Data/${genomeFASTAname} | tr -d '\n' | sed 's/\t/\n/g' > ${outputFolderName}/tmp_long.fasta
+
+
+###-----------------------fasta change sequence onto one line
+
+
+```
+
+
 
   - blast for plasmid
     - OriC
@@ -61,11 +112,13 @@ minimap2 --version
   - BUSCO (maybe very generic...which contig is what)
   - contig size
   - check for presence of dnaA (diammond/PROKKA)
-  ==> Take home: contig originates from?
+ 
 
 ```{bash}
 
 ```
+
+ ==> Take home: contig originates from?
 
 ## 2. show circlarity
 
