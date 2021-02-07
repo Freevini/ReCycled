@@ -82,10 +82,9 @@ Here, I start defining necessary bash variables.
 ```{bash}
 circleriesPATH=/home/vincent/Desktop/Projects/2020_circleries
 genomeFASTAname=03_test_Data/test_streptococcus_polished_dnaA-pos-1526474_nonOVERLAPING.fasta
+flyeOutput=
 outputFolderName=04_OUTPUTTest
 ```
-
-
 
 
 ## 1. check if bacterial contig
@@ -93,7 +92,7 @@ outputFolderName=04_OUTPUTTest
 #### 1.1 contig description
 
 Here, I quickly look for the number, name and length of contigs in the file. 
-Therefore I worked on a nice onliner from [Daniel Cook](https://www.danielecook.com/generate-fasta-sequence-lengths/)
+Therefore I worked on a nice oneliner from [Daniel Cook](https://www.danielecook.com/generate-fasta-sequence-lengths/)
 
 ```{bash}
 
@@ -121,7 +120,6 @@ cat ${outputFolderName}/genome.log
 ##this is useful in order to easly and quickly extract one contig after enother
 ##here we also change the fasta header to contain no whitespaces or tabs
 ##================================
-
 
  sed '/>/s/\t/_/g' 03_test_Data/${genomeFASTAname}|sed '/>/s/ /_/g'|sed '/>/s/$/\t/g' | tr -d '\n' | sed 's/\t/\n/g' > ${outputFolderName}/genomes/tmp_wide_all.fasta
 
@@ -141,12 +139,12 @@ done
 
   
 #### 1.2 dnaA search
+##### 1.2.1 DB creation
 
 Here, I try to diammond dnaA
 Therefore I first create a dnaA database. 
 
 ```{bash}
-
 ##================================
 ##create dnaA DB
 ##================================
@@ -157,6 +155,140 @@ wget https://v101.orthodb.org/download/odb10v1_OGs.tab.gz
 wget https://v101.orthodb.org/download/odb10v1_OG2genes.tab.gz
 wget https://v101.orthodb.org/download/odb10v1_genes.tab.gz
 gunzip *.gz
+
+cd ${circleriesPATH}
+
+
+mkdir -p 99_OMA
+cd 99_OMA
+wget https://omabrowser.org/All/oma-protein-annotations.txt.gz
+
+
+wget https://omabrowser.org/All/group-descriptions.txt.gz
+#wget https://omabrowser.org/All/All.cog.tar.gz
+
+
+
+##---------1. OG description
+wget https://omabrowser.org/All/group-descriptions.txt.gz
+##---------2. similiar OG
+wget https://omabrowser.org/All/oma-close-groups.txt.gz
+##---------3. file that contains the seqNames for the OG
+wget https://omabrowser.org/All/oma-groups.txt.gz
+##---------4. the actual faa sequence file with the seqNames as header
+wget https://omabrowser.org/All/oma-seqs.fa.gz
+
+
+###----------------dnaA groups
+grep "dnaa" -i  group-descriptions.txt |grep "regulatory"  -v |grep "domain-containing" -v|grep "DnaD" -v
+
+
+###----------------check if more similar dnaA groups exist
+grep "dnaa" -i  group-descriptions.txt |grep "regulatory"  -v |grep "domain-containing" -v|grep "DnaD" -v
+grep "OMAGrp921125 " oma-close-groups.txt |cut -f 1
+
+rm all_groups_very_similiar.txt
+for groupsss in $(grep "dnaa" -i  group-descriptions.txt |grep "regulatory"  -v |grep "domain-containing" -v|grep "DnaD" -v|cut -f 1)
+do
+echo ${groupsss}
+grep "OMAGrp${groupsss} " oma-close-groups.txt |cut -f 1 >> all_groups_very_similiar.txt
+
+echo -e "OMAGrp"${groupsss} >> all_groups_very_similiar.txt
+
+done
+
+for groupsss in $(grep "dnaa" -i  group-descriptions.txt |grep "regulatory"  -v |grep "domain-containing" -v|grep "DnaD" -v|cut -f 1)
+do
+echo ${groupsss}
+grep "OMAGrp0${groupsss} " oma-close-groups.txt |cut -f 1 >> all_groups_very_similiar.txt
+
+echo -e "OMAGrp0"${groupsss} >> all_groups_very_similiar.txt
+
+done
+
+grep "dnaa" -i  group-descriptions.txt |grep "regulatory"  -v |grep "domain-containing" -v|grep "DnaD" -v
+
+sort all_groups_very_similiar.txt|sed 's/://g'|uniq  
+sort all_groups_very_similiar.txt|sed 's/://g'|uniq |sed 's/OMAGrp//g' |sed 's/^0//g'|sort -n|uniq
+
+##-------------------------------------check with extensive OG list what they are
+
+
+for OGSss in $(sort all_groups_very_similiar.txt|sed 's/://g'|uniq |sed 's/OMAGrp//g' |sed 's/^0//g'|sort -n|uniq )
+do
+
+awk -v OGzzz="${OGSss}" '{if($1==OGzzz)print $0}'  group-descriptions.txt
+
+done
+##many of these genes are strange I will therefore not take them and only use the original list
+
+
+
+
+##-------------------------------------take the OG labels and loop through the oma groups description to extract the seqNames to download
+
+rm list_of_seq_names_dnaA.txt
+for OGSss in $(grep "dnaa" -i  group-descriptions.txt |grep "regulatory"  -v |grep "domain-containing" -v|grep "DnaD" -v|cut -f 1)
+do
+
+echo ${OGSss}
+awk -v OGzzz="${OGSss}" '{if($1==OGzzz) print $0}' oma-groups.txt | awk '{$1=$2=""; print $0}'  | sed 's/^ //g'| sed 's/^ //g'|sed 's/ /\n/g' >> list_of_seq_names_dnaA.txt
+
+
+done
+
+##-------------------------------------extract sequences with SeqNames
+
+
+ sed '/>/s/$/\t/g' oma-seqs.fa | tr -d '\n' | sed 's/\t/\n/g' > oma-seqs_online.fa
+rm oma-seqs.fa
+sed -i '2,$s/>/\n>/' oma-seqs_online.fa
+rm oma-seqs_online_dnaA.fa
+for SequNamesss in $(cat list_of_seq_names_dnaA.txt |sort|uniq)
+do
+
+echo ${SequNamesss}
+grep "${SequNamesss}" -A 1 oma-seqs_online.fa >>  oma-seqs_online_dnaA.fa
+
+done
+
+
+
+sed 's/> />/g' 99_OMA/oma-seqs_online_dnaA.fa  > 99_OMA/oma-seqs_online_dnaA_corrected.fa
+
+makeblastdb -max_file_sz 1GB -in 99_OMA/oma-seqs_online_dnaA_corrected.fa \
+ -out 99_OMA/oma-seqs_online_dnaA_corrected -parse_seqids -dbtype prot
+
+
+
+
+###don't print the first or second column 
+grep oma-groups.txt.gz | awk '{$1=$2=""; print $0}' 
+
+
+gunzip *gz
+
+grep "dnaa" -i group-descriptions.txt 
+
+
+###head
+head -5 oma-protein-annotations.txt
+head -5 oma-close-groups.txt
+head -5 group-descriptions.txt
+
+
+group-descriptions.txt
+
+grep "dnaa" -i  oma-protein-annotations.txt
+
+grep "30176" -i  oma-close-groups.txt
+grep "30176" -i  oma-protein-annotations.txt
+```
+
+##### 1.2.2 calculations
+
+
+```{bash}
 ##================================
 ##header
 ##================================
@@ -183,7 +315,7 @@ cat ${outputFolderName}/genome.log
 ##================================
 
 
- sed '/>/s/\t/_/g' 03_test_Data/${genomeFASTAname}|sed '/>/s/ /_/g'|sed '/>/s/$/\t/g' | tr -d '\n' | sed 's/\t/\n/g' > ${outputFolderName}/genomes/tmp_wide_all.fasta
+ sed '/>/s/\t/_/g' ${genomeFASTAname}|sed '/>/s/ /_/g'|sed '/>/s/$/\t/g' | tr -d '\n' | sed 's/\t/\n/g' > ${outputFolderName}/genomes/tmp_wide_all.fasta
 
 ##================================
 ##split every contig into one row
@@ -192,10 +324,31 @@ cat ${outputFolderName}/genome.log
 for header in $(grep ">" ${outputFolderName}/genomes/tmp_wide_all.fasta)
 do
 
+echo $header
+
 header_short=$(echo ${header}|sed 's/>//g' )
-grep "${header}" -A 1 ${outputFolderName}/genomes/tmp_wide_all.fasta) > ${outputFolderName}/genomes/${header_short}.fasta)
+grep "${header}" -A 1 ${outputFolderName}/genomes/tmp_wide_all.fasta > ${outputFolderName}/genomes/${header_short}.fasta
 
 done
+
+##================================
+##blastn with DB
+##================================
+
+sed 's/> />/g' 99_OMA/oma-seqs_online_dnaA.fa  > 99_OMA/oma-seqs_online_dnaA_corrected.fa
+
+makeblastdb -max_file_sz 1GB -in 99_OMA/oma-seqs_online_dnaA_corrected.fa \
+ -out 99_OMA/oma-seqs_online_dnaA_corrected -parse_seqids -dbtype prot
+
+
+mkdir -p ${outputFolderName}/blast/
+
+ blastx  -max_hsps 1 -max_target_seqs 1 -show_gis \
+  -query ${outputFolderName}/genomes/tmp_wide_all.fasta \
+  -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore stitle slen sgi sacc" \
+  -db ${circleriesPATH}/99_OMA/oma-seqs_online_dnaA_corrected \
+  -out ${outputFolderName}/blast/dnaA_matches.blast \
+  -evalue 0.01 -word_size 3
 
 
 ```
@@ -215,6 +368,7 @@ done
 ```
 
  ==> Take home: contig originates from?
+ With the circular contigs I would go into the circluarizse step. 
 
 ## 2. show circlarity
 
