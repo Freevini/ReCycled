@@ -48,3 +48,8 @@ Most genomes however are not finished (complete and circular), therefore it woul
 - split first contigs at dnaA (+)
 - arrange contigs according to minimap2 alignment
 - (optional: change headers)
+
+## 6. check contaminations
+
+- PhiX
+- humman contaminations

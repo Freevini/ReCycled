@@ -57,7 +57,8 @@ busco
 ###---------------------------------
 
 minimap2 --version
-
+htsbox
+bwa
 
 ###---------------------------------
 ## Part 3. 
@@ -84,6 +85,7 @@ circleriesPATH=/home/vincent/Desktop/Projects/2020_circleries
 genomeFASTAname=03_test_Data/test_streptococcus_polished_dnaA-pos-1526474_nonOVERLAPING.fasta
 flyeOutput=
 outputFolderName=04_OUTPUTTest
+threads=8
 ```
 
 
@@ -134,6 +136,16 @@ header_short=$(echo ${header}|sed 's/>//g' )
 grep "${header}" -A 1 ${outputFolderName}/genomes/tmp_wide_all.fasta) > ${outputFolderName}/genomes/${header_short}.fasta)
 
 done
+
+##================================
+##make prodigal 
+##================================
+
+rm -r ${outputFolderName}/genomes/annotations/
+mkdir -p ${outputFolderName}/genomes/annotations/
+
+prodigal -i ${outputFolderName}/genomes/tmp_wide_all.fasta -o ${outputFolderName}/genomes/annotations/prodigal_out -a ${outputFolderName}/genomes/annotations/prodigal_out_my.proteins.faa
+
 
 ```
 
@@ -283,10 +295,47 @@ grep "dnaa" -i  oma-protein-annotations.txt
 
 grep "30176" -i  oma-close-groups.txt
 grep "30176" -i  oma-protein-annotations.txt
+
+seqlength.py 99_OMA/oma-seqs_online_dnaA_corrected.fa
+
+##================================
+##create dnaA DB from OMA
+##================================
+
+#1. download a MSA from a dnaA homology group 
+
+mkdir -p 99_OMA
+
+###------------------------------------
+#make MSA
+###------------------------------------
+
+mafft --thread 10 --maxiterate 1000  --auto  99_OMA/20210206_dnaA_OMA.faa >  99_OMA/20210206_dnaA_OMA_alg.faa
+
+
+###------------------------------------
+#create HMM database
+###------------------------------------
+
+hmmbuild  99_OMA/20210206_dnaA_OMA_alg.hmm  99_OMA/20210206_dnaA_OMA_alg.faa
+
+##================================
+##download trycycler DNA start site
+##================================
+mkdir -p 05_startAlign_data
+cd 05_startAlign_data
+
+wget https://github.com/rrwick/Trycycler/raw/main/trycycler/data/starting_genes.fasta
+
 ```
 
 ##### 1.2.2 calculations
 
+Here, I quickly look for the number, name and length of contigs in the file. 
+Therefore I worked on a nice oneliner from [Daniel Cook](https://www.danielecook.com/generate-fasta-sequence-lengths/)
+
+Further I check for the presence of dnaA. 
+I also run a Busco to identify the bacterial contigs. 
 
 ```{bash}
 ##================================
@@ -325,11 +374,82 @@ for header in $(grep ">" ${outputFolderName}/genomes/tmp_wide_all.fasta)
 do
 
 echo $header
-
+mkdir -p  ${outputFolderName}/genomes/contigs_split/
 header_short=$(echo ${header}|sed 's/>//g' )
-grep "${header}" -A 1 ${outputFolderName}/genomes/tmp_wide_all.fasta > ${outputFolderName}/genomes/${header_short}.fasta
+grep "${header}" -A 1 ${outputFolderName}/genomes/tmp_wide_all.fasta > ${outputFolderName}/genomes/contigs_split/${header_short}.fasta
 
 done
+
+##================================
+##Busco
+##================================
+
+##================================
+##minimap2 ORIs to sequences
+##================================
+
+
+for header in $(grep ">" ${outputFolderName}/genomes/tmp_wide_all.fasta)
+do
+
+echo $header
+
+#bwa index ${outputFolderName}/genomes/contigs_split/${header_short}.fasta
+#bwa index ${circleriesPATH}/05_startAlign_data/starting_genes.fasta
+mkdir -p ${outputFolderName}/start_alignment_mapping/
+  
+##map dnaA genes to the indiviual references and remove non-mapping or low quality mapping reads  
+#bwa mem -x intractg ${outputFolderName}/genomes/contigs_split/${header_short}.fasta ${circleriesPATH}/05_startAlign_data/starting_genes.fasta |samtools view -q 30 -F 4 > ${outputFolderName}/start_alignment_mapping/${header_short}.mapping
+
+
+##map dnaA genes to the individual references and remove non-mapping or low quality mapping reads (mapq>50) 
+minimap2 ${outputFolderName}/genomes/contigs_split/${header_short}.fasta ${circleriesPATH}/05_startAlign_data/starting_genes.fasta  |awk -F "\t" '{OFS="\t"}{if($12>50) print $0}'  > ${outputFolderName}/start_alignment_mapping/${header_short}.minimap
+
+
+
+done
+
+##================================
+##minimap2 analysis
+##================================
+
+rm ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap
+
+for header in $(grep ">" ${outputFolderName}/genomes/tmp_wide_all.fasta)
+do
+
+echo $header
+
+#the most left alignment this shows the start of the gene
+sort -k8 -n ${outputFolderName}/start_alignment_mapping/${header_short}.minimap
+
+#the longest alignment shows the orientation of the contig
+sort -k10 -n -r ${outputFolderName}/start_alignment_mapping/${header_short}.minimap
+
+#find out if there are mappings
+number_of_mappings=$(wc -l ${outputFolderName}/start_alignment_mapping/${header_short}.minimap|cut -d ' ' -f 1)
+
+
+if [ $number_of_mappings -gt 0 ]
+    then              
+      echo "dnaA map found"
+        orientation=$(sort -k10 -n -r ${outputFolderName}/start_alignment_mapping/${header_short}.minimap|head -1 |cut -f 5)
+        start=$(sort -k8 -n ${outputFolderName}/start_alignment_mapping/${header_short}.minimap|head -1 |awk -F "\t" '{OFS="\t"}{print $8-$3}')
+        contig_length=$(sort -k8 -n ${outputFolderName}/start_alignment_mapping/${header_short}.minimap|head -1 |cut -f 7)
+        
+        echo -e ${header}"\t"${number_of_mappings}"\t"${orientation}"\t"${start}"\t"${contig_length} >>  ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap
+
+  else              
+      echo "no dnaA map found"
+      
+       echo -e ${header}"\t"${number_of_mappings}"\tNA\tNA\tNA" >>  ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap
+    
+  fi  
+  
+
+done
+
+cat ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap
 
 ##================================
 ##blastn with DB
@@ -349,6 +469,15 @@ mkdir -p ${outputFolderName}/blast/
   -db ${circleriesPATH}/99_OMA/oma-seqs_online_dnaA_corrected \
   -out ${outputFolderName}/blast/dnaA_matches.blast \
   -evalue 0.01 -word_size 3
+
+
+##================================
+##Hmm with dnaA DB
+##================================
+#rm -r ${outputFolderName}/genomes/hmm_dnaA
+#mkdir -p ${outputFolderName}/genomes/hmm_dnaA
+
+hmmsearch  -o ${outputFolderName}/genomes/hmm_dnaA/dna_idnentificaion.txt   99_OMA/20210206_dnaA_OMA_alg.hmm ${outputFolderName}/genomes/annotations/prodigal_out_my.proteins.faa
 
 
 ```
