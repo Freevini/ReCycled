@@ -40,7 +40,7 @@ knitr::opts_chunk$set(message=FALSE, echo=FALSE, eval=FALSE)
 
 ## Dependencies
 
-```{bash}
+```{bash dependencies , eval=TRUE}
 
 
 #conda activate circleries
@@ -50,22 +50,26 @@ knitr::opts_chunk$set(message=FALSE, echo=FALSE, eval=FALSE)
 ## Part 1. 
 ###---------------------------------
 
-busco
+#busco
 
 ###---------------------------------
 ## Part 2. 
 ###---------------------------------
 
 minimap2 --version
-htsbox
-bwa
+#htsbox
+#bwa
 
 ###---------------------------------
 ## Part 3. 
 ###---------------------------------
 
-fasta_shift --help
-prodigal --version
+fasta_shift_path=/home/vincent/Desktop/Projects/2020_circleries/02_dependencies/fasta_shift
+$fasta_shift_path --help
+
+revseq #embos toolkit
+
+#prodigal --version
 
 ###---------------------------------
 ## Part 4. 
@@ -80,14 +84,14 @@ prodigal --version
 ## parameter
 
 Here, I start defining necessary bash variables.
-```{bash}
+```{bash parameters, eval=TRUE}
 circleriesPATH=/home/vincent/Desktop/Projects/2020_circleries
 genomeFASTAname=03_test_Data/test_streptococcus_polished_dnaA-pos-1526474_nonOVERLAPING.fasta
 flyeOutput=
 outputFolderName=04_OUTPUTTest
 threads=8
+outName=Final_startAligned
 ```
-
 
 ## 1. check if bacterial contig
 
@@ -114,8 +118,8 @@ mkdir -p ${outputFolderName}/genomes
 ##contig length
 ##================================
 
-cat ${genomeFASTAname} | awk '$0 ~ ">" {if (NR > 1) {print c;} c=0;printf substr($0,2,100) "\t"; } $0 !~ ">" {c+=length($0);} END { print c; }' > ${outputFolderName}/genome.log
-cat ${outputFolderName}/genome.log
+#cat ${genomeFASTAname} | awk '$0 ~ ">" {if (NR > 1) {print c;} c=0;printf substr($0,2,100) "\t"; } $0 !~ ">" {c+=length($0);} END { print c; }' > ${outputFolderName}/genome.log
+#cat ${outputFolderName}/genome.log
 
 ##================================
 ##change fasta sequence onto one line
@@ -141,11 +145,10 @@ done
 ##make prodigal 
 ##================================
 
-rm -r ${outputFolderName}/genomes/annotations/
-mkdir -p ${outputFolderName}/genomes/annotations/
+#rm -r ${outputFolderName}/genomes/annotations/
+#mkdir -p ${outputFolderName}/genomes/annotations/
 
-prodigal -i ${outputFolderName}/genomes/tmp_wide_all.fasta -o ${outputFolderName}/genomes/annotations/prodigal_out -a ${outputFolderName}/genomes/annotations/prodigal_out_my.proteins.faa
-
+#prodigal -i ${outputFolderName}/genomes/tmp_wide_all.fasta -o ${outputFolderName}/genomes/annotations/prodigal_out -a ${outputFolderName}/genomes/annotations/prodigal_out_my.proteins.faa
 
 ```
 
@@ -329,7 +332,7 @@ wget https://github.com/rrwick/Trycycler/raw/main/trycycler/data/starting_genes.
 
 ```
 
-##### 1.2.2 calculations
+##### 1.2.2 sequence preperation
 
 Here, I quickly look for the number, name and length of contigs in the file. 
 Therefore I worked on a nice oneliner from [Daniel Cook](https://www.danielecook.com/generate-fasta-sequence-lengths/)
@@ -337,7 +340,7 @@ Therefore I worked on a nice oneliner from [Daniel Cook](https://www.danielecook
 Further I check for the presence of dnaA. 
 I also run a Busco to identify the bacterial contigs. 
 
-```{bash}
+```{bash prepperation , eval=FALSE}
 ##================================
 ##header
 ##================================
@@ -363,7 +366,6 @@ cat ${outputFolderName}/genome.log
 ##here we also change the fasta header to contain no whitespaces or tabs
 ##================================
 
-
  sed '/>/s/\t/_/g' ${genomeFASTAname}|sed '/>/s/ /_/g'|sed '/>/s/$/\t/g' | tr -d '\n' | sed 's/\t/\n/g' > ${outputFolderName}/genomes/tmp_wide_all.fasta
 
 ##================================
@@ -379,11 +381,11 @@ header_short=$(echo ${header}|sed 's/>//g' )
 grep "${header}" -A 1 ${outputFolderName}/genomes/tmp_wide_all.fasta > ${outputFolderName}/genomes/contigs_split/${header_short}.fasta
 
 done
+```
 
-##================================
-##Busco
-##================================
+##### 1.2.3 dnaA Search
 
+```{bash MINIMAP2 , eval=FALSE}
 ##================================
 ##minimap2 ORIs to sequences
 ##================================
@@ -413,57 +415,75 @@ done
 ##minimap2 analysis
 ##================================
 
-rm ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap
+echo -e "#contigName\tContigOrigin\tNumberOfdnaAmappings\tOrientationOfMapping\tStartOfTargetMapping\tContigLength" >  ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap
 
-for header in $(grep ">" ${outputFolderName}/genomes/tmp_wide_all.fasta)
+for header in $(grep ">" ${outputFolderName}/genomes/tmp_wide_all.fasta|sed 's/>//g')
 do
 
 echo $header
 
-#the most left alignment this shows the start of the gene
-sort -k8 -n ${outputFolderName}/start_alignment_mapping/${header_short}.minimap
 
 #the longest alignment shows the orientation of the contig
-sort -k10 -n -r ${outputFolderName}/start_alignment_mapping/${header_short}.minimap
+#sort -k10 -n -r ${outputFolderName}/start_alignment_mapping/${header_short}.minimap
 
 #find out if there are mappings
 number_of_mappings=$(wc -l ${outputFolderName}/start_alignment_mapping/${header_short}.minimap|cut -d ' ' -f 1)
+orientation=$(sort -k10 -n -r ${outputFolderName}/start_alignment_mapping/${header_short}.minimap|head -1 |cut -f 5)
 
 
-if [ $number_of_mappings -gt 0 ]
-    then              
-      echo "dnaA map found"
-        orientation=$(sort -k10 -n -r ${outputFolderName}/start_alignment_mapping/${header_short}.minimap|head -1 |cut -f 5)
-        start=$(sort -k8 -n ${outputFolderName}/start_alignment_mapping/${header_short}.minimap|head -1 |awk -F "\t" '{OFS="\t"}{print $8-$3}')
+  
+if [ $number_of_mappings == "0" ]
+then
+        echo "no dnaA map found"
+      
+       echo -e ${header}"\tnon-bacterial_contig\t"${number_of_mappings}"\tNA\tNA\tNA" >>  ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap
+    
+elif [ $orientation == "+" ]
+then
+
+  #the most left alignment this shows the start of the gene
+  #sort -k8 -n ${outputFolderName}/start_alignment_mapping/${header_short}.minimap
+
+  start=$(sort -k8 -n ${outputFolderName}/start_alignment_mapping/${header_short}.minimap|head -1 |awk -F "\t" '{OFS="\t"}{print $8-$3-5}')
         contig_length=$(sort -k8 -n ${outputFolderName}/start_alignment_mapping/${header_short}.minimap|head -1 |cut -f 7)
         
-        echo -e ${header}"\t"${number_of_mappings}"\t"${orientation}"\t"${start}"\t"${contig_length} >>  ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap
+        echo -e ${header}"\tbacterial_contig\t"${number_of_mappings}"\t"${orientation}"\t"${start}"\t"${contig_length} >>  ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap
+        
+else
 
-  else              
-      echo "no dnaA map found"
-      
-       echo -e ${header}"\t"${number_of_mappings}"\tNA\tNA\tNA" >>  ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap
-    
-  fi  
-  
+    #the most right alignment this shows the start of the gene
+    #sort -k9 -n ${outputFolderName}/start_alignment_mapping/${header_short}.minimap
+
+    start=$(sort -k9 -n -r ${outputFolderName}/start_alignment_mapping/${header_short}.minimap|head -1 |awk -F "\t" '{OFS="\t"}{print $9+$2-$4+5}')
+        contig_length=$(sort -k9 -n -r  ${outputFolderName}/start_alignment_mapping/${header_short}.minimap|head -1 |cut -f 7)
+        
+        echo -e ${header}"\tbacterial_contig\t"${number_of_mappings}"\t"${orientation}"\t"${start}"\t"${contig_length} >>  ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap
+        
+fi
+
 
 done
 
 cat ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap
+cut -f 3  ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap
 
+```
+
+
+```{bash OLDmAPPING ,eval=FALSE}
 ##================================
 ##blastn with DB
 ##================================
 
-sed 's/> />/g' 99_OMA/oma-seqs_online_dnaA.fa  > 99_OMA/oma-seqs_online_dnaA_corrected.fa
+#sed 's/> />/g' 99_OMA/oma-seqs_online_dnaA.fa  > 99_OMA/oma-seqs_online_dnaA_corrected.fa
 
-makeblastdb -max_file_sz 1GB -in 99_OMA/oma-seqs_online_dnaA_corrected.fa \
+#makeblastdb -max_file_sz 1GB -in 99_OMA/oma-seqs_online_dnaA_corrected.fa \
  -out 99_OMA/oma-seqs_online_dnaA_corrected -parse_seqids -dbtype prot
 
 
-mkdir -p ${outputFolderName}/blast/
+#mkdir -p ${outputFolderName}/blast/
 
- blastx  -max_hsps 1 -max_target_seqs 1 -show_gis \
+# blastx  -max_hsps 1 -max_target_seqs 1 -show_gis \
   -query ${outputFolderName}/genomes/tmp_wide_all.fasta \
   -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore stitle slen sgi sacc" \
   -db ${circleriesPATH}/99_OMA/oma-seqs_online_dnaA_corrected \
@@ -477,14 +497,12 @@ mkdir -p ${outputFolderName}/blast/
 #rm -r ${outputFolderName}/genomes/hmm_dnaA
 #mkdir -p ${outputFolderName}/genomes/hmm_dnaA
 
-hmmsearch  -o ${outputFolderName}/genomes/hmm_dnaA/dna_idnentificaion.txt   99_OMA/20210206_dnaA_OMA_alg.hmm ${outputFolderName}/genomes/annotations/prodigal_out_my.proteins.faa
+#hmmsearch  -o ${outputFolderName}/genomes/hmm_dnaA/dna_idnentificaion.txt   99_OMA/20210206_dnaA_OMA_alg.hmm ${outputFolderName}/genomes/annotations/prodigal_out_my.proteins.faa
 
 
 ```
 
-
-
-
+##### 1.2.4 search and identify plasmids/virsuses
 
   - blast for plasmid
     - OriC
@@ -492,14 +510,38 @@ hmmsearch  -o ${outputFolderName}/genomes/hmm_dnaA/dna_idnentificaion.txt   99_O
     - 16S
  
 
-```{bash}
+```{bash non-bacterial-contigs-start ,eval=FALSE}
 
+##not started yet
 ```
+
+
+##### 1.2.5 summary contigs
 
  ==> Take home: contig originates from?
  With the circular contigs I would go into the circluarizse step. 
 
+```{bash}
+##===========================================
+#summary stats before circularizing
+##===========================================
+
+echo "============================================================"
+echo "summary stats before circularizing"
+echo "============================================================"
+
+echo -e "We will proceed start aligning following " ${BacContigs} " contigss..."
+grep "^#"  ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap 
+grep "^#" -v  ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap |awk -F "\t" '{OFS="\t"}{if($2=="bacterial_contig")print $0}'
+
+
+```
+
+
+
 ## 2. show circlarity
+
+Not incorporated yet. 
 
 #### 2.1 map ends
 ```{bash}
@@ -519,79 +561,174 @@ hmmsearch  -o ${outputFolderName}/genomes/hmm_dnaA/dna_idnentificaion.txt   99_O
 
 ## 3. Circleries
 
+
+#### 3.1 Circleries contigs
+
 use [fasta_shift](https://github.com/b-brankovics/fasta_tools).
 
-```{bash}
-##===========
-##PROKKA annotation
-##===========
-
-rm -r /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/
-#mkdir -p /data/Project/2020_StarterCultureDiversity/06_PROKKA/${speciesss}/${culture}_${strainzzz}
-
-/usr/bin/perl /usr/bin/prokka --cpus 5 --outdir /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/ --locustag ${sample} --proteins proteins.faa --evalue 0.001 --addgenes /data/Project/2020_StarterCultureDiversity/09_flye/Polishing_woCirclator/${sample}/08_fourthFreebayes/freebayesOuput/8_fourthFreebayes.fasta
-
-
-##===========
-##QC
-##===========
-
-
-seq_length.py /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/*.fna
-grep "dnaA" /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/*gff |awk -F "\t" '{if($3=="gene")print $0}'
-
-
+```{bash Circleries, eval=FALSE}
 ##===========
 ##start align
 ##===========
 
+ rm -r ${outputFolderName}/StartAlignedContigs/
+ mkdir -p ${outputFolderName}/StartAlignedContigs/
+ mkdir -p ${outputFolderName}/tmp/
+  
+for contigName in $(grep "^#" -v  ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap |awk -F "\t" '{OFS="\t"}{if($2=="bacterial_contig")print $1}')
+do
 
+echo -e "contig name: \t\t" ${contigName}
+ orientation=$(awk -F "\t" -v contigzz="$contigName" '{OFS="\t"}{if($1==contigzz)print $4}' ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap )
+ contigStart=$(awk -F "\t" -v contigzz="$contigName" '{OFS="\t"}{if($1==contigzz)print $5}'   ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap )
+ contigLength=$(awk -F "\t" -v contigzz="$contigName" '{OFS="\t"}{if($1==contigzz)print $6}'  ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap )
 
- echo ${sample}
- 
- grep "dnaA" /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/*gff |awk -F "\t" '{if($3=="gene")print $0}'
- 
- 
- orientation=$(grep "dnaA" /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/*gff |awk -F "\t" '{if($3=="gene")print $0}' |cut -f 7)
- contigName=$(grep "dnaA" /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/*gff |awk -F "\t" '{if($3=="gene")print $0}' |cut -f 1)
- samtools faidx /data/Project/2020_StarterCultureDiversity/09_flye/Polishing_woCirclator/${sample}/08_fourthFreebayes/freebayesOuput/8_fourthFreebayes.fasta ${contigName} > \
-        /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/bac_genome.fna
-  rm -r /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/aligned
-  mkdir -p /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/aligned
   if [ $orientation == "+" ]
     then              
-      echo "forward oriented"
-      startAlign=$(grep "dnaA" /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/*gff |awk -F "\t" '{if($3=="gene")print $0}' |awk -F "\t" '{print $4-5}')
-      echo -e "start align at:  "${startAlign}
-      /home/vincent/apps/fasta_tools/bin/fasta_shift -i /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/bac_genome.fna -p ${startAlign} > \
-              /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/aligned/8_fourthFreebayes_startAligned.fasta
+      echo "forward oriented and start align at:  "${contigStart}
+
+      $fasta_shift_path -i ${outputFolderName}/genomes/contigs_split/${contigName}.fasta -p ${contigStart} > \
+              ${outputFolderName}/StartAlignedContigs/${contigName}_startAligned.fasta
   else              
-      echo "reverse oriented"
-      startAlign=$(grep "dnaA" /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/*gff |awk -F "\t" '{if($3=="gene")print $0}' |awk -F "\t" '{print $5+5}')
-      echo -e "start align at:  "${startAlign}
-      /home/vincent/apps/fasta_tools/bin/fasta_shift -i /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/bac_genome.fna -p ${startAlign} > \
-      /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/aligned/tmp.fasta
-      revseq -sequence /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/aligned/tmp.fasta -outseq \
-          /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/aligned/8_fourthFreebayes_startAligned.fasta -notag
+
+        echo "reverse oriented and start align at:  "${contigStart}
+
+      $fasta_shift_path -i ${outputFolderName}/genomes/contigs_split/${contigName}.fasta -p ${contigStart} > \
+              ${outputFolderName}/tmp/${contigName}_startAligned_wrongOrientation.fasta
+      
+      revseq -sequence ${outputFolderName}/tmp/${contigName}_startAligned_wrongOrientation.fasta -outseq \
+          ${outputFolderName}/StartAlignedContigs/${contigName}_startAligned.fasta -notag
+      
+      #add startaligned tag
+
+    #  grep ">" ${outputFolderName}/StartAlignedContigs/${contigName}_startAligned.fasta
+      sed -i '/^>/ s/$/_StartAligned/' ${outputFolderName}/StartAlignedContigs/${contigName}_startAligned.fasta 
+    #  grep ">" ${outputFolderName}/StartAlignedContigs/${contigName}_startAligned.fasta
+
+
   fi  
-  
+
+
+
+done
+```
+
+#### 3.2 QC of Circleries 
+
+
+```{bash QC_Circleries, eval=FALSE}
 ###-------------------QC if DNA is really at first position
   
+echo -e "#contigName\tContigOrigin\tNumberOfdnaAmappings\tOrientationOfMapping\tStartOfTargetMapping\tContigLength" >  ${outputFolderName}/start_alignment_mapping/After_StartAlignment_contigs.minimap
 
-samtools faidx /data/Project/2020_StarterCultureDiversity/09_flye/Polishing_woCirclator/${sample}/08_fourthFreebayes/freebayesOuput/8_fourthFreebayes.fasta ${non_bac} >> \
-        /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/aligned/8_fourthFreebayes_startAligned.fasta
+for contigName in $(grep "^#" -v  ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap |awk -F "\t" '{OFS="\t"}{if($2=="bacterial_contig")print $1}')
+do
+
+minimap2 ${outputFolderName}/StartAlignedContigs/${contigName}_startAligned.fasta  ${circleriesPATH}/05_startAlign_data/starting_genes.fasta |awk -F "\t" '{OFS="\t"}{if($12>50) print $0}'  > ${outputFolderName}/start_alignment_mapping/${header_short}_afterStartAlignment.minimap
+
+sort -k10 -n -r ${outputFolderName}/start_alignment_mapping/${header_short}_afterStartAlignment.minimap |head -1
 
 
-###-------------------QC if DNA is really at first position
+number_of_mappings=$(wc -l ${outputFolderName}/start_alignment_mapping/${header_short}_afterStartAlignment.minimap|cut -d ' ' -f 1)
+orientation=$(sort -k10 -n -r ${outputFolderName}/start_alignment_mapping/${header_short}_afterStartAlignment.minimap|head -1 |cut -f 5)
 
-rm -r /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/aligned/ProkkaAfter n/perl /usr/bin/prokka --cpus 35 --outdir /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/aligned/ProkkaAfter --locustag ${sample} --proteins s.faa --evalue 0.001 --addgenes /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/aligned/8_fourthFreebayes_startAligned.fasta
+  
+if [ $number_of_mappings == "0" ]
+then
+        echo "no dnaA map found"
+      
+       echo -e ${header}"\tnon-bacterial_contig\t"${number_of_mappings}"\tNA\tNA\tNA" >>  ${outputFolderName}/start_alignment_mapping/After_StartAlignment_contigs.minimap
+    
+elif [ $orientation == "+" ]
+then
+           echo "Looks good!"
 
+  start=$(sort -k8 -n ${outputFolderName}/start_alignment_mapping/${header_short}_afterStartAlignment.minimap|head -1 |awk -F "\t" '{OFS="\t"}{print $8-$3-5}')
+        contig_length=$(sort -k8 -n ${outputFolderName}/start_alignment_mapping/${header_short}_afterStartAlignment.minimap|head -1 |cut -f 7)
+        
+        echo -e ${header}"\tbacterial_contig\t"${number_of_mappings}"\t"${orientation}"\t"${start}"\t"${contig_length} >>  ${outputFolderName}/start_alignment_mapping/After_StartAlignment_contigs.minimap
+        
+else
 
+    start=$(sort -k9 -n -r ${outputFolderName}/start_alignment_mapping/${header_short}_afterStartAlignment.minimap|head -1 |awk -F "\t" '{OFS="\t"}{print $9+$2-$4+5}')
+        contig_length=$(sort -k9 -n -r  ${outputFolderName}/start_alignment_mapping/${header_short}_afterStartAlignment.minimap|head -1 |cut -f 7)
+        
+        echo -e ${header}"\tbacterial_contig\t"${number_of_mappings}"\t"${orientation}"\t"${start}"\t"${contig_length} >>  ${outputFolderName}/start_alignment_mapping/After_StartAlignment_contigs.minimap
+        
+        echo "SOMETHING IS WRONG BECAUSE dnaA IS STILL ON THE REVERSE STRAND"
+fi
 
-echo ${sample}
-grep "dnaA" /data/Project/2020_StarterCultureDiversity/09_flye/StartAlignAfterPolishr/${sample}/aligned/ProkkaAfter/*gff |awk -F "\t" '{if($3=="gene")print $0}'
+done
 
 ```
+
+
+#### 3.2 bring contigs together again
+
+Here, I finally merge the contigs again. 
+
+```{bash merge_Circleries, eval=FALSE}
+
+rm  ${outputFolderName}/${outName}.fasta
+for contigName in $(grep ">" ${outputFolderName}/genomes/tmp_wide_all.fasta|sed 's/>//g')
+do
+
+origin=$(awk -F "\t" -v contigzz="$contigName" '{OFS="\t"}{if($1==contigzz)print $2} ' ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap)
+
+
+ if [ $origin=="bacterial_contig" ]
+    then              
+     echo -e "Bacterial contig name: \t\t" ${contigName}
+     cat ${outputFolderName}/StartAlignedContigs/${contigName}_startAligned.fasta  >> ${outputFolderName}/${outName}.fasta
+
+  else              
+
+     echo -e "Non-bacterial contig name: \t\t" ${contigName}
+     cat  ${outputFolderName}/genomes/${contigName}.fasta  >> ${outputFolderName}/${outName}.fasta
+
+
+  fi  
+
+done
+
+#grep ">" ${outputFolderName}/${outName}.fasta
+
+```
+
+
+#### 3.3 Final_Info
+
+Here, I finally merge the contigs again. 
+
+```{bash finalInfo_Circleries, eval=FALSE}
+
+echo "============================================================"
+echo "Final Infos"
+echo "============================================================"
+here=$(pwd)
+echo -e "Location of Startaligned contigs: \t\t"${here}/${outputFolderName}/${outName}".fasta"
+
+
+numberContigs=$(grep "^#" -c ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap)
+BacContigs=$(grep "^#" -v  ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap |awk -F "\t" '{OFS="\t"}{if($2=="bacterial_contig")print $0}'|wc -l)
+NonBacContigs=$(grep "^#" -v  ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap |awk -F "\t" '{OFS="\t"}{if($2!="bacterial_contig")print $0}' |wc -l)
+
+echo -e "Total number of contigs: \t\t"${numberContigs}
+echo -e "Bacterial contigs: \t\t"${BacContigs}
+#grep "^#" -v  ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap |awk -F "\t" '{OFS="\t"}{if($2=="bacterial_contig")print $0}'
+echo -e "Non-Bacterial contigs: \t\t"${NonBacContigs}
+#grep "^#" -v  ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap |awk -F "\t" '{OFS="\t"}{if($2!="bacterial_contig")print $0}'
+
+
+echo -e "The location of dnaA on the " ${BacContigs} " Bacterial contigs..."
+grep "^#"  ${outputFolderName}/start_alignment_mapping/After_StartAlignment_contigs.minimap
+grep "^#" -v  ${outputFolderName}/start_alignment_mapping/After_StartAlignment_contigs.minimap|awk -F "\t" '{OFS="\t"}{if($2=="bacterial_contig")print $0}'
+
+
+echo -e "Remember the contigs should still be polished now..."
+
+```
+
 
 ## 4 polish edge
 
