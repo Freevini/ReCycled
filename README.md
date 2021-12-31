@@ -31,7 +31,7 @@ Aims:
 
 In order to to this we are working on the following parts:
 
-## 1. check query genome assembly
+## 1. Check and prepare query genome assembly
 
 - check contigs: how many? How large?
 - try to identify contig origines (bacteria, plasmids, phages)
@@ -39,7 +39,7 @@ In order to to this we are working on the following parts:
 
   ==> Take home: contig originates from?
 
-## 2. check circularity
+## 2. Check circularity
 
 - map ends (1kb) onto eachother (minimap2) --> overlap or not
 - merge contig ends and map raw reads to look for:
@@ -49,7 +49,7 @@ In order to to this we are working on the following parts:
 
     ==> Take home: contig is circler or not!
 
-## 3. circleries
+## 3. Circleries
 
   - take dnaA minimap2 mapping
   - check for presence of DNAa
@@ -59,7 +59,7 @@ In order to to this we are working on the following parts:
   - merge all non-start aligned contigs and start aligned contig back together
 
 
-## 5. put Illumina contigs into synteny (not implemented)
+## 4. put Illumina contigs into synteny (not implemented)
 
 Most genomes however are not finished (complete and circular), therefore it would be good to have an option for these too.
 
@@ -70,7 +70,7 @@ Most genomes however are not finished (complete and circular), therefore it woul
 - arrange contigs according to minimap2 alignment
 - (optional: change headers)
 
-## 6. check contaminations (not implemented)
+## 5. check contaminations (not implemented)
 
 - PhiX
 - humman contaminations
