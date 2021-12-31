@@ -1,0 +1,164 @@
+---
+title: "20211229_circles_analysis"
+author: "Vincent Somerville"
+date: "30/12/2021"
+output: html_document
+---
+
+```{r setup ,echo=FALSE}
+knitr::opts_chunk$set(message=FALSE, echo=FALSE, eval=FALSE)
+```
+
+
+## check start alignment
+
+Here, I check how many completely assembled genomes are start aligned on NCBI. 
+
+```{bash}
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/log/
+curl 'ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/assembly_summary.txt' > /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.txt
+
+
+cut -f 12 /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.txt|sort|uniq -c
+
+
+##------------------------------------------------
+#only chromosome
+##------------------------------------------------
+
+awk -F "\t" 'BEGIN{OFS="\t"} {if ($12=="Chromosome" ) print $0}' /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.txt |cut -f 20 | sed -r 's|(https://ftp.ncbi.nlm.nih.gov/genomes/all/.+/)(GCF_.+)|\1\2\/\2_genomic.gff.gz|' >    \
+    /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.download_chromosome
+    
+    
+cd 
+rm -r /data/Project/2021_circlator/NCBI_analysis/download/gff/
+ mkdir -p /data/Project/2021_circlator/NCBI_analysis/download/gff/
+ 
+ rm -r /data/Project/2021_circlator/NCBI_analysis/analysis
+ mkdir -p /data/Project/2021_circlator/NCBI_analysis/analysis/
+ 
+ 
+cd /data/Project/2021_circlator/NCBI_analysis/download/gff/
+
+#wget -i /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.download_chromosome
+
+
+for downloadsss in $(cat /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.download_chromosome)
+do
+
+echo $downloadsss
+
+namess=$(echo $downloadsss |sed 's/.*\///g'|sed 's/_genomic.gff.gz//g')
+
+wget  ${downloadsss}
+
+
+zgrep "=dnaA;" -i ${namess}* | awk '{if($2=="RefSeq")print $0}' >> /data/Project/2021_circlator/NCBI_analysis/analysis/genes.identified.chromosome
+startss=$(zgrep "=dnaA;" -i ${namess}* | awk '{if($2=="RefSeq")print $4}')
+orientation=$(zgrep "=dnaA;" -i ${namess}* | awk '{if($2=="RefSeq")print $7}')
+#startAligned=$(zgrep "=dnaA;" -i ${namess}* | awk '{if($2=="RefSeq" && $4 < "5000" && $7 =="+")print "Yes"; else print "NO"}')
+#startAligned=$(zgrep "=dnaA;" -i ${namess}* | awk '{if(($2=="RefSeq") && ($4 < "5000") && ( $7 =="+")) print "Yes" }')
+
+startAligned=$(echo $startss | awk -v orientations="$orientation" '{if(($1 < 5000) && (orientations == "+")) print "Yes"; else print "NO" }')
+
+
+
+#echo -e ${namess}
+#echo -e ${namess}"\t"${startss}
+#echo -e ${namess}"\t"${startss}"\t"${orientation}
+#echo -e ${namess}"\t"${startss}"\t"${orientation}"\t"${startAligned} 
+
+#zgrep "=dnaA;" -i ${namess}* | awk '{if(($2=="RefSeq" && $4 < "5000" && $7 =="+")) print "Yes" }'
+
+#|awk -F "\t" -v contigNames="$contigName" '{OFS="\t"}{if($2=="bacterial_contig"  && ($7=="Y"||$8=="Y"||$9=="Y"))print "Y"; else print "N"}'
+
+echo -e ${namess}"\t"${startss}"\t"${orientation}"\t"${startAligned} >> /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.chromosome
+#rm ${namess}*
+done
+
+
+cat /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.chromosome
+
+cut -f 4 /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.chromosome |sort|uniq -c
+cut -f 3 /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.chromosome |sort|uniq -c
+
+wc -l /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.chromosome
+wc -l /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.download_chromosome
+
+
+
+##------------------------------------------------
+#only complete genome
+##------------------------------------------------
+
+awk -F "\t" 'BEGIN{OFS="\t"} {if ($12=="Complete Genome" ) print $0}' /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.txt |cut -f 20 | sed -r 's|(https://ftp.ncbi.nlm.nih.gov/genomes/all/.+/)(GCF_.+)|\1\2\/\2_genomic.gff.gz|' >    \
+    /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.download_Complete_Genome
+    
+    
+cd 
+#rm -r /data/Project/2021_circlator/NCBI_analysis/download/gff/
+#mkdir -p /data/Project/2021_circlator/NCBI_analysis/download/gff/
+ 
+# rm -r /data/Project/2021_circlator/NCBI_analysis/analysis
+# mkdir -p /data/Project/2021_circlator/NCBI_analysis/analysis/
+ 
+ 
+cd /data/Project/2021_circlator/NCBI_analysis/download/gff/
+
+#wget -i /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.download_chromosome
+
+
+for downloadsss in $(cat /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.download_Complete_Genome)
+do
+
+echo $downloadsss
+
+namess=$(echo $downloadsss |sed 's/.*\///g'|sed 's/_genomic.gff.gz//g')
+
+wget  ${downloadsss}
+
+zgrep "=dnaA;" -i ${namess}* | awk '{if($2=="RefSeq")print $0}' >> /data/Project/2021_circlator/NCBI_analysis/analysis/genes.identified.Complete_Genome
+startss=$(zgrep "=dnaA;" -i ${namess}* | awk '{if($2=="RefSeq")print $4}')
+orientation=$(zgrep "=dnaA;" -i ${namess}* | awk '{if($2=="RefSeq")print $7}')
+#startAligned=$(zgrep "=dnaA;" -i ${namess}* | awk '{if($2=="RefSeq" && $4 < "5000" && $7 =="+")print "Yes"; else print "NO"}')
+#startAligned=$(zgrep "=dnaA;" -i ${namess}* | awk '{if(($2=="RefSeq") && ($4 < "5000") && ( $7 =="+")) print "Yes" }')
+
+startAligned=$(echo $startss | awk -v orientations="$orientation" '{if(($1 < 5000) && (orientations == "+")) print "Yes"; else print "NO" }')
+
+
+
+#echo -e ${namess}
+#echo -e ${namess}"\t"${startss}
+#echo -e ${namess}"\t"${startss}"\t"${orientation}
+#echo -e ${namess}"\t"${startss}"\t"${orientation}"\t"${startAligned} 
+
+#zgrep "=dnaA;" -i ${namess}* | awk '{if(($2=="RefSeq" && $4 < "5000" && $7 =="+")) print "Yes" }'
+
+#|awk -F "\t" -v contigNames="$contigName" '{OFS="\t"}{if($2=="bacterial_contig"  && ($7=="Y"||$8=="Y"||$9=="Y"))print "Y"; else print "N"}'
+
+echo -e ${namess}"\t"${startss}"\t"${orientation}"\t"${startAligned} >> /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.Complete_Genome
+#rm ${namess}*
+done
+
+
+cat /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.Complete_Genome
+
+cut -f 4 /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.Complete_Genome |sort|uniq -c
+cut -f 3 /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.Complete_Genome |sort|uniq -c
+
+wc -l /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.Complete_Genome
+wc -l /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.download_Complete_Genome
+
+
+##----------------------------------------------------
+#move local
+##----------------------------------------------------
+
+mkdir -p  /home/vincent/Desktop/Projects/2020_circleries/07_figures
+mkdir -p  /home/vincent/Desktop/Projects/2020_circleries/06_analysis/
+scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.chromosome /home/vincent/Desktop/Projects/2020_circleries/06_analysis/
+
+
+```
+
+

@@ -1,10 +1,38 @@
 # Circles
 Michael Schmid & Vincent Somerville
 
+italics(Sensu stricto) circular genomes do not have a start and end. However genome replication starts at the first position of the the replication origin gene, also called dnaA. This results in a skewed read coverage distribution when sequencing bacteria in the log phase. They generally show higher coverages at the origin of replication (i.e. dnaA) then at the terminus (Fig. 1).
+
+<p align = "center">
+<img src = "07_figures/PTR_figure.png">
+</p>
+<p align = "center">
+Fig.1 - Peak-to-trough ratio (PTR) for a growing or non-growing bacteria. Taken from Korem et al. 2015 (DOI: 10.1126/science.aac4812)
+</p>
+
+In order to compare genomes with each other it has been decided to start align completly assembled genomes infront of the dnaA gene on the positive strand (REF). Previous tools, e.g. circlator (REF) try to identify completly assembled genomes and start align them, however it often does not work and cannot cope with the high throughput of many projects. Very few genome assembly tools actually incorporate start alignement into the workflow. Most noteably Unicycler (REF) and Tricylcler identifies circulor, bacterial contigs and start aligns them accordingly. Nevertheless the large majority of genomes on NCBI remain not start aligned (Fig. 2). This hinders a good comparative genomic approach, e.g.genome synteny cannot easyly be infered.
+
+
+<p align = "center">
+<img src = "Plot_chromosome_startAligned_NCBI.png">
+</p>
+<p align = "center">
+Fig.2 -Number of start aligned and non-start aligned genomes on NCBI assgined to chromosome level assemblies (done on 30.12.2021))
+</p>
+
 
 Here, we are creating a pipeline that checks the circularity of genome assemblies and circluarises them according to the location of the dnaA.
 
 In order to to this we are working on the following parts:
+
+
+
+
+
+
+
+
+
 
 ## 1. check query genome assembly
 
