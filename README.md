@@ -4,7 +4,7 @@ Michael Schmid & Vincent Somerville
 *Sensu stricto* circular genomes do not have a start and end. However genome replication starts at the first position of the the replication origin gene, also called dnaA. This results in a skewed read coverage distribution when sequencing bacteria in the log phase. They generally show higher coverages at the origin of replication (i.e. dnaA) then at the terminus (Fig. 1).
 
 <p align = "center">
-<img src = "07_figures/PTR_figure.png" width="200">
+<img src = "07_figures/PTR_figure.png" width="400">
 </p>
 <p align = "center">
 Fig.1 - Peak-to-trough ratio (PTR) for a growing or non-growing bacteria. Taken from Korem et al. 2015 (DOI: 10.1126/science.aac4812)
@@ -14,7 +14,7 @@ In order to compare genomes with each other it has been decided to start align c
 
 
 <p align = "center">
-<img src = "07_figures/Plot_chromosome_startAligned_NCBI.png" width="200">
+<img src = "07_figures/Plot_chromosome_startAligned_NCBI.png" width="400">
 </p>
 <p align = "center">
 Fig.2 -Number of start aligned and non-start aligned genomes on NCBI assgined to chromosome level assemblies (done on 30.12.2021))
