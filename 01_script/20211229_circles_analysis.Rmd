@@ -3,6 +3,8 @@ title: "20211229_circles_analysis"
 author: "Vincent Somerville"
 date: "30/12/2021"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup ,echo=FALSE}
@@ -152,7 +154,6 @@ wc -l /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.download_Comp
 
 ##----------------------------------------------------
 #move local
-##----------------------------------------------------
 
 mkdir -p  /home/vincent/Desktop/Projects/2020_circleries/07_figures
 mkdir -p  /home/vincent/Desktop/Projects/2020_circleries/06_analysis/
@@ -160,5 +161,26 @@ scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/analysis
 
 
 ```
+
+
+```{r}
+
+
+library(tidyverse)
+
+dnaA_genes_stats <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/dnaA_genes.stats.chromosome", delim = "\t", escape_double = FALSE, col_names = c("genome","startpostion","orientation","startAligned"), trim_ws = TRUE)
+
+plot_chromsome <- ggplot(dnaA_genes_stats,aes(x=startAligned,fill=startAligned,color=startAligned))+geom_bar()+theme_classic()+labs(x="Genome start aligned\n at dnaA",y="Genomes",title = "Chromosome-level asseblies\non NCBI")+theme(legend.position = "none")
+
+png("/home/vincent/Desktop/Projects/2020_circleries/07_figures/Plot_chromosome_startAligned_NCBI.png", width = 2200, height = 3000,res=400)
+# pdf("~/Desktop/Projects/2020_StarterCultureDiversity/97_Images/Sterm_phylogney_total.pdf",width=10,height=10)
+
+plot_chromsome
+
+dev.off()
+
+
+```
+
 
 

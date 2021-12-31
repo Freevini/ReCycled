@@ -1,7 +1,7 @@
 # Circles
 Michael Schmid & Vincent Somerville
 
-*Sensu stricto* circular genomes do not have a start and end. However DNA replication starts at the first position of the replication origin gene, also called *dnaA*. This results in a skewed read coverage distribution when sequencing growing bacteria. They generally show higher coverages at the origin of replication (i.e. *dnaA*) then at the terminus (Fig. 1).
+*Sensu stricto* circular genomes do not have a start and end. However bacterial chromosomes have a single, unique origin of replication (oriC). DNA replication starts at the first position of the replication initiator protein, also called *dnaA* This results in a skewed read coverage distribution when sequencing growing bacteria. They generally show higher coverages at the origin of replication (i.e. *dnaA*) then at the terminus (Fig. 1).
 
 <p align = "center">
 <img src = "07_figures/PTR_figure.png" width="400">
@@ -10,7 +10,7 @@ Michael Schmid & Vincent Somerville
 Fig.1 - Peak-to-trough ratio (PTR) for a growing or non-growing bacteria. Taken from Korem et al. 2015 (DOI: 10.1126/science.aac4812)
 </p>
 
-In order to compare genomes with each other, it has been decided to start align assembled genomes at the beginning of the dnaA gene on the positive strand (REF). Previous tools, e.g. circlator (REF) attempt to identify completely assembled genomes and start align them, however it often does not work and cannot cope with the high throughput of many sequencing projects today. Very few genome assembly tools incorporate start alignment into the workflow. Most notably Unicycler (REF) and Tricylcler identifies circular, bacterial contigs and start aligns them accordingly. Nevertheless the large majority of genomes on NCBI remain not start aligned (Fig. 2). This hinders a streamlined comparative genomic approach, e.g. genome synteny cannot easily be inferred.
+In order to compare genomes with each other, it has been decided to start align assembled genomes at the beginning of the *dnaA* gene, which should be located on the positive strand (REF). Previous tools, e.g. circlator (REF) attempt to identify completely assembled genomes and start align them. However it is limited in it's utility of using different sequencing methods and the high throughput of many sequencing projects today. Very few genome assembly tools incorporate start alignment into the workflow. Most notably Unicycler (REF) and Tricylcler (REF) identifies circular, bacterial contigs and start aligns them accordingly. Nevertheless the large majority of genomes on NCBI remain not start aligned (Fig. 2). This hinders a streamlined comparative genomic approach, e.g. genome synteny cannot easily be inferred.
 
 
 <p align = "center">
