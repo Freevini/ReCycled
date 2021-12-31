@@ -23,6 +23,12 @@ Fig.2 -Number of start aligned and non-start aligned genomes on NCBI assgined to
 
 Here, we are creating a pipeline that checks the circularity of genome assemblies and circularises them according to the location of the dnaA.
 
+Aims:
+
+1. Create a tool that identifies and circularises complete bacterial contigs
+2. Create a fast and scalable approach
+3. use a few dependencies as possible
+
 In order to to this we are working on the following parts:
 
 ## 1. check query genome assembly
