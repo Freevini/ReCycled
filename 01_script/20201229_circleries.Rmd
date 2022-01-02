@@ -67,7 +67,7 @@ minimap2 --version
 fasta_shift_path=/home/vincent/Desktop/Projects/2020_circleries/02_dependencies/fasta_shift
 $fasta_shift_path --help
 
-revseq #embos toolkit
+revseq #emboss toolkit
 
 #prodigal --version
 
@@ -75,7 +75,7 @@ revseq #embos toolkit
 ## Part 4. 
 ###---------------------------------
 
-bedtools
+bedtools -h
 
 #PROKKA --version
 #bwa --version
