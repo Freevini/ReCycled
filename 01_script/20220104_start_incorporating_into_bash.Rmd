@@ -1,0 +1,110 @@
+---
+title: "Circleries"
+author: "Vincent Somerville"
+date: "02/10/2020"
+output: html_document
+---
+
+```{r setup ,echo=FALSE}
+knitr::opts_chunk$set(message=FALSE, echo=FALSE, eval=FALSE)
+```
+
+
+
+
+
+testset
+
+```{bash parameters, eval=TRUE}
+#---------------------------------------
+## testset 1
+#---------------------------------------
+
+circleriesPATH=/home/vincent/Desktop/Projects/2020_circleries
+genomeFASTAname=03_test_Data/test_streptococcus_polished_dnaA-pos-1526474_nonOVERLAPING.fasta
+outputFolderName=04_OUTPUTTest
+threads=8
+outName=Final_startAligned
+longreads=
+shortreads_1=
+shortreads_2=
+
+#---------------------------------------
+## testset 2
+#---------------------------------------
+circleriesPATH=/home/vincent/Desktop/Projects/2020_circleries
+genomeFASTAname=03_test_Data/Ldel_24754/assembly.fasta
+outputFolderName=04_OUTPUTTest_02
+threads=8
+outName=Final_startAligned
+longreads=03_test_Data/Ldel_24754/24754_filtered.fastq.gz
+shortreads_1=03_test_Data/Ldel_24754/FAM24754_R1_val_1.fq.gz
+shortreads_2=03_test_Data/Ldel_24754/FAM24754_R2_val_2.fq.gz
+```
+
+
+```{bash parameters, eval=TRUE}
+#---------------------------------------
+## test command 2
+#---------------------------------------
+
+/home/vincent/Desktop/Projects/2020_circleries/01_script/test.sh \
+    -i /home/vincent/Desktop/Projects/2020_circleries/03_test_Data/Ldel_24754/assembly.fasta \
+    -l /home/vincent/Desktop/Projects/2020_circleries/03_test_Data/Ldel_24754/24754_filtered.fastq.gz \
+    -t 8 \
+    -o test_02 \
+    -d /home/vincent/Desktop/Projects/2020_circleries/03_test_Data \
+    -f /home/vincent/Desktop/Projects/2020_circleries/03_test_Data/Ldel_24754/FAM24754_R1_val_1.fq.gz \
+    -F \
+    -x
+    
+
+#circular contigs
+
+/home/vincent/Desktop/Projects/2020_circleries/Circleries.sh\
+    -i /home/vincent/Desktop/Projects/2020_circleries/03_test_Data/Ldel_24754/assembly.fasta \
+    -l /home/vincent/Desktop/Projects/2020_circleries/03_test_Data/Ldel_24754/24754_filtered.fastq.gz \
+    -t 8 \
+    -o test_02 \
+    -d /home/vincent/Desktop/Projects/2020_circleries/03_test_Data \
+    -f /home/vincent/Desktop/Projects/2020_circleries/03_test_Data/Ldel_24754/FAM24754_R1_val_1.fq.gz \
+    -F \
+    -x
+    
+
+#non-circular contigs
+
+
+#cd /home/vincent/Desktop/Projects/2020_circleries/01_script/
+#./test.sh
+
+```
+
+
+
+
+
+### 1.3 summary contigs
+
+ ==> Take home: contig originates from?
+ With the circular contigs I would go into the circluarizse step. 
+
+```{bash}
+##===========================================
+#summary stats before circularizing
+##===========================================
+
+echo "============================================================"
+echo "summary stats before circularizing"
+echo "============================================================"
+
+echo -e "We will proceed start aligning following " ${BacContigs} " contigss..."
+grep "^#"  ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap 
+grep "^#" -v  ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap |awk -F "\t" '{OFS="\t"}{if($2=="bacterial_contig")print $0}'
+
+```
+
+
+
+
+

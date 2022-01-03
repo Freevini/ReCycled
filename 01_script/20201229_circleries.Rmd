@@ -9,34 +9,152 @@ output: html_document
 knitr::opts_chunk$set(message=FALSE, echo=FALSE, eval=FALSE)
 ```
 
+## Input 
 
-## Circleries steps
-1. check (bacterial) contig
-  - blast for plasmid
-    - OriC
-  - blast/diamond bacterial housekeeping genes
-    - 16S
-  - BUSCO (maybe very generic...which contig is what)
-  - contig size
-  - check for presence of dnaA (diammond/PROKKA)
-  ==> Take home: contig originates from?
-2. check if potentially circler
-  - map ends (10kb) onto eachother (minimap2) --> overlap or not
-  - merge contig ends and map raw reads+ look for:
-    - even coverage (output: X coverage--> is this in the range)
-    - spanning reads (number of reads)
-      - PE (are pairs mapping)
-      - ONT/Pacbio (is read spanning)
-    ==> Take home: contig is circler or not! 
-3. circleries
-  - take dnaA diamond mapping (+prodigal)
-  - check if no genes are on reverse strand (prodigal)
-  - check for presence of DNAa 
-  - check for DNAa orientation
-  - cut and shift fasta start
-4. Polish the newly stitched region
-  - QC how many locations have change!
-  - advise if additional polishing is required!
+Here, I start defining necessary bash variables.
+```{bash}
+
+#!/bin/bash
+############################################################
+# Help                                                     #
+############################################################
+Help()
+{
+   # Display Help
+   echo "Circleries: checks the completness, circularity and bacterial origins of contigs and start aligns them at dnaA if possible"
+   echo
+   echo "Syntax: Circleries [-g|h|v|V]"
+   echo "options:"
+   echo "-p     circleries scirpt path" #circleriesPATH
+   echo "-i     input genome name (in fasta format)" #genomeFASTAname
+   echo "-d     output direcotry [.]" #outputFolderName
+   echo "-t     number of threads to use [4]" #threads
+   echo "-o     output file name  [results]" #threads #outName
+   echo "-l     long read file" #longreads
+   echo "-f     short read forward read (read 1)" #shortreads_1
+   echo "-r     short read reverse read (read 2)" #shortreads_2
+   echo "-h     help option" #shortreads_2
+
+   echo
+}
+
+
+############################################################
+############################################################
+# Main program                                             #
+############################################################
+############################################################
+
+# Set defaults
+Name="world"
+circleriesPATH=$PATH
+genomeFASTAname=03_test_Data/Ldel_24754/assembly.fasta
+outputFolderName=04_OUTPUTTest_02
+threads=4
+outName=Final_startAligned
+longreads=03_test_Data/Ldel_24754/24754_filtered.fastq.gz
+#shortreads_1=03_test_Data/Ldel_24754/FAM24754_R1_val_1.fq.gz
+shortreads_2=03_test_Data/Ldel_24754/FAM24754_R2_val_2.fq.gz
+
+# Set Infos
+AUTHOR="Vincent Somerville"
+EXE="Circleries"
+VERSION="V0.0.1" 
+starttime=$(date)
+
+unset genomeFASTAname
+unset shortreads_1
+
+
+############################################################
+# Process the input options. Add options as needed.        #
+############################################################
+# Get the options
+#while getopts ":pidtolfrh:" option; do
+while getopts ":hpi:" option; do
+   case $option in
+      h) # display Help
+         Help
+         exit;;
+      p) #circleries scirpt path
+         circleriesPATH=$OPTARG;;
+      i) #input genome name (in fasta format)
+         genomeFASTAname=$OPTARG;;
+      d) #output direcotry [.]
+         outputFolderName=$OPTARG;;
+      f) #short read forward read (read 1)
+         shortreads_1=$OPTARG;;
+     \?) # Invalid option
+         echo "Error: Invalid option"
+         Help
+         exit;;
+   esac
+done
+
+# check for mandatory parameters and inputs
+
+: ${genomeFASTAname:?Missing: "-i" which is the input genome name (in fasta format). this information is mandatory}
+: ${shortreads_1:?Missing: "-f" which short read forward read (read 1). this information is mandator}
+
+echo "hello $Name!"
+
+```
+
+
+
+testset
+
+```{bash parameters, eval=TRUE}
+
+#---------------------------------------
+## testset 1
+#---------------------------------------
+
+circleriesPATH=/home/vincent/Desktop/Projects/2020_circleries
+genomeFASTAname=03_test_Data/test_streptococcus_polished_dnaA-pos-1526474_nonOVERLAPING.fasta
+outputFolderName=04_OUTPUTTest
+threads=8
+outName=Final_startAligned
+longreads=
+shortreads_1=
+shortreads_2=
+
+#---------------------------------------
+## testset 2
+#---------------------------------------
+circleriesPATH=/home/vincent/Desktop/Projects/2020_circleries
+genomeFASTAname=03_test_Data/Ldel_24754/assembly.fasta
+outputFolderName=04_OUTPUTTest_02
+threads=8
+outName=Final_startAligned
+longreads=03_test_Data/Ldel_24754/24754_filtered.fastq.gz
+shortreads_1=03_test_Data/Ldel_24754/FAM24754_R1_val_1.fq.gz
+shortreads_2=03_test_Data/Ldel_24754/FAM24754_R2_val_2.fq.gz
+
+
+```
+
+testset circular
+
+```{bash parameters, eval=TRUE}
+
+
+```
+
+## some Info
+
+```{bash}
+# . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+# welcome message
+
+echo -e "This is "$EXE $VERSION
+echo -e "Written by "$AUTHOR
+echo -e "Local time is" $starttime
+echo -e "Operating system is "$OSTYPE
+
+```
+
+
 
 ## Dependencies
 
@@ -45,6 +163,7 @@ knitr::opts_chunk$set(message=FALSE, echo=FALSE, eval=FALSE)
 
 #conda activate circleries
 
+SCRIPT_PATH=$(dirname $(realpath -s $0))
 
 ###---------------------------------
 ## Part 1. 
@@ -83,50 +202,7 @@ bedtools -h
 
 ```
 
-## parameter
 
-Here, I start defining necessary bash variables.
-```{bash parameters, eval=TRUE}
-circleriesPATH=/home/vincent/Desktop/Projects/2020_circleries
-genomeFASTAname=03_test_Data/test_streptococcus_polished_dnaA-pos-1526474_nonOVERLAPING.fasta
-flyeOutput=
-outputFolderName=04_OUTPUTTest
-threads=8
-outName=Final_startAligned
-longreads=
-shortreads_1=
-shortreads_2=
-
-```
-
-testset circular
-
-```{bash parameters, eval=TRUE}
-circleriesPATH=/home/vincent/Desktop/Projects/2020_circleries
-genomeFASTAname=03_test_Data/Ldel_24754/assembly.fasta
-flyeOutput=
-outputFolderName=04_OUTPUTTest_02
-threads=8
-outName=Final_startAligned
-longreads=03_test_Data/Ldel_24754/24754_filtered.fastq.gz
-shortreads_1=03_test_Data/Ldel_24754/FAM24754_R1_val_1.fq.gz
-shortreads_2=03_test_Data/Ldel_24754/FAM24754_R2_val_2.fq.gz
-
-
-#scp -r vincent@130.223.51.66:/data/Project/2020_StarterCultureDiversity/09_flye/assembly/24754_02/*.fasta /home/vincent/Desktop/Projects/2020_circleries/03_test_Data/Ldel_24754/
-
-
-#scp -r vincent@130.223.51.66:/data/Project/2020_StarterCultureDiversity/01_Data/20210310_genomeSeqONT/filtered/gz//24754_filtered.fastq.gz /home/vincent/Desktop/Projects/2020_circleries/03_test_Data/Ldel_24754/
-
-
-#scp -r vincent@130.223.51.66:/data/Project/2020_StarterCultureDiversity/01_Data/20200515_genomeSeq/01_rawdata/trimmed_Galore/gz/FAM24754/FAM24754_R1_val_1.fq.gz /home/vincent/Desktop/Projects/2020_circleries/03_test_Data/Ldel_24754/
-
-#scp -r vincent@130.223.51.66:/data/Project/2020_StarterCultureDiversity/01_Data/20200515_genomeSeq/01_rawdata/trimmed_Galore/gz/FAM24754/FAM24754_R2_val_2.fq.gz /home/vincent/Desktop/Projects/2020_circleries/03_test_Data/Ldel_24754/
-
-
- 
-
-```
 
 ## 1. check if bacterial contig
 
