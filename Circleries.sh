@@ -438,6 +438,7 @@ echo
 echo -e "3. Checking circularity"
 echo -e "       Aligning short reads...This may take some time!"
 
+mkdir -p ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/
 
 if [[ "$shortreads_1" == "" ]];
 then

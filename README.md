@@ -22,7 +22,7 @@ Circles was designed and implemented by Vincent Somerville and Michael Schmid as
 * [Known limitations](#known-limitations)
 * [License](#license)
 
-#idea
+# idea
 
 *Sensu stricto* circular genomes do not have a start and end. However bacterial chromosomes have a single, unique origin of replication (oriC). DNA replication starts at the first position of the replication initiator protein, also called *dnaA* This results in a skewed read coverage distribution when sequencing growing bacteria. They generally show higher coverages at the origin of replication (i.e. *dnaA*) then at the terminus (Fig. 1).
 
