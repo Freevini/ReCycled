@@ -159,6 +159,9 @@ mkdir -p  /home/vincent/Desktop/Projects/2020_circleries/07_figures
 mkdir -p  /home/vincent/Desktop/Projects/2020_circleries/06_analysis/
 scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.chromosome /home/vincent/Desktop/Projects/2020_circleries/06_analysis/
 
+mkdir -p  /home/vincent/Desktop/Projects/2020_circleries/06_analysis/
+scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.Complete_Genome /home/vincent/Desktop/Projects/2020_circleries/06_analysis/
+
 
 ```
 
@@ -168,9 +171,13 @@ scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/analysis
 
 library(tidyverse)
 
+#-----------------------------------------------------------------------
+#chromosome
+#-----------------------------------------------------------------------
+
 dnaA_genes_stats <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/dnaA_genes.stats.chromosome", delim = "\t", escape_double = FALSE, col_names = c("genome","startpostion","orientation","startAligned"), trim_ws = TRUE)
 
-plot_chromsome <- ggplot(dnaA_genes_stats,aes(x=startAligned,fill=startAligned,color=startAligned))+geom_bar()+theme_classic()+labs(x="Genome start aligned\n at dnaA",y="Genomes",title = "Chromosome-level asseblies\non NCBI")+theme(legend.position = "none")
+plot_chromsome <- ggplot(dnaA_genes_stats,aes(x=startAligned,fill=startAligned,color=startAligned))+geom_bar()+theme_classic()+labs(x="Genome start aligned\n at dnaA",y="Genomes",title = "Chromosome-level assemblies\non NCBI")+theme(legend.position = "none")
 
 png("/home/vincent/Desktop/Projects/2020_circleries/07_figures/Plot_chromosome_startAligned_NCBI.png", width = 2200, height = 3000,res=400)
 # pdf("~/Desktop/Projects/2020_StarterCultureDiversity/97_Images/Sterm_phylogney_total.pdf",width=10,height=10)
@@ -180,7 +187,195 @@ plot_chromsome
 dev.off()
 
 
+#-----------------------------------------------------------------------
+#complete genomes
+#-----------------------------------------------------------------------
+
+dnaA_genes_stats_complete <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/dnaA_genes.stats.Complete_Genome", delim = "\t", escape_double = FALSE, col_names = c("genome","startpostion","orientation","startAligned"), trim_ws = TRUE)
+
+plot_complete_genome <- ggplot(dnaA_genes_stats_complete,aes(x=startAligned,fill=startAligned,color=startAligned))+geom_bar()+theme_classic()+labs(x="Genome start aligned\n at dnaA",y="Genomes",title = "Complete genome assemblies\non NCBI")+theme(legend.position = "none")
+plot_complete_genome
+png("/home/vincent/Desktop/Projects/2020_circleries/07_figures/Plot_completeGenomes_startAligned_NCBI.png", width = 2200, height = 3000,res=400)
+# pdf("~/Desktop/Projects/2020_StarterCultureDiversity/97_Images/Sterm_phylogney_total.pdf",width=10,height=10)
+
+plot_complete_genome
+
+dev.off()
+
+
+#-----------------------------------------------------------------------
+#together
+#-----------------------------------------------------------------------
+
+library(patchwork)
+plot_complete_genome+plot_chromsome
+
+png("/home/vincent/Desktop/Projects/2020_circleries/07_figures/Plot_both_startAligned_NCBI.png", width = 4400, height = 3000,res=400)
+
+plot_complete_genome+plot_chromsome
+
+dev.off()
+
 ```
+
+
+# biosample2SRA
+
+download SRA files to test circlator and circleries on 20 long read data. 
+
+from https://www.biostars.org/p/448799/ 
+
+```{bash}
+##--------------------------------------------------------
+#test
+##--------------------------------------------------------
+cd /data/Project/2021_circlator/NCBI_analysis/log/
+cat samples.txt 
+SAMN14390563
+SAMN14390566
+SAMN14390576
+SAMN14390578
+SAMN14453547
+SAMN14453553
+
+
+epost -db biosample -input samples.test -format acc | \
+elink -target sra | \
+efetch -db sra -format runinfo -mode xml | \
+xtract -pattern Row -def "NA" -element Run spots bases spots_with_mates avgLength \
+size_MB download_path Experiment LibraryStrategy LibrarySelection LibrarySource \
+LibraryLayout InsertSize InsertDev Platform Model SRAStudy BioProject ProjectID \
+Sample BioSample SampleType TaxID ScientificName SampleName CenterName \
+Submission Consent > samples.test.sra
+
+
+/home/vincent/apps/sratoolkit.2.11.2-ubuntu64/bin/fastq-dump --stdout SRR390728 
+
+/home/vincent/apps/sratoolkit.2.11.2-ubuntu64/bin/fastq-dump --stdout SRR390728 
+
+SAMN14390563
+
+
+
+```
+
+
+## get the SRAs
+
+Here, I first identify 20 SRAs that include long read data don't have a circular genome
+
+```{bash}
+
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/{logs,SRA}
+
+
+awk '{if($4=="NO")print $0}' /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.Complete_Genome > /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.Complete_Genome_non_circular
+
+
+maxNUM=$(wc -l /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.Complete_Genome_non_circular|cut -d ' ' -f 1)
+
+rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names
+rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names.sra.info
+
+
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/{logs,SRA,flye}
+
+for count in {1..20}
+do
+
+echo $count
+lineNUM=$(echo $((1 + $RANDOM % $maxNUM)))
+echo $lineNUM
+
+genomeName=$(sed -n "${lineNUM}p" /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.Complete_Genome_non_circular |cut -f 1)
+echo ${genomeName}
+
+grep "${genomeName}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.txt |cut -f 3 > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names
+
+
+
+epost -db biosample -input /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names -format acc | \
+elink -target sra| \
+efetch -db sra -format runinfo -mode xml | \
+xtract -pattern Row -def "NA" -element Run spots bases spots_with_mates avgLength \
+size_MB download_path Experiment LibraryStrategy LibrarySelection LibrarySource \
+LibraryLayout InsertSize InsertDev Platform Model SRAStudy BioProject ProjectID \
+Sample BioSample SampleType TaxID ScientificName SampleName CenterName \
+Submission Consent >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp
+
+cat data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names.sra.info
+
+SRA=$(grep "Illumina" -i -v  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp |head -1 |cut -f 1)
+
+/home/vincent/apps/sratoolkit.2.11.2-ubuntu64/bin/fastq-dump --stdout ${SRA} | gzip > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq.gz
+
+
+Pacbio_yes=$(grep "Illumina" -i -v  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp |head -1|grep "pacbio" -i|wc -l |cut -d ' ' -f 1)
+
+ONT_yes=$(grep "Illumina" -i -v  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp |head -1|grep "Oxford" -i|wc -l |cut -d ' ' -f 1)
+
+#echo ${Pacbio_yes}
+#echo ${ONT_yes}
+
+##-----------------------------------------assemble with flye
+
+if [ $Pacbio_yes == "1" ]
+then
+echo "Pacbio data"
+
+python /home/vincent/apps/flye/Flye/bin/flye --threads 37  --iterations 1 --pacbio-raw \
+      /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq.gz \
+      --out-dir /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/${SRA}
+
+elif [ $ONT_yes == "1" ]
+then
+echo "ONT data"
+
+python /home/vincent/apps/flye/Flye/bin/flye --threads 37  --iterations 1 --nano-raw \
+      /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq.gz \
+      --out-dir /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/${SRA}
+
+fi
+
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/
+
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/${SRA}/assembly_info.txt  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt
+
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/${SRA}/assembly.fasta  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}.fasta
+
+rm -r /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/${SRA}
+
+##-----------------------------------------circlator
+
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered/
+
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${SRA}/
+start=`date +%s`
+circlator all --threads 8 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}.fasta /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${SRA}/
+
+end=`date +%s`
+runtime_circlator=$( echo "$end - $start" | bc -l )
+echo $runtime_circlator
+
+echo -e ${SRA}"\t"${runtime_circlator} >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered/runtimes.circlator
+
+
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${SRA}/06.fixstart.detailed.log /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered/${SRA}_fixstart.log
+
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${SRA}/04.merge.circularise.log /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered/${SRA}_circularise.log
+
+rm -r /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${SRA}
+
+##-----------------------------------------circleres
+
+
+
+done
+
+#generate randome number
+
+```
+
 
 
 

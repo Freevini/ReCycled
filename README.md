@@ -1,6 +1,29 @@
 # Circles
 Michael Schmid & Vincent Somerville
 
+Circles is a tool to check the circularity of bacterial genome assemblies and circularise them according to the location of origin of replication.
+
+In brief, it detects the presence of the origin of replication (i.e. *dnaA*). Moreover it checks the ciruclarity of contigs bying looking for overlap at the contig edges and mapping the raw data to identify overlaping reads. Based on this information it circularises and start aligns the bacterial contigs upstream of *dnaA* gene.
+
+Circles was designed and implemented by Vincent Somerville and Michael Schmid as a free software under the GPLv3 license.
+
+# Table of contents
+
+* [idea](#idea)
+* [Requirements](#requirements)
+* [Installation](#installation)
+    * [Install from source](#install-from-source)
+    * [Build and run without installation](#build-and-run-without-installation)
+    * [Install via PyPI](#install-via-pypi)
+* [Usage examples](#usage-examples)
+* [Output of a CircAidMe run](#output-of-a-circaidme-run)
+* [Full usage](#full-usage)
+* [How it works](#how-it-works)
+* [Known limitations](#known-limitations)
+* [License](#license)
+
+#idea
+
 *Sensu stricto* circular genomes do not have a start and end. However bacterial chromosomes have a single, unique origin of replication (oriC). DNA replication starts at the first position of the replication initiator protein, also called *dnaA* This results in a skewed read coverage distribution when sequencing growing bacteria. They generally show higher coverages at the origin of replication (i.e. *dnaA*) then at the terminus (Fig. 1).
 
 <p align = "center">
@@ -14,7 +37,7 @@ In order to compare genomes with each other, it has been decided to start align 
 
 
 <p align = "center">
-<img src = "07_figures/Plot_chromosome_startAligned_NCBI.png" width="400">
+<img src = "07_figures/Plot_both_startAligned_NCBI.png" width="400">
 </p>
 <p align = "center">
 Fig.2 -Number of start aligned and non-start aligned genomes on NCBI assgined to chromosome level assemblies (done on 30.12.2021))
@@ -27,7 +50,7 @@ Aims:
 
 1. Create a tool that identifies and circularises complete bacterial contigs
 2. Create a fast and scalable approach
-3. use a few dependencies as possible
+3. use as few dependencies as possible
 
 In order to to this we are working on the following parts:
 
