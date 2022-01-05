@@ -22,7 +22,7 @@ Circles was designed and implemented by Vincent Somerville and Michael Schmid as
 * [Known limitations](#known-limitations)
 * [License](#license)
 
-# idea
+# Idea
 
 *Sensu stricto* circular genomes do not have a start and end. However bacterial chromosomes have a single, unique origin of replication (oriC). DNA replication starts at the first position of the replication initiator protein, also called *dnaA* This results in a skewed read coverage distribution when sequencing growing bacteria. They generally show higher coverages at the origin of replication (i.e. *dnaA*) then at the terminus (Fig. 1).
 
@@ -52,48 +52,101 @@ Aims:
 2. Create a fast and scalable approach
 3. use as few dependencies as possible
 
-In order to to this we are working on the following parts:
 
-## 1. Check and prepare query genome assembly
-
-- check contigs: how many? How large?
-- try to identify contig origines (bacteria, plasmids, phages)
-- identify if only 1 bacterial contigs
-
-  ==> Take home: contig originates from?
-
-## 2. Check circularity
-
-- map ends (1kb) onto eachother (minimap2) --> overlap or not
-- merge contig ends and map raw reads to look for:
-  - spanning reads (number of reads)
-    - PE (are pairs mapping)
-    - ONT/Pacbio (is read spanning)
-
-    ==> Take home: contig is circler or not!
-
-## 3. Circleries
-
-  - take dnaA minimap2 mapping
-  - check for presence of DNAa
-  - check for DNAa orientation
-  - cut and shift fasta start
-  - advise if additional polishing is required!
-  - merge all non-start aligned contigs and start aligned contig back together
+# Requirements
 
 
-## 4. put Illumina contigs into synteny (not implemented)
+* Linux
+* [bedtools](https://bedtools.readthedocs.io/en/latest/index.html)
 
-Most genomes however are not finished (complete and circular), therefore it would be good to have an option for these too.
 
-- check dnaA location of the REF sequence
-- check dnaA lcoation of the query sequence
-- minimap2 query sequence to REF sequence
-- split first contigs at dnaA (+)
-- arrange contigs according to minimap2 alignment
-- (optional: change headers)
 
-## 5. check contaminations (not implemented)
+Circles is currently not tested on macOS or Windows.
 
-- PhiX
-- humman contaminations
+#  Installation
+
+
+### Build and run without installation
+
+By simply running `make` in CircAidMe's directory, you can compile the C++ components but not install an executable. The program can then be executed by directly calling the `circaidme-runner.py` script.
+
+```bash
+git clone https://github.com/Freevini/Circleries.git
+cd Circleries
+
+Circleries.sh -h
+```
+
+
+# Usage examples
+
+__Minimally parameterized run of Circleries:__<br>
+`Circleries.sh -i input_assembly.fasta -l input_long reads `
+
+__If you want to run it in multithread mode use flag `-t`:__<br>
+`Circleries.sh -i input_assembly.fasta -l input_long reads -t 8 `
+
+__If you want to overwrite the previous run use flag `-F`:__<br>
+`Circleries.sh -i input_assembly.fasta -l input_long reads -F `
+
+__If you want to keep all tmp files use flag `-x`:__<br>
+`Circleries.sh -i input_assembly.fasta -l input_long reads -x `
+
+__If you want to define a specific output file name use `-o` or output file directory use `-d` :__<br>
+`Circleries.sh -i input_assembly.fasta -l input_long reads -o results -d results/out/directory/ `
+
+# Output of a CircAidMe run
+
+Circleries outputs two files:
+* *basename*.fasta: Contains the newly startaligned fasta file. All contigs that were startaligned are labelled with a *_startaligned* in the fasta header.
+* *basename*_analysis_circularity_extended.log: Contains statisticis for all contigs and if they were startaligned.
+
+
+# Full usage
+
+```
+usage: Circleries.sh [-h]
+
+Circleries: checks the circularity and bacterial origins of contigs and start aligns them at dnaA if possible
+
+minimal syntax: Circleries -i <genome_input.fasta> -l <raw_long_read.fastq.gz>
+                 options:
+
+                 INPUT
+                    -i     input genome name (in fasta format) (MANDATORY)
+                    -l     long read file (fq or fq.gz) (MANDATORY)
+                    -f     short read forward read (read 1) (fq or fq.gz)
+                    -r     short read reverse read (read 2) (fq or fq.gz)
+
+                 OUTPUT
+                    -d     output directory [.]
+                    -o     output file name
+
+                 RUNNING OPTIONS
+                    -p     circleries script directory (with all dependencies) [PATH]
+                    -t     number of threads to use [4]
+                    -x     keep all tmp files created [N]
+                    -F     Force everything to run again [N]
+
+                 INFOS
+                    -h     help option
+                    -v     verbose [N]
+                    -V     print Version [N]
+
+```
+
+
+
+# How Circleries works
+
+A in-depth description of Circleries can be found in the bioXriv.
+
+
+
+# Known limitations
+* Circleries does not polish contigs after start aligning. Might be addressed later if needed.
+* Circleries does not circleries non-bacterial contigs. It reports them but does not change the location. Might be addressed later if needed.
+
+# License
+
+[GNU General Public License, version 3](https://www.gnu.org/licenses/gpl-3.0.html)

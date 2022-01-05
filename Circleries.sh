@@ -22,7 +22,7 @@ starttime=$(date)
 starts=`date +%s`
 outName="N"
 force="N"
-limitOverlaps=5 #not incorporated into parameters
+limitOverlaps_set=5 #not incorporated into parameters
 
 shortreads_1=""
 shortreads_2=""
@@ -184,6 +184,7 @@ echo -e "Dependencies:"
 
 fasta_shift_path=$(echo -e ${circleriesPATH}"/02_dependencies/fasta_shift")
 seqkit_path=$(echo -e ${circleriesPATH}"/02_dependencies/seqkit")
+#paftools_path=$(echo -e ${circleriesPATH}"/02_dependencies/paftools.js")
 startalining_genes=$(echo -e ${circleriesPATH}"/05_startAlign_data/starting_genes.fasta ")
 
 #${circleriesPATH}/05_startAlign_data/starting_genes.fasta
@@ -194,8 +195,9 @@ startalining_genes=$(echo -e ${circleriesPATH}"/05_startAlign_data/starting_gene
 type minimap2 >/dev/null 2>&1 && echo -e "   Minimap2......OK" || { echo >&2 "   Minimap2 is not installed.  Aborting."; exit 1; }
 #type $fasta_shift_path >/dev/null 2>&1 && echo -e "   fasta_shift......OK" || { echo >&2 "   fasta_shift is not installed.  Aborting."; exit 1; }
 #type revseq >/dev/null 2>&1 && echo -e "   revseq......OK" || { echo >&2 "   revseq is not installed.  Aborting."; exit 1; }
-#type bedtools >/dev/null 2>&1 && echo -e "   bedtools......OK" || { echo >&2 "   bedtools is not installed.  Aborting."; exit 1; }
+type bedtools >/dev/null 2>&1 && echo -e "   bedtools......OK" || { echo >&2 "   bedtools is not installed.  Aborting."; exit 1; }
 type $seqkit_path >/dev/null 2>&1 && echo -e "   seqkit......OK" || { echo >&2 "   seqkit is not installed.  Aborting."; exit 1; }
+#type $paftools_path >/dev/null 2>&1 && echo -e "   paftools.js......OK" || { echo >&2 "   paftools.js is not installed.  Aborting."; exit 1; }
 [ -f $startaligning_genes ] && echo "   startaligning_genes......OK" || { echo "   startaligning_genes is not installed.  Aborting."; exit 1; }
 
 
@@ -322,13 +324,13 @@ contig_length=$(grep -v ">" ${outputFolderName}/tmp_${outName}/genome/${header}.
 
 ##--------------------------------------------extract start of contig----------------------------------
 
-echo -e ${header}"\t1\t1000" > ${outputFolderName}/tmp_${outName}/Start_end_overlap/fastas/${header}_start.bed
+echo -e ${header}"\t1\t3000" > ${outputFolderName}/tmp_${outName}/Start_end_overlap/fastas/${header}_start.bed
 $seqkit_path subseq ${outputFolderName}/tmp_${outName}/genome/${header}.fasta --bed ${outputFolderName}/tmp_${outName}/Start_end_overlap/fastas/${header}_start.bed > ${outputFolderName}/tmp_${outName}/Start_end_overlap/fastas/${header}_start.fasta 2> ${outputFolderName}/tmp_${outName}/Start_end_overlap/fastas/${header}_start.log
 #end extract
 
 ##--------------------------------------------extract end of contig-----------------------------------
 
-echo -e ${header}| awk -F "\t" -v contigLength="$contig_length" '{OFS="\t"}{print $1,contigLength-1001,contigLength-1}' > ${outputFolderName}/tmp_${outName}/Start_end_overlap/fastas/${header}_end.bed
+echo -e ${header}| awk -F "\t" -v contigLength="$contig_length" '{OFS="\t"}{print $1,contigLength-3001,contigLength-1}' > ${outputFolderName}/tmp_${outName}/Start_end_overlap/fastas/${header}_end.bed
 $seqkit_path subseq ${outputFolderName}/tmp_${outName}/genome/${header}.fasta --bed ${outputFolderName}/tmp_${outName}/Start_end_overlap/fastas/${header}_end.bed > ${outputFolderName}/tmp_${outName}/Start_end_overlap/fastas/${header}_end.fasta 2> ${outputFolderName}/tmp_${outName}/Start_end_overlap/fastas/${header}_end.log
 
 ##--------------------------------------------mapping start and end----------------------------------
@@ -387,7 +389,7 @@ do
 
 echo -e ">"${header}"_EndAndStart" > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/${header}_EndAndStart.fasta
 grep ">" -v ${outputFolderName}/tmp_${outName}/Start_end_overlap/fastas//${header}_end.fasta >> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/${header}_EndAndStart.fasta
-echo -e "NNNNNNNNNN" >> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/${header}_EndAndStart.fasta
+echo -e "N" >> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/${header}_EndAndStart.fasta
 grep ">" -v ${outputFolderName}/tmp_${outName}/Start_end_overlap/fastas//${header}_start.fasta >> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/${header}_EndAndStart.fasta
 
 
@@ -403,18 +405,33 @@ rm ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/${h
 minimap2 -x map-ont -t ${threads} ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/${header}_EndAndStart_fitted.fasta ${longreads} > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping_unfiltered.paf 2> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.log
 awk -F "\t" '{OFS="\t"}{if($12>50) print $0}'  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping_unfiltered.paf >  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.paf
 
+##with coverage find
+
+echo -e ${header}"_EndAndStart\t4\t2500"  > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/bedCoverage_location.bed
+echo -e ${header}"_EndAndStart\t3500\t6000"  >>  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/bedCoverage_location.bed
+
+awk -F "\t" '{OFS="\t"}{if($10>1000 && $10>0.8*$11) print $6,$8,$9}' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.paf > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.bed
+bedtools coverage -a ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/bedCoverage_location.bed -b ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.bed -d > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.coverge
+
 
 ##-------------------------------------------- set limitation that reads must map more then 1400bp----------------------------------
 
 
-awk -F "\t" '{OFS="\t"}{if($10>1400) print $0}' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.paf > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping_overlaping_reads.paf
+awk -F "\t" '{OFS="\t"}{if($10>1000 && $8<2900 && $9> 3100 && $10>0.8*$11) print $0}' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.paf > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping_overlaping_reads.paf
 overlaps=$(wc -l ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping_overlaping_reads.paf |cut -d ' ' -f 1)
 
 
+if [ "${overlaps}" -gt "10" ]; then
+    #limitOverlaps=$((${mean_coverage}/2))
+    mean_coverage=$(awk '{ sum += $5 } END { if (NR > 0) print sum / NR }' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.coverge)
+    #echo -e "flanking mapping coverage of....."$mean_coverage
+    limitOverlaps=$(awk '{ sum += $5 } END { if (NR > 0) print (sum / NR)/2 }' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.coverge)
+  else
+    limitOverlaps=${limitOverlaps_set}
+  fi
+
 echo -e ${overlaps} | awk -v limitOverlapzz="$limitOverlaps" '{if ($1>limitOverlapzz)	print "Y" ; else 	print "N"}' >> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/tmp.analysis
-echo -e ${overlaps} | awk -v limitOverlapzz="$limitOverlaps"  -v contigName="$header" '{if ($1>limitOverlapzz)	print "           "contigName"......found "$1" mapping long reads" ; else 	print  "           "contigName"......No mapping long reads found"}'
-
-
+echo -e ${overlaps} | awk -v limitOverlapzz="$limitOverlaps"  -v contigName="$header" '{if ($1>limitOverlapzz)	print "           "contigName"......found "$1" mapping long reads, which is larger than the minimum coverage of "limitOverlapzz ; else 	print  "           "contigName"......Too few mapping long reads found (found "$1" and needed "limitOverlapzz")"}'
 
 done
 
@@ -522,8 +539,8 @@ awk -F "\t" -v contigNames="$header" '{OFS="\t"}{if($1==contigNames )print $0}' 
 done
 
 ##--------------------------------------------Merge with previous analysis----------------------------------
-paste -d "\t"  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/analysis_circularity_extended ${outputFolderName}/tmp_${outName}/Start_end_readmapping/tmp.circularizable  >  ${outputFolderName}/analysis_circularity_extended.log
-cat  ${outputFolderName}/analysis_circularity_extended.log
+paste -d "\t"  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/analysis_circularity_extended ${outputFolderName}/tmp_${outName}/Start_end_readmapping/tmp.circularizable  >  ${outputFolderName}/${outName}_analysis_circularity_extended.lo
+cat  ${outputFolderName}/${outName}_analysis_circularity_extended.lo
 
 echo
 
@@ -535,13 +552,13 @@ echo -e "Circularising"
  mkdir -p ${outputFolderName}/tmp_${outName}/StartAlignedContigs/
  mkdir -p ${outputFolderName}/tmp_${outName}/tmp/
 
-for contigName in $(grep "^#" -v  ${outputFolderName}/analysis_circularity_extended.log |awk -F "\t" '{OFS="\t"}{if($10=="Y")print $1}')
+for contigName in $(grep "^#" -v  ${outputFolderName}/${outName}_analysis_circularity_extended.lo |awk -F "\t" '{OFS="\t"}{if($10=="Y")print $1}')
 do
 
 #echo -e "contig name: \t\t" ${contigName}
- orientation=$(awk -F "\t" -v contigzz="$contigName" '{OFS="\t"}{if($1==contigzz)print $4}' ${outputFolderName}/analysis_circularity_extended.log )
- contigStart=$(awk -F "\t" -v contigzz="$contigName" '{OFS="\t"}{if($1==contigzz)print $5}'   ${outputFolderName}/analysis_circularity_extended.log )
- contigLength=$(awk -F "\t" -v contigzz="$contigName" '{OFS="\t"}{if($1==contigzz)print $6}'  ${outputFolderName}/analysis_circularity_extended.log )
+ orientation=$(awk -F "\t" -v contigzz="$contigName" '{OFS="\t"}{if($1==contigzz)print $4}' ${outputFolderName}/${outName}_analysis_circularity_extended.lo )
+ contigStart=$(awk -F "\t" -v contigzz="$contigName" '{OFS="\t"}{if($1==contigzz)print $5}'   ${outputFolderName}/${outName}_analysis_circularity_extended.lo )
+ contigLength=$(awk -F "\t" -v contigzz="$contigName" '{OFS="\t"}{if($1==contigzz)print $6}'  ${outputFolderName}/${outName}_analysis_circularity_extended.lo )
 
   if [ $orientation == "+" ]
     then
@@ -592,7 +609,7 @@ echo -e "Quality Control"
 
 echo -e "#contigName\tContigOrigin\tNumberOfdnaAmappings\tOrientationOfMapping\tStartOfTargetMapping\tContigLength" >   ${outputFolderName}/tmp_${outName}/start_alignment_mapping/After_StartAlignment_contigs.minimap
 
-for contigName in $(grep "^#" -v  ${outputFolderName}/analysis_circularity_extended.log |awk -F "\t" '{OFS="\t"}{if($10=="Y")print $1}')
+for contigName in $(grep "^#" -v  ${outputFolderName}/${outName}_analysis_circularity_extended.lo |awk -F "\t" '{OFS="\t"}{if($10=="Y")print $1}')
 do
 
 
@@ -662,7 +679,7 @@ fi
 for header in $(grep ">" ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.fasta |sed 's/>//g')
   do
 
-  circular=$(awk -F "\t" -v contigzz="$header" '{OFS="\t"}{if($1==contigzz)print $10} ' ${outputFolderName}/analysis_circularity_extended.log )
+  circular=$(awk -F "\t" -v contigzz="$header" '{OFS="\t"}{if($1==contigzz)print $10} ' ${outputFolderName}/${outName}_analysis_circularity_extended.lo )
 
 
    if [ $circular == "Y" ];
@@ -687,9 +704,9 @@ for header in $(grep ">" ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.
   echo -e "Final Infos"
 
 
-  numberContigs=$(grep "^#" -c ${outputFolderName}/analysis_circularity_extended.log)
-  BacContigs=$(grep "^#" -v  ${outputFolderName}/analysis_circularity_extended.log |awk -F "\t" '{OFS="\t"}{if($2=="dnaA-containing-contig")print $0}'|wc -l)
-  NonBacContigs=$(grep "^#" -v  ${outputFolderName}/analysis_circularity_extended.log |awk -F "\t" '{OFS="\t"}{if($2!="dnaA-containing-contig")print $0}' |wc -l)
+  numberContigs=$(grep "^#" -c ${outputFolderName}/${outName}_analysis_circularity_extended.lo)
+  BacContigs=$(grep "^#" -v  ${outputFolderName}/${outName}_analysis_circularity_extended.lo |awk -F "\t" '{OFS="\t"}{if($2=="dnaA-containing-contig")print $0}'|wc -l)
+  NonBacContigs=$(grep "^#" -v  ${outputFolderName}/${outName}_analysis_circularity_extended.lo |awk -F "\t" '{OFS="\t"}{if($2!="dnaA-containing-contig")print $0}' |wc -l)
 
   echo -e "            Total number of contigs......"${numberContigs}
   echo -e "            Number of startaligned contigs contigs......"${BacContigs}
@@ -706,7 +723,7 @@ echo
   echo -e "Output"
 
   echo -e "      Location of Startaligned contigs......"${outputFolderName}/${outName}".fasta"
-  echo -e "      Location of log file......"${outputFolderName}"/analysis_circularity_extended.log"
+  echo -e "      Location of log file......"${outputFolderName}"/${outName}_analysis_circularity_extended.log"
 
   end=`date +%s`
 
