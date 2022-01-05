@@ -12,11 +12,9 @@ Circles was designed and implemented by Vincent Somerville and Michael Schmid as
 * [idea](#idea)
 * [Requirements](#requirements)
 * [Installation](#installation)
-    * [Install from source](#install-from-source)
     * [Build and run without installation](#build-and-run-without-installation)
-    * [Install via PyPI](#install-via-pypi)
 * [Usage examples](#usage-examples)
-* [Output of a CircAidMe run](#output-of-a-circaidme-run)
+* [Output of a Circleries run](#output-of-a-Circleries-run)
 * [Full usage](#full-usage)
 * [How it works](#how-it-works)
 * [Known limitations](#known-limitations)
@@ -95,7 +93,7 @@ __If you want to keep all tmp files use flag `-x`:__<br>
 __If you want to define a specific output file name use `-o` or output file directory use `-d` :__<br>
 `Circleries.sh -i input_assembly.fasta -l input_long reads -o results -d results/out/directory/ `
 
-# Output of a CircAidMe run
+# Output of a Circleries run
 
 Circleries outputs two files:
 * *basename*.fasta: Contains the newly startaligned fasta file. All contigs that were startaligned are labelled with a *_startaligned* in the fasta header.

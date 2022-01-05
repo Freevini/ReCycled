@@ -380,6 +380,7 @@ elif [[ "$longreads" == "NA" ]]; then
 #rm -r ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/
 mkdir -p ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/{fastas,mapping}/
 echo -e "OverlapingLongReads" > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/tmp.analysis
+[ -e ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/all_contigs_EndAndStart.fasta ] && rm ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/all_contigs_EndAndStart.fasta
 
 for header in $(grep ">" ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.fasta |sed 's/>//g')
 do
@@ -398,17 +399,30 @@ awk 'BEGIN{RS=">"}NR>1{sub("\n","\t"); gsub("\n",""); print RS$0}' ${outputFolde
 
 rm ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/${header}_EndAndStart.fasta
 
+#merge all contigs
+cat ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/${header}_EndAndStart_fitted.fasta >> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/all_contigs_EndAndStart.fasta
 
-##-------------------------------------------- map to the new constructs----------------------------------
+done
+
+##-------------------------------------------- map to the new constructs together----------------------------------
 
 ##map dnaA genes to the individual references and remove non-mapping or low quality mapping reads (mapq>50)
-minimap2 -x map-ont -t ${threads} ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/${header}_EndAndStart_fitted.fasta ${longreads} > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping_unfiltered.paf 2> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.log
-awk -F "\t" '{OFS="\t"}{if($12>50) print $0}'  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping_unfiltered.paf >  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.paf
+minimap2 -x map-ont -t ${threads} ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/all_contigs_EndAndStart.fasta ${longreads} > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_unfiltered.paf 2> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping.log
+awk -F "\t" '{OFS="\t"}{if($12>50) print $0}'  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_unfiltered.paf >  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping.paf
+
+#minimap2 -x map-ont -t ${threads} ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/${header}_EndAndStart_fitted.fasta ${longreads} > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping_unfiltered.paf 2> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.log
+#awk -F "\t" '{OFS="\t"}{if($12>50) print $0}'  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping_unfiltered.paf >  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.paf
+
+
+for header in $(grep ">" ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.fasta |sed 's/>//g')
+do
 
 ##with coverage find
 
 echo -e ${header}"_EndAndStart\t4\t2500"  > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/bedCoverage_location.bed
 echo -e ${header}"_EndAndStart\t3500\t6000"  >>  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/bedCoverage_location.bed
+
+awk -F "\t" -v contigName="$header" '{OFS="\t"}{if($6==contigName"_EndAndStart")print $0}' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping.paf > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.paf
 
 awk -F "\t" '{OFS="\t"}{if($10>1000 && $10>0.8*$11) print $6,$8,$9}' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.paf > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.bed
 bedtools coverage -a ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/bedCoverage_location.bed -b ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.bed -d > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.coverge
@@ -475,6 +489,7 @@ then
     #rm -r ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/
     mkdir -p ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/{fastas,mapping}/
     echo -e "OverlapingShortReads" > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/tmp.analysis
+    [ -e ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/fastas/all_contigs_EndAndStart.fasta ] && rm ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/fastas/all_contigs_EndAndStart.fasta
 
     for header in $(grep ">" ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.fasta |sed 's/>//g')
     do
@@ -485,7 +500,7 @@ then
 
     echo -e ">"${header}"_EndAndStart" > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/fastas/${header}_EndAndStart.fasta
     grep ">" -v ${outputFolderName}/tmp_${outName}/Start_end_overlap/fastas//${header}_end.fasta >> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/fastas/${header}_EndAndStart.fasta
-    echo -e "NNNNNNNNNN" >> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/fastas/${header}_EndAndStart.fasta
+    echo -e "N" >> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/fastas/${header}_EndAndStart.fasta
     grep ">" -v ${outputFolderName}/tmp_${outName}/Start_end_overlap/fastas//${header}_start.fasta >> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/fastas/${header}_EndAndStart.fasta
 
     ##make the assembly fit together nicely (60 nucleotides wide)
@@ -493,17 +508,25 @@ then
 
     rm ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/fastas/${header}_EndAndStart.fasta
 
+    #merge all contigs
+    cat ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/fastas/${header}_EndAndStart_fitted.fasta >> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/fastas/all_contigs_EndAndStart.fasta
+
+    done
 
 
     ##--------------------------------------------map to the new constructs---------------------------------
 
     #map dnaA genes to the individual references and remove non-mapping or low quality mapping reads (mapq>50)
-   minimap2 -x sr -t ${threads} ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/fastas/${header}_EndAndStart_fitted.fasta ${shortreads_1} ${shortreads_2} > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/mapping/${header}_mapping_unfiltered.paf 2> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/mapping/${header}_mapping.paf.log
-   awk -F "\t" '{OFS="\t"}{if($12>50) print $0}' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/mapping/${header}_mapping_unfiltered.paf > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/mapping/${header}_mapping.paf
-   #wc -l ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/mapping/${header}_mapping.paf
+   minimap2 -x sr -t ${threads} ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/fastas/all_contigs_EndAndStart.fasta ${shortreads_1} ${shortreads_2} > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/mapping/all_contigs_mapping_unfiltered.paf 2> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/mapping/all_contigs_mapping.paf.log
+   awk -F "\t" '{OFS="\t"}{if($12>50) print $0}' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/mapping/all_contigs_mapping_unfiltered.paf > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/mapping/all_contigs_mapping.paf
+   #wc -l ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/mapping/all_contigs_mapping_unfiltered.paf
 
 
     ##-------------------------------------------- reads that map longer than 50% of the read and map 10bp on either side----------------------------------
+    for header in $(grep ">" ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.fasta |sed 's/>//g')
+    do
+
+    awk -F "\t" -v contigName="$header" '{OFS="\t"}{if($6==contigName"_EndAndStart")print $0}' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/mapping/all_contigs_mapping.paf > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/mapping/${header}_mapping.paf
 
     reads_mapping=$(awk '{if($8<990 && $9>1020 && $10 > 0.5*$2) print $0}'  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/mapping/${header}_mapping.paf |wc -l |cut -d ' ' -f 1)
     Read_counts=$(wc -l  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/mapping/${header}_mapping.paf |cut -d ' ' -f 1)
@@ -539,8 +562,8 @@ awk -F "\t" -v contigNames="$header" '{OFS="\t"}{if($1==contigNames )print $0}' 
 done
 
 ##--------------------------------------------Merge with previous analysis----------------------------------
-paste -d "\t"  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/analysis_circularity_extended ${outputFolderName}/tmp_${outName}/Start_end_readmapping/tmp.circularizable  >  ${outputFolderName}/${outName}_analysis_circularity_extended.lo
-cat  ${outputFolderName}/${outName}_analysis_circularity_extended.lo
+paste -d "\t"  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/analysis_circularity_extended ${outputFolderName}/tmp_${outName}/Start_end_readmapping/tmp.circularizable  >  ${outputFolderName}/${outName}_analysis_circularity_extended.log
+cat  ${outputFolderName}/${outName}_analysis_circularity_extended.log
 
 echo
 
@@ -552,13 +575,13 @@ echo -e "Circularising"
  mkdir -p ${outputFolderName}/tmp_${outName}/StartAlignedContigs/
  mkdir -p ${outputFolderName}/tmp_${outName}/tmp/
 
-for contigName in $(grep "^#" -v  ${outputFolderName}/${outName}_analysis_circularity_extended.lo |awk -F "\t" '{OFS="\t"}{if($10=="Y")print $1}')
+for contigName in $(grep "^#" -v  ${outputFolderName}/${outName}_analysis_circularity_extended.log |awk -F "\t" '{OFS="\t"}{if($10=="Y")print $1}')
 do
 
 #echo -e "contig name: \t\t" ${contigName}
- orientation=$(awk -F "\t" -v contigzz="$contigName" '{OFS="\t"}{if($1==contigzz)print $4}' ${outputFolderName}/${outName}_analysis_circularity_extended.lo )
- contigStart=$(awk -F "\t" -v contigzz="$contigName" '{OFS="\t"}{if($1==contigzz)print $5}'   ${outputFolderName}/${outName}_analysis_circularity_extended.lo )
- contigLength=$(awk -F "\t" -v contigzz="$contigName" '{OFS="\t"}{if($1==contigzz)print $6}'  ${outputFolderName}/${outName}_analysis_circularity_extended.lo )
+ orientation=$(awk -F "\t" -v contigzz="$contigName" '{OFS="\t"}{if($1==contigzz)print $4}' ${outputFolderName}/${outName}_analysis_circularity_extended.log )
+ contigStart=$(awk -F "\t" -v contigzz="$contigName" '{OFS="\t"}{if($1==contigzz)print $5}'   ${outputFolderName}/${outName}_analysis_circularity_extended.log )
+ contigLength=$(awk -F "\t" -v contigzz="$contigName" '{OFS="\t"}{if($1==contigzz)print $6}'  ${outputFolderName}/${outName}_analysis_circularity_extended.log )
 
   if [ $orientation == "+" ]
     then
@@ -609,7 +632,7 @@ echo -e "Quality Control"
 
 echo -e "#contigName\tContigOrigin\tNumberOfdnaAmappings\tOrientationOfMapping\tStartOfTargetMapping\tContigLength" >   ${outputFolderName}/tmp_${outName}/start_alignment_mapping/After_StartAlignment_contigs.minimap
 
-for contigName in $(grep "^#" -v  ${outputFolderName}/${outName}_analysis_circularity_extended.lo |awk -F "\t" '{OFS="\t"}{if($10=="Y")print $1}')
+for contigName in $(grep "^#" -v  ${outputFolderName}/${outName}_analysis_circularity_extended.log |awk -F "\t" '{OFS="\t"}{if($10=="Y")print $1}')
 do
 
 
@@ -679,7 +702,7 @@ fi
 for header in $(grep ">" ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.fasta |sed 's/>//g')
   do
 
-  circular=$(awk -F "\t" -v contigzz="$header" '{OFS="\t"}{if($1==contigzz)print $10} ' ${outputFolderName}/${outName}_analysis_circularity_extended.lo )
+  circular=$(awk -F "\t" -v contigzz="$header" '{OFS="\t"}{if($1==contigzz)print $10} ' ${outputFolderName}/${outName}_analysis_circularity_extended.log )
 
 
    if [ $circular == "Y" ];
@@ -704,9 +727,9 @@ for header in $(grep ">" ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.
   echo -e "Final Infos"
 
 
-  numberContigs=$(grep "^#" -c ${outputFolderName}/${outName}_analysis_circularity_extended.lo)
-  BacContigs=$(grep "^#" -v  ${outputFolderName}/${outName}_analysis_circularity_extended.lo |awk -F "\t" '{OFS="\t"}{if($2=="dnaA-containing-contig")print $0}'|wc -l)
-  NonBacContigs=$(grep "^#" -v  ${outputFolderName}/${outName}_analysis_circularity_extended.lo |awk -F "\t" '{OFS="\t"}{if($2!="dnaA-containing-contig")print $0}' |wc -l)
+  numberContigs=$(grep "^#" -c ${outputFolderName}/${outName}_analysis_circularity_extended.log)
+  BacContigs=$(grep "^#" -v  ${outputFolderName}/${outName}_analysis_circularity_extended.log |awk -F "\t" '{OFS="\t"}{if($2=="dnaA-containing-contig")print $0}'|wc -l)
+  NonBacContigs=$(grep "^#" -v  ${outputFolderName}/${outName}_analysis_circularity_extended.log |awk -F "\t" '{OFS="\t"}{if($2!="dnaA-containing-contig")print $0}' |wc -l)
 
   echo -e "            Total number of contigs......"${numberContigs}
   echo -e "            Number of startaligned contigs contigs......"${BacContigs}
