@@ -229,8 +229,9 @@ echo -e "       Seperating contigs..."
 for header in $(grep ">" ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.fasta)
 do
 header_short=$(echo ${header}|sed 's/>//g' )
-echo -e "           "$header_short
 grep "${header}" -A 1 ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.fasta > ${outputFolderName}/tmp_${outName}/genome/${header_short}.fasta
+genomeSize=$(grep ">" -v ${outputFolderName}/tmp_${outName}/genome/${header_short}.fasta |wc -c)
+echo -e "           "$header_short" (contigsize = "${genomeSize}" bp)"
 done
 echo
 
@@ -256,7 +257,7 @@ do
 minimap2 ${outputFolderName}/tmp_${outName}/genome/${header}.fasta $startalining_genes  > ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}_unfiltered.minimap 2> ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}.minimap.log
 #awk -F "\t" '{OFS="\t"}{if($12>50) print $0}' ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}_unfiltered.minimap > ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}.minimap
 
-awk -F "\t" '{OFS="\t"}{if($12>50 && $11>(0.8*$2)&& $10>(0.7*$2)) print $0}' ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}_unfiltered.minimap > ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}.minimap
+awk -F "\t" '{OFS="\t"}{if($12>50 && $11>(0.8*$2)&& $10>(0.7*$2) && $2>300) print $0}' ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}_unfiltered.minimap > ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}.minimap
 
 ##--------------------------------------------minimap2 analysis------------------------------------
 
