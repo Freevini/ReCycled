@@ -56,13 +56,13 @@ Aims:
 
 * Linux
 * [bedtools](https://bedtools.readthedocs.io/en/latest/index.html)
+* [Minimap2](https://github.com/lh3/minimap2)
 
 
 
 Circles is currently not tested on macOS or Windows.
 
 #  Installation
-
 
 ### Build and run without installation
 
@@ -103,9 +103,12 @@ Circleries outputs two files:
 # Full usage
 
 ```
-usage: Circleries.sh [-h]
+usage: Circleries.sh [-h] -i INPUT_GENOME -l LONG_READ_FILE [-f SHORT_READ_FORWARD]
+                     [-r SHORT_READ_REVERSE] [-d  OUTPUT_DIRECTORY] [-O OUTPUT_FILE]
+                     [-p CIRCLERIES_SCRIPT_DIRECTORY] [-t THREADS] [-x] [-F] [-v] [-V]
 
-Circleries: checks the circularity and bacterial origins of contigs and start aligns them at dnaA if possible
+Circleries: checks the circularity and bacterial origins of contigs and
+startaligns them at dnaA if possible
 
 minimal syntax: Circleries -i <genome_input.fasta> -l <raw_long_read.fastq.gz>
                  options:
@@ -144,6 +147,9 @@ A in-depth description of Circleries can be found in the bioXriv.
 # Known limitations
 * Circleries does not polish contigs after start aligning. Might be addressed later if needed.
 * Circleries does not circleries non-bacterial contigs. It reports them but does not change the location. Might be addressed later if needed.
+* Circleries does not start align or arrange incomplete bacterial assemblies. Might be addressed later if needed.
+
+
 
 # License
 

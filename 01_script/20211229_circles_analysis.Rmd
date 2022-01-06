@@ -268,6 +268,7 @@ SAMN14390563
 
 scp -r /home/vincent/Desktop/Projects/2020_circleries vincent@130.223.51.66:/data/Project/2021_circlator/20220106_2020_circleries_tool/
 
+cd /data/Project/2021_circlator/20220106_2020_circleries_tool/
 
 git clone https://github.com/Freevini/Circleries.git
 
@@ -291,25 +292,24 @@ maxNUM=$(wc -l /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.st
 
 #rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names
 #rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names.sra.info
+#rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis
 
 
 mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/{logs,SRA,flye}
-
-for count in {1..20}
+for count in {1..200}
 do
 
 echo $count
 lineNUM=$(echo $((1 + $RANDOM % $maxNUM)))
 echo $lineNUM
-
 genomeName=$(sed -n "${lineNUM}p" /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.Complete_Genome_non_circular |cut -f 1)
 echo ${genomeName}
 
 #genomeName=GCF_001766355.1_ASM176635v1 # good test case (pacbio, few reads, circular)
-
+#genomeName=GCF_002158885.1_ASM215888v1
 grep "${genomeName}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.txt |cut -f 3 > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names
 
-
+SRA=NA
 
 epost -db biosample -input /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names -format acc | \
 elink -target sra| \
@@ -335,12 +335,18 @@ Pacbio_yes=$(grep "Illumina" -i -v  /data/Project/2021_circlator/NCBI_analysis/S
 
 ONT_yes=$(grep "Illumina" -i -v  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp |head -1|grep "Oxford" -i|wc -l |cut -d ' ' -f 1)
 
+Illumina_yes=$(grep "Illumina" -i  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp |head -1|wc -l |cut -d ' ' -f 1)
+
+
+
+
 #echo ${Pacbio_yes}
 #echo ${ONT_yes}
 
 rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp
 
 ##-----------------------------------------assemble with flye
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp/
 
 if [ $Pacbio_yes == "1" ]
 then
@@ -348,7 +354,7 @@ echo "Pacbio data"
 
 python /home/vincent/apps/flye/Flye/bin/flye --threads 37  --iterations 1 --pacbio-raw \
       /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq.gz \
-      --out-dir /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/${SRA}
+      --out-dir /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp/${SRA}
 
 elif [ $ONT_yes == "1" ]
 then
@@ -356,25 +362,26 @@ echo "ONT data"
 
 python /home/vincent/apps/flye/Flye/bin/flye --threads 37  --iterations 1 --nano-raw \
       /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq.gz \
-      --out-dir /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/${SRA}
+      --out-dir /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp/${SRA}
 
 fi
 
 mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/
 
-cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/${SRA}/assembly_info.txt  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp/${SRA}/assembly_info.txt  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt
 
-cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/${SRA}/assembly.fasta  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}.fasta
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp/${SRA}/assembly.fasta  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}.fasta
 
-rm -r /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/${SRA}
+rm -r /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp/${SRA}
 
 ##-----------------------------------------circlator
 
 mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered/
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp
 
-rm -r  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${SRA}/
+rm -r  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp/${SRA}/
 start=`date +%s`
-circlator all --threads 8 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}.fasta /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${SRA}/
+circlator all --threads 8 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}.fasta /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp/${SRA}/
 
 end=`date +%s`
 runtime_circlator=$( echo "$end - $start" | bc -l )
@@ -383,15 +390,15 @@ echo $runtime_circlator
 echo -e ${SRA}"\t"${runtime_circlator}"\tcirclator" >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered/runtimes.circlator
 
 
-cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${SRA}/06.fixstart.detailed.log /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered/${SRA}_fixstart.log
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp/${SRA}/06.fixstart.detailed.log /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered/${SRA}_fixstart.log
 
-cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${SRA}/04.merge.circularise.log /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered/${SRA}_circularise.log
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp/${SRA}/04.merge.circularise.log /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered/${SRA}_circularise.log
 
-rm -r /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${SRA}
+rm -r /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp/${SRA}
 
 ##-----------------------------------------circleres
 
-mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${SRA}
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp/${SRA}
 start=`date +%s`
 
 /data/Project/2021_circlator/20220106_2020_circleries_tool/Circleries/Circleries.sh \
@@ -399,7 +406,7 @@ start=`date +%s`
     -l /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq.gz \
     -t 8 \
     -o ${SRA} \
-    -d /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${SRA}/ \
+    -d /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp/${SRA}/ \
     -F 
     
 end=`date +%s`
@@ -412,23 +419,79 @@ mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_g
 echo -e ${SRA}"\t"${runtime_circleres}"\tcircleres" >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered/runtimes.circleres
 
 
-cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${SRA}/${SRA}_analysis_circularity_extended.log  \
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp/${SRA}/${SRA}_analysis_circularity_extended.log  \
     /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered/${SRA}_analysis_circularity_extended.log 
     
-cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${SRA}/${SRA}.fasta \
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp/${SRA}/${SRA}.fasta \
     /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered/${SRA}.fasta
    
-rm -r  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${SRA}/
-
+rm -r  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp/${SRA}/
 
 rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq
 
+##final summary
+
+
+echo -e ${lineNUM}"\t"${genomeName}"\t"${SRA}"\t"${Pacbio_yes}"\t"${ONT_yes}"\t"${Illumina_yes}"\t"${runtime_circlator}"\t"${runtime_circleres} >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis
 
 done
 
-#generate randome number
+
+cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/*_info.txt
+
+cat  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered/*_analysis_circularity_extended.log 
+
+cat  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered/*_circularise.log
+
 
 ```
+
+# rerun without assembly
+
+
+```{bash}
+
+for SRA in $(cut -f 3 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis)
+do
+
+
+##---------------------------circleries
+
+
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp/${SRA}
+start=`date +%s`
+
+/data/Project/2021_circlator/20220106_2020_circleries_tool/Circleries/Circleries.sh \
+    -i /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}.fasta \
+    -l /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq.gz \
+    -t 8 \
+    -o ${SRA} \
+    -d /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp/${SRA}/ \
+    -F 
+    
+end=`date +%s`
+runtime_circleres=$( echo "$end - $start" | bc -l )
+echo $runtime_circleres
+
+
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_again/
+
+#echo -e ${SRA}"\t"${runtime_circleres}"\tcircleres" >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_again/runtimes.circleres
+
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp/${SRA}/${SRA}_analysis_circularity_extended.log  \
+    /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_again/${SRA}_analysis_circularity_extended.log 
+    
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp/${SRA}/${SRA}.fasta \
+    /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_again/${SRA}.fasta
+   
+rm -r  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp/${SRA}/
+
+##final summary
+
+done
+```
+
+
 
 
 

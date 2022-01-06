@@ -254,8 +254,9 @@ do
 #  echo -e "           "$header
 ##map dnaA genes to the individual references and remove non-mapping or low quality mapping reads (mapq>50)
 minimap2 ${outputFolderName}/tmp_${outName}/genome/${header}.fasta $startalining_genes  > ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}_unfiltered.minimap 2> ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}.minimap.log
-awk -F "\t" '{OFS="\t"}{if($12>50) print $0}' ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}_unfiltered.minimap > ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}.minimap
+#awk -F "\t" '{OFS="\t"}{if($12>50) print $0}' ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}_unfiltered.minimap > ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}.minimap
 
+awk -F "\t" '{OFS="\t"}{if($12>50 && $11>(0.8*$2)&& $10>(0.7*$2)) print $0}' ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}_unfiltered.minimap > ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}.minimap
 
 ##--------------------------------------------minimap2 analysis------------------------------------
 
@@ -276,7 +277,7 @@ then
 
 elif [ $orientation == "+" ]
 then
-  echo -e "           "$header"......dnaA map found"
+  echo -e "           "$header"......dnaA map found (#${number_of_mappings})"
   #the most left alignment this shows the start of the gene
   #sort -k8 -n ${outputFolderName}/start_alignment_mapping/${header}.minimap
 
@@ -286,7 +287,7 @@ then
         echo -e ${header}"\tdnaA-containing-contig\t"${number_of_mappings}"\t"${orientation}"\t"${start}"\t"${contig_length} >>  ${outputFolderName}/tmp_${outName}//start_alignment_mapping//StartAlignment_contigs.minimap
 
 else
-      echo -e "           "$header"......dnaA map found"
+      echo -e "           "$header"......dnaA map found (#${number_of_mappings})"
 
     #the most right alignment this shows the start of the gene
     #sort -k9 -n ${outputFolderName}/start_alignment_mapping/${header}.minimap
@@ -553,12 +554,12 @@ echo
 
 echo -e "Circularizability final verdict"
 
-echo -e "Circularizable" > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/tmp.circularizable
+echo -e "Circularizable\tsampleName" > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/tmp.circularizable
 
 for header in $(grep ">" ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.fasta |sed 's/>//g')
 do
 #echo $header
-awk -F "\t" -v contigNames="$header" '{OFS="\t"}{if($1==contigNames )print $0}' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/analysis_circularity_extended  |awk -F "\t" -v contigNames="$contigName" '{OFS="\t"}{if($2=="dnaA-containing-contig"  && ($7=="Y"||$8=="Y"||$9=="Y"))print "Y"; else print "N"}' >> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/tmp.circularizable
+awk -F "\t" -v contigNames="$header" '{OFS="\t"}{if($1==contigNames )print $0}' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/analysis_circularity_extended  |awk -F "\t" -v contigNames="$contigName" -v namez="${outName}" '{OFS="\t"}{if($2=="dnaA-containing-contig"  && ($7=="Y"||$8=="Y"||$9=="Y"))print "Y",namez; else print "N",namez}' >> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/tmp.circularizable
 done
 
 ##--------------------------------------------Merge with previous analysis----------------------------------
@@ -727,12 +728,12 @@ for header in $(grep ">" ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.
   echo -e "Final Infos"
 
 
-  numberContigs=$(grep "^#" -c ${outputFolderName}/${outName}_analysis_circularity_extended.log)
-  BacContigs=$(grep "^#" -v  ${outputFolderName}/${outName}_analysis_circularity_extended.log |awk -F "\t" '{OFS="\t"}{if($2=="dnaA-containing-contig")print $0}'|wc -l)
-  NonBacContigs=$(grep "^#" -v  ${outputFolderName}/${outName}_analysis_circularity_extended.log |awk -F "\t" '{OFS="\t"}{if($2!="dnaA-containing-contig")print $0}' |wc -l)
+  numberContigs=$(grep "^#" -v -c ${outputFolderName}/${outName}_analysis_circularity_extended.log)
+  BacContigs=$(grep "^#" -v  ${outputFolderName}/${outName}_analysis_circularity_extended.log |awk -F "\t" '{OFS="\t"}{if($10=="Y")print $0}'|wc -l)
+  NonBacContigs=$(grep "^#" -v  ${outputFolderName}/${outName}_analysis_circularity_extended.log |awk -F "\t" '{OFS="\t"}{if($10!="Y")print $0}' |wc -l)
 
   echo -e "            Total number of contigs......"${numberContigs}
-  echo -e "            Number of startaligned contigs contigs......"${BacContigs}
+  echo -e "            Number of startaligned contigs ......"${BacContigs}
   #grep "^#" -v  ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap |awk -F "\t" '{OFS="\t"}{if($2=="bacterial_contig")print $0}'
   echo -e "            Number of non-startaligned contigs......"${NonBacContigs}
   #grep "^#" -v  ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap |awk -F "\t" '{OFS="\t"}{if($2!="bacterial_contig")print $0}'
