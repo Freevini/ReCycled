@@ -1,0 +1,1 @@
+starting_genes.fasta: https://github.com/rrwick/Trycycler/tree/main/trycycler/data

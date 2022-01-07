@@ -11,6 +11,20 @@ editor_options:
 knitr::opts_chunk$set(message=FALSE, echo=FALSE, eval=FALSE)
 ```
 
+## dnaA database
+
+```{bash}
+grep ">" -c /home/vincent/Desktop/Projects/2020_circleries/05_startAlign_data/starting_genes.fasta
+
+grep "dnaa" -i -c  /home/vincent/Desktop/Projects/2020_circleries/05_startAlign_data/starting_genes.fasta
+grep "chromo" -i -c  /home/vincent/Desktop/Projects/2020_circleries/05_startAlign_data/starting_genes.fasta
+
+grep "plasmid" -i -c  /home/vincent/Desktop/Projects/2020_circleries/05_startAlign_data/starting_genes.fasta
+
+grep ">" /home/vincent/Desktop/Projects/2020_circleries/05_startAlign_data/starting_genes.fasta
+
+```
+
 
 ## check start alignment
 
@@ -272,6 +286,8 @@ cd /data/Project/2021_circlator/20220106_2020_circleries_tool/
 
 git clone https://github.com/Freevini/Circleries.git
 
+scp -r /home/vincent/Desktop/Projects/2020_circleries/01_script/random_line.txt vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/
+
 ```
 
 
@@ -281,6 +297,38 @@ git clone https://github.com/Freevini/Circleries.git
 Here, I first identify 20 SRAs that include long read data don't have a circular genome
 
 ```{bash}
+
+##testing loop 
+for lineNUM in $(echo "1 7141 2 3 2800 5 6")
+do
+echo $lineNUM
+
+alreadyyy=$( awk -v linezzz="$lineNUM" '{if($1==linezzz) print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_assembly |wc -l |cut -f 1 )
+ #if [ $alreadyyy -gt "0" ]; then exit fi
+   if [[ $alreadyyy -gt 0 ]]; then
+    continue
+  fi
+ echo "not yet"
+
+done
+
+##----------------------prep 2
+wc -l /data/Project/2021_circlator/NCBI_analysis/random_line.txt
+head /data/Project/2021_circlator/NCBI_analysis/random_line.txt
+
+for liness in $(cut -f 1 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_assembly)
+#for liness in $(echo "11881 8098")
+
+do
+
+grep -v "^${liness}$(printf '\n')" /data/Project/2021_circlator/NCBI_analysis/random_line.txt > /data/Project/2021_circlator/NCBI_analysis/random_line_tmp.txt
+cat  /data/Project/2021_circlator/NCBI_analysis/random_line_tmp.txt > /data/Project/2021_circlator/NCBI_analysis/random_line.txt
+done
+head /data/Project/2021_circlator/NCBI_analysis/random_line.txt
+wc -l /data/Project/2021_circlator/NCBI_analysis/random_line.txt
+
+
+##-----------------------main script download and assemble
 
 mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/{logs,SRA}
 
@@ -295,15 +343,20 @@ maxNUM=$(wc -l /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.st
 #rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis
 
 
-mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/{logs,SRA,flye}
-for count in {1..200}
-do
+#less /data/Project/2021_circlator/NCBI_analysis/random_line.txt
 
-echo $count
-lineNUM=$(echo $((1 + $RANDOM % $maxNUM)))
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/{logs,SRA,flye}
+#for count in {1..300}
+for lineNUM in $(head -300 /data/Project/2021_circlator/NCBI_analysis/random_line.txt)
+do
+#echo $lineNUM
+#echo $count
+#lineNUM=$(echo $((1 + $RANDOM % $maxNUM)))
 echo $lineNUM
 genomeName=$(sed -n "${lineNUM}p" /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.Complete_Genome_non_circular |cut -f 1)
 echo ${genomeName}
+
+
 
 #genomeName=GCF_001766355.1_ASM176635v1 # good test case (pacbio, few reads, circular)
 #genomeName=GCF_002158885.1_ASM215888v1
@@ -336,9 +389,6 @@ Pacbio_yes=$(grep "Illumina" -i -v  /data/Project/2021_circlator/NCBI_analysis/S
 ONT_yes=$(grep "Illumina" -i -v  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp |head -1|grep "Oxford" -i|wc -l |cut -d ' ' -f 1)
 
 Illumina_yes=$(grep "Illumina" -i  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp |head -1|wc -l |cut -d ' ' -f 1)
-
-
-
 
 #echo ${Pacbio_yes}
 #echo ${ONT_yes}
@@ -374,6 +424,256 @@ cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp/${SRA}/assem
 
 rm -r /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp/${SRA}
 
+
+rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq
+
+##final summary
+
+echo -e ${lineNUM}"\t"${genomeName}"\t"${SRA}"\t"${Pacbio_yes}"\t"${ONT_yes}"\t"${Illumina_yes} >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_assembly
+
+
+done
+
+
+#cut -f 1,2,3,4,5,6 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis  > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_assembly
+
+
+
+```
+# analysis
+### check SRAs
+
+```{bash}
+
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/{logs,SRA,flye}
+#for count in {1..300}
+for lineNUM in $(tail -12320 /data/Project/2021_circlator/NCBI_analysis/random_line.txt)
+do
+#echo $lineNUM
+#echo $count
+#lineNUM=$(echo $((1 + $RANDOM % $maxNUM)))
+echo $lineNUM
+genomeName=$(sed -n "${lineNUM}p" /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.Complete_Genome_non_circular |cut -f 1)
+echo ${genomeName}
+
+
+
+#genomeName=GCF_001766355.1_ASM176635v1 # good test case (pacbio, few reads, circular)
+#genomeName=GCF_002158885.1_ASM215888v1
+genomeName=GCF_016889345.1_ASM1688934v1
+
+grep "${genomeName}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.txt |cut -f 3 > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names_tmp
+
+
+SRA=NA
+
+epost -db biosample -input /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names_tmp -format acc | \
+elink -target sra| \
+efetch -db sra -format runinfo -mode xml | \
+xtract -pattern Row -def "NA" -element Run spots bases spots_with_mates avgLength \
+size_MB download_path Experiment LibraryStrategy LibrarySelection LibrarySource \
+LibraryLayout InsertSize InsertDev Platform Model SRAStudy BioProject ProjectID \
+Sample BioSample SampleType TaxID ScientificName SampleName CenterName \
+Submission Consent > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_03
+
+cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_03
+
+cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_02 >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names.sra.info_02
+
+SRA=$(cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_02 |head -1 |cut -f 1)
+
+#/home/vincent/apps/sratoolkit.2.11.2-ubuntu64/bin/fastq-dump --stdout ${SRA} > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq
+
+#rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq.gz
+ #gzip -c /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq.gz
+
+
+
+Pacbio_yes=$(grep "Illumina" -i -v  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_02|grep "pacbio" -i|wc -l |cut -d ' ' -f 1)
+
+ONT_yes=$(grep "Illumina" -i -v  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_02 |grep "Oxford" -i|wc -l |cut -d ' ' -f 1)
+
+Illumina_yes=$(grep "Illumina" -i  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_02 |wc -l |cut -d ' ' -f 1)
+
+echo -e ${lineNUM}"\t"${genomeName}"\t"${SRA}"\t"${Pacbio_yes}"\t"${ONT_yes}"\t"${Illumina_yes} >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_assembly_final_test
+
+done
+
+
+cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names.sra.info_02
+cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_assembly_final_test
+
+wc -l /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_assembly_final_test
+awk -F "\t" '{OFS="\t"}{if( $4>0 || $5 > 0) print $0}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_assembly_final_test |wc -l
+
+awk -F "\t" '{OFS="\t"}{if( $4 == 1 || $5 == 1) print $0}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_assembly_final_test |wc -l
+
+
+```
+
+### download and assemble
+
+```{bash}
+
+
+###------------------------------------------------------
+#analyse current assemblies
+###------------------------------------------------------
+rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt
+for SRA in $(ls /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/ |grep "_info.txt" |sed 's/_info.txt//g' )
+do
+#echo $SRA
+
+#cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt
+
+contig_count=$(grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt |wc -l)
+
+longest_contig=$(grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt |sort -k2 -n -r | cut -f 2|head -1)
+
+circ_longest=$(grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt |sort -k2 -n -r | cut -f 4|head -1)
+
+num_circ=$(grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt |sort -k2 -n -r | cut -f 4|grep "Y"|wc -l |cut -f 1)
+
+num_non_circ=$(grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt |sort -k2 -n -r | cut -f 4|grep -v "Y"|wc -l |cut -f 1)
+
+echo -e ${SRA}"\t"${contig_count}"\t"${longest_contig}"\t"${circ_longest}"\t"${num_circ}"\t"${num_non_circ} >>  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt
+
+done
+
+cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt
+
+for genomeName in $(awk -F "\t" '{OFS="\t"}{if( $4 == 1 || $5 == 1) print $2}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_assembly_final_test |uniq |head -100 )
+do
+
+#genomeName=GCF_016889345.1_ASM1688934v1
+
+grep "${genomeName}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.txt |cut -f 3 > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names_tmp
+
+
+#SRA=NA
+
+epost -db biosample -input /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names_tmp -format acc | \
+elink -target sra| \
+efetch -db sra -format runinfo -mode xml | \
+xtract -pattern Row -def "NA" -element Run spots bases spots_with_mates avgLength \
+size_MB download_path Experiment LibraryStrategy LibrarySelection LibrarySource \
+LibraryLayout InsertSize InsertDev Platform Model SRAStudy BioProject ProjectID \
+Sample BioSample SampleType TaxID ScientificName SampleName CenterName \
+Submission Consent > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_03
+
+cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_03
+
+cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_03 >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names.sra.info_03
+
+SRA=$(cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_03|grep -v -i "Illumina" |head -1 |cut -f 1)
+
+echo -e ${SRA}
+#SRA=SRR13181905
+#SRA=SRR13181905
+/home/vincent/apps/sratoolkit.2.11.2-ubuntu64/bin/fastq-dump --stdout ${SRA} > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq
+
+#rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq.gz
+ gzip -c /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq.gz &
+
+
+
+awk -v srazzz="$SRA" '{if($1==srazzz)print $0}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names.sra.info_03 > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp
+
+Pacbio_yes=$(grep "Illumina" -i -v  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp |head -1|grep "pacbio" -i|wc -l |cut -d ' ' -f 1)
+
+ONT_yes=$(grep "Illumina" -i -v  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp |head -1|grep "Oxford" -i|wc -l |cut -d ' ' -f 1)
+
+Illumina_yes=$(grep "Illumina" -i  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp |head -1|wc -l |cut -d ' ' -f 1)
+
+#echo ${Pacbio_yes}
+#echo ${ONT_yes}
+
+rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp
+
+##-----------------------------------------assemble with flye
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp/
+
+if [ $Pacbio_yes -gt 0 ]
+then
+echo "Pacbio data"
+
+python /home/vincent/apps/flye/Flye/bin/flye --threads 37  --iterations 1 --pacbio-raw \
+      /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq \
+      --out-dir /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp/${SRA}
+
+elif [ $ONT_yes -gt 0 ]
+then
+echo "ONT data"
+
+python /home/vincent/apps/flye/Flye/bin/flye --threads 37  --iterations 1 --nano-raw \
+      /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq \
+      --out-dir /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp/${SRA}
+
+fi
+
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/
+
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp/${SRA}/assembly_info.txt  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt
+
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp/${SRA}/assembly.fasta  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}.fasta
+
+rm -r /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp/${SRA}
+
+#rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq
+
+##----------------------final summary
+
+contig_count=$(grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt |wc -l)
+
+longest_contig=$(grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt |sort -k2 -n -r | cut -f 2|head -1)
+
+circ_longest=$(grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt |sort -k2 -n -r | cut -f 4|head -1)
+
+num_circ=$(grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt |sort -k2 -n -r | cut -f 4|grep "Y"|wc -l |cut -f 1)
+
+num_non_circ=$(grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt |sort -k2 -n -r | cut -f 4|grep -v "Y"|wc -l |cut -f 1)
+
+echo -e ${SRA}"\t"${contig_count}"\t"${longest_contig}"\t"${circ_longest}"\t"${num_circ}"\t"${num_non_circ} >>  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt
+
+
+done
+
+SRR10586120
+
+##-------------------------------------delete SRA which are not interesting
+
+cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt
+
+#awk -F "\t" '{OFS="\t"}{if($2<20 && $3>800000 && $4=="Y" &&)}'
+
+awk -F "\t" '{OFS="\t"}{if($2>15 && $3<500000) print $0}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt
+
+
+for SRA in $(awk -F "\t" '{OFS="\t"}{if($2>15 && $3<500000) print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt)
+do
+
+echo ${SRA}
+
+rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.*
+
+done 
+
+
+cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt
+
+
+awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $0}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt
+
+awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $4}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |sort|uniq -c
+
+
+
+
+```
+
+## circlator vs. circleries
+
+```{bash}
 ##-----------------------------------------circlator
 
 mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered/
@@ -446,17 +746,18 @@ cat  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathe
 
 ```
 
-# rerun without assembly
 
+
+
+# rerun without assembly
 
 ```{bash}
 
-for SRA in $(cut -f 3 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis)
+for SRA in $(cut -f 3 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis |grep "SR")
 do
 
-
+echo $SRA
 ##---------------------------circleries
-
 
 mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp/${SRA}
 start=`date +%s`

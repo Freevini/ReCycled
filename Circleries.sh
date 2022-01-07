@@ -38,7 +38,7 @@ unset longreads
 Help()
 {
    # Display Help
-   echo "Circleries: checks the circularity and bacterial origins of contigs and start aligns them at dnaA if possible"
+   echo "Circleries: checks the circularity and bacterial origins of contigs and start aligns them at origin if possible"
    #echo -e "This is "$EXE $VERSION
    echo
    echo "minimal syntax: Circleries -i <genome_input.fasta> -l <raw_long_read.fastq.gz>"
@@ -215,7 +215,8 @@ echo -e "Preparing genome"
 
 ##--------------------------------------------set the direcotry----------------------------------------
 if [[ "$force" == "Y" ]]; then
-  rm -r ${outputFolderName}/tmp_${outName}
+  [ -d  ${outputFolderName}/tmp_${outName} ] && rm -r ${outputFolderName}/tmp_${outName}
+
 fi
 
 mkdir -p ${outputFolderName}/tmp_${outName}/genome/
@@ -236,24 +237,24 @@ done
 echo
 
 ###########################################################
-#dnaA search
+#origin search
 ############################################################
 
 echo -e "Searching for OriC"
 
-##--------------------------------------------minimap2 dnaA to sequences------------------------------------
+##--------------------------------------------minimap2 origin to sequences------------------------------------
 
 #rm -r  ${outputFolderName}/tmp_${genomeFASTAname}//start_alignment_mapping/
 mkdir -p  ${outputFolderName}/tmp_${outName}//start_alignment_mapping/
 echo -e "       On contig..."
 
-echo -e "#contigName\tContigOrigin\tNumberOfdnaAmappings\tOrientationOfMapping\tStartOfTargetMapping\tContigLength" >  ${outputFolderName}/tmp_${outName}//start_alignment_mapping//StartAlignment_contigs.minimap
+echo -e "#contigName\tContigOrigin\tNumberOforiginmappings\tOrientationOfMapping\tStartOfTargetMapping\tContigLength" >  ${outputFolderName}/tmp_${outName}//start_alignment_mapping//StartAlignment_contigs.minimap
 
 
 for header in $(grep ">" ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.fasta |sed 's/>//g')
 do
 #  echo -e "           "$header
-##map dnaA genes to the individual references and remove non-mapping or low quality mapping reads (mapq>50)
+##map origin genes to the individual references and remove non-mapping or low quality mapping reads (mapq>50)
 minimap2 ${outputFolderName}/tmp_${outName}/genome/${header}.fasta $startalining_genes  > ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}_unfiltered.minimap 2> ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}.minimap.log
 #awk -F "\t" '{OFS="\t"}{if($12>50) print $0}' ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}_unfiltered.minimap > ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}.minimap
 
@@ -267,28 +268,28 @@ number_of_mappings=$(wc -l ${outputFolderName}/tmp_${outName}//start_alignment_m
 orientation=$(sort -k10 -n -r ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}.minimap|head -1 |cut -f 5)
 
 
-# create a info table containing information about the presence of dnaA and if present the orientation
+# create a info table containing information about the presence of origin and if present the orientation
 
 if [ $number_of_mappings == "0" ]
 then
-  echo -e "           "$header"......no dnaA map found"
+  echo -e "           "$header"......no origin map found"
       contig_length=$(grep -v ">" ${outputFolderName}/tmp_${outName}/genome/${header}.fasta|wc -c )
 
-       echo -e ${header}"\tnon-dnaA-containing-contig\t"${number_of_mappings}"\tNA\tNA\t"${contig_length} >>  ${outputFolderName}/tmp_${outName}//start_alignment_mapping//StartAlignment_contigs.minimap
+       echo -e ${header}"\tnon-origin-containing-contig\t"${number_of_mappings}"\tNA\tNA\t"${contig_length} >>  ${outputFolderName}/tmp_${outName}//start_alignment_mapping//StartAlignment_contigs.minimap
 
 elif [ $orientation == "+" ]
 then
-  echo -e "           "$header"......dnaA map found (#${number_of_mappings})"
+  echo -e "           "$header"......origin map found (#${number_of_mappings})"
   #the most left alignment this shows the start of the gene
   #sort -k8 -n ${outputFolderName}/start_alignment_mapping/${header}.minimap
 
   start=$(sort -k8 -n ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}.minimap|head -1 |awk -F "\t" '{OFS="\t"}{print $8-$3-5}')
         contig_length=$(sort -k8 -n ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}.minimap|head -1 |cut -f 7)
 
-        echo -e ${header}"\tdnaA-containing-contig\t"${number_of_mappings}"\t"${orientation}"\t"${start}"\t"${contig_length} >>  ${outputFolderName}/tmp_${outName}//start_alignment_mapping//StartAlignment_contigs.minimap
+        echo -e ${header}"\torigin-containing-contig\t"${number_of_mappings}"\t"${orientation}"\t"${start}"\t"${contig_length} >>  ${outputFolderName}/tmp_${outName}//start_alignment_mapping//StartAlignment_contigs.minimap
 
 else
-      echo -e "           "$header"......dnaA map found (#${number_of_mappings})"
+      echo -e "           "$header"......origin map found (#${number_of_mappings})"
 
     #the most right alignment this shows the start of the gene
     #sort -k9 -n ${outputFolderName}/start_alignment_mapping/${header}.minimap
@@ -296,7 +297,7 @@ else
     start=$(sort -k9 -n -r ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}.minimap|head -1 |awk -F "\t" '{OFS="\t"}{print $9+$2-$4+5}')
         contig_length=$(sort -k9 -n -r  ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}.minimap|head -1 |cut -f 7)
 
-        echo -e ${header}"\tdnaA-containing-contig\t"${number_of_mappings}"\t"${orientation}"\t"${start}"\t"${contig_length} >>  ${outputFolderName}/tmp_${outName}//start_alignment_mapping//StartAlignment_contigs.minimap
+        echo -e ${header}"\torigin-containing-contig\t"${number_of_mappings}"\t"${orientation}"\t"${start}"\t"${contig_length} >>  ${outputFolderName}/tmp_${outName}//start_alignment_mapping//StartAlignment_contigs.minimap
 
 fi
 
@@ -408,7 +409,7 @@ done
 
 ##-------------------------------------------- map to the new constructs together----------------------------------
 
-##map dnaA genes to the individual references and remove non-mapping or low quality mapping reads (mapq>50)
+##map origin genes to the individual references and remove non-mapping or low quality mapping reads (mapq>50)
 minimap2 -x map-ont -t ${threads} ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/all_contigs_EndAndStart.fasta ${longreads} > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_unfiltered.paf 2> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping.log
 awk -F "\t" '{OFS="\t"}{if($12>50) print $0}'  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_unfiltered.paf >  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping.paf
 
@@ -518,7 +519,7 @@ then
 
     ##--------------------------------------------map to the new constructs---------------------------------
 
-    #map dnaA genes to the individual references and remove non-mapping or low quality mapping reads (mapq>50)
+    #map origin genes to the individual references and remove non-mapping or low quality mapping reads (mapq>50)
    minimap2 -x sr -t ${threads} ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/fastas/all_contigs_EndAndStart.fasta ${shortreads_1} ${shortreads_2} > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/mapping/all_contigs_mapping_unfiltered.paf 2> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/mapping/all_contigs_mapping.paf.log
    awk -F "\t" '{OFS="\t"}{if($12>50) print $0}' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/mapping/all_contigs_mapping_unfiltered.paf > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/mapping/all_contigs_mapping.paf
    #wc -l ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/mapping/all_contigs_mapping_unfiltered.paf
@@ -560,7 +561,7 @@ echo -e "Circularizable\tsampleName" > ${outputFolderName}/tmp_${outName}/Start_
 for header in $(grep ">" ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.fasta |sed 's/>//g')
 do
 #echo $header
-awk -F "\t" -v contigNames="$header" '{OFS="\t"}{if($1==contigNames )print $0}' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/analysis_circularity_extended  |awk -F "\t" -v contigNames="$contigName" -v namez="${outName}" '{OFS="\t"}{if($2=="dnaA-containing-contig"  && ($7=="Y"||$8=="Y"||$9=="Y"))print "Y",namez; else print "N",namez}' >> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/tmp.circularizable
+awk -F "\t" -v contigNames="$header" '{OFS="\t"}{if($1==contigNames )print $0}' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/short_read/analysis_circularity_extended  |awk -F "\t" -v contigNames="$contigName" -v namez="${outName}" '{OFS="\t"}{if($2=="origin-containing-contig"  && ($7=="Y"||$8=="Y"||$9=="Y"))print "Y",namez; else print "N",namez}' >> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/tmp.circularizable
 done
 
 ##--------------------------------------------Merge with previous analysis----------------------------------
@@ -632,13 +633,13 @@ echo -e "Quality Control"
 
 ###-------------------QC if DNA is really at first position
 
-echo -e "#contigName\tContigOrigin\tNumberOfdnaAmappings\tOrientationOfMapping\tStartOfTargetMapping\tContigLength" >   ${outputFolderName}/tmp_${outName}/start_alignment_mapping/After_StartAlignment_contigs.minimap
+echo -e "#contigName\tContigOrigin\tNumberOforiginmappings\tOrientationOfMapping\tStartOfTargetMapping\tContigLength" >   ${outputFolderName}/tmp_${outName}/start_alignment_mapping/After_StartAlignment_contigs.minimap
 
 for contigName in $(grep "^#" -v  ${outputFolderName}/${outName}_analysis_circularity_extended.log |awk -F "\t" '{OFS="\t"}{if($10=="Y")print $1}')
 do
 
 
-  ##map dnaA genes to the individual references and remove non-mapping or low quality mapping reads (mapq>50)
+  ##map origin genes to the individual references and remove non-mapping or low quality mapping reads (mapq>50)
   minimap2 ${outputFolderName}/tmp_${outName}/StartAlignedContigs/${contigName}_startAligned.fasta $startalining_genes  > ${outputFolderName}/tmp_${outName}/start_alignment_mapping/${contigName}_afterStartAlignment_unfiltered.minimap 2> ${outputFolderName}/tmp_${outName}/start_alignment_mapping/${contigName}_afterStartAlignment_unfiltered.log
   awk -F "\t" '{OFS="\t"}{if($12>50) print $0}' ${outputFolderName}/tmp_${outName}/start_alignment_mapping/${contigName}_afterStartAlignment_unfiltered.minimap > ${outputFolderName}/tmp_${outName}/start_alignment_mapping/${contigName}_afterStartAlignment.minimap
 
@@ -650,16 +651,16 @@ do
   orientation=$(sort -k10 -n -r  ${outputFolderName}/tmp_${outName}/start_alignment_mapping/${contigName}_afterStartAlignment.minimap|head -1 |cut -f 5)
 
 
-  # create a info table containing information about the presence of dnaA and if present the orientation
+  # create a info table containing information about the presence of origin and if present the orientation
 
   if [ $number_of_mappings == "0" ]
   then
-    echo -e "           "$contigName"......no dnaA map found"
+    echo -e "           "$contigName"......no origin map found"
         contig_length=$(grep -v ">" ${outputFolderName}/tmp_${outName}/genome/${contigName}.fasta|wc -c )
 
-         echo -e ${contigName}"\tnon-dnaA-containing-contig\t"${number_of_mappings}"\tNA\tNA\t"${contig_length} >>  ${outputFolderName}/tmp_${outName}/start_alignment_mapping/After_StartAlignment_contigs.minimap
-         echo "no dnaA map found"
-         echo "SOMETHING IS WRONG BECAUSE dnaA cannot be found anymore...aborting"
+         echo -e ${contigName}"\tnon-origin-containing-contig\t"${number_of_mappings}"\tNA\tNA\t"${contig_length} >>  ${outputFolderName}/tmp_${outName}/start_alignment_mapping/After_StartAlignment_contigs.minimap
+         echo "no origin map found"
+         echo "SOMETHING IS WRONG BECAUSE origin cannot be found anymore...aborting"
          exit
 
   elif [ $orientation == "+" ]
@@ -668,19 +669,19 @@ do
           start=$(sort -k8 -n ${outputFolderName}/tmp_${outName}/start_alignment_mapping/${contigName}_afterStartAlignment.minimap|head -1 |awk -F "\t" '{OFS="\t"}{print $8-$3-5}')
           contig_length=$(sort -k8 -n ${outputFolderName}/tmp_${outName}/start_alignment_mapping/${contigName}_afterStartAlignment.minimap|head -1 |cut -f 7)
 
-          echo -e ${contigName}"\tdnaA-containing-contig\t"${number_of_mappings}"\t"${orientation}"\t"${start}"\t"${contig_length} >>  ${outputFolderName}/tmp_${outName}/start_alignment_mapping/After_StartAlignment_contigs.minimap
+          echo -e ${contigName}"\torigin-containing-contig\t"${number_of_mappings}"\t"${orientation}"\t"${start}"\t"${contig_length} >>  ${outputFolderName}/tmp_${outName}/start_alignment_mapping/After_StartAlignment_contigs.minimap
           #echo "Looks good!"
-          echo -e "           "$contigName"......dnaA map found on "${orientation}" strand at position "${start}
+          echo -e "           "$contigName"......origin map found on "${orientation}" strand at position "${start}
 
   else
-        echo -e "           "$contigName"......dnaA map found"
+        echo -e "           "$contigName"......origin map found"
 
 
       start=$(sort -k9 -n -r ${outputFolderName}/tmp_${outName}/start_alignment_mapping/${contigName}_afterStartAlignment.minimap|head -1 |awk -F "\t" '{OFS="\t"}{print $9+$2-$4+5}')
           contig_length=$(sort -k9 -n -r  ${outputFolderName}/tmp_${outName}/start_alignment_mapping/${contigName}_afterStartAlignment.minimap|head -1 |cut -f 7)
 
-          echo -e ${contigName}"\tdnaA-containing-contig\t"${number_of_mappings}"\t"${orientation}"\t"${start}"\t"${contig_length} >> ${outputFolderName}/tmp_${outName}/start_alignment_mapping/After_StartAlignment_contigs.minimap
-          echo "SOMETHING IS WRONG BECAUSE dnaA IS STILL ON THE REVERSE STRAND...aborting"
+          echo -e ${contigName}"\torigin-containing-contig\t"${number_of_mappings}"\t"${orientation}"\t"${start}"\t"${contig_length} >> ${outputFolderName}/tmp_${outName}/start_alignment_mapping/After_StartAlignment_contigs.minimap
+          echo "SOMETHING IS WRONG BECAUSE origin IS STILL ON THE REVERSE STRAND...aborting"
           exit
   fi
 
@@ -733,14 +734,24 @@ for header in $(grep ">" ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.
   BacContigs=$(grep "^#" -v  ${outputFolderName}/${outName}_analysis_circularity_extended.log |awk -F "\t" '{OFS="\t"}{if($10=="Y")print $0}'|wc -l)
   NonBacContigs=$(grep "^#" -v  ${outputFolderName}/${outName}_analysis_circularity_extended.log |awk -F "\t" '{OFS="\t"}{if($10!="Y")print $0}' |wc -l)
 
+  cicContigs=$(grep "^#" -v  ${outputFolderName}/${outName}_analysis_circularity_extended.log |awk -F "\t" '{OFS="\t"}{if($8=="Y")print $0}' |wc -l)
+  NoncicContigs=$(grep "^#" -v  ${outputFolderName}/${outName}_analysis_circularity_extended.log |awk -F "\t" '{OFS="\t"}{if($8!="Y")print $0}' |wc -l)
+
+
   echo -e "            Total number of contigs......"${numberContigs}
+  echo
   echo -e "            Number of startaligned contigs ......"${BacContigs}
   #grep "^#" -v  ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap |awk -F "\t" '{OFS="\t"}{if($2=="bacterial_contig")print $0}'
   echo -e "            Number of non-startaligned contigs......"${NonBacContigs}
+  echo
+  echo -e "            Number of circular contigs ......"${cicContigs}
+  #grep "^#" -v  ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap |awk -F "\t" '{OFS="\t"}{if($2=="bacterial_contig")print $0}'
+  echo -e "            Number of non-circular contigs......"${NoncicContigs}
+
   #grep "^#" -v  ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap |awk -F "\t" '{OFS="\t"}{if($2!="bacterial_contig")print $0}'
 echo
 
-  echo -e "The location of dnaA on the "${BacContigs}" Bacterial contigs..."
+  echo -e "The location of origin on the "${BacContigs}" Bacterial contigs..."
   #grep "^#"  ${outputFolderName}/start_alignment_mapping/After_StartAlignment_contigs.minimap
   #grep "^#" -v  ${outputFolderName}/start_alignment_mapping/After_StartAlignment_contigs.minimap|awk -F "\t" '{OFS="\t"}{if($2=="bacterial_contig")print $0}'
   cat ${outputFolderName}/tmp_${outName}/start_alignment_mapping/After_StartAlignment_contigs.minimap
