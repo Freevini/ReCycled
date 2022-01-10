@@ -415,7 +415,10 @@ done
 ##-------------------------------------------- map to the new constructs together----------------------------------
 
 ##map origin genes to the individual references and remove non-mapping or low quality mapping reads (mapq>50)
-minimap2 -x map-ont -t ${threads} ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/all_contigs_EndAndStart.fasta ${longreads} > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_unfiltered.paf 2> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping.log
+minimap2 -x map-ont -F 6000 -t ${threads} ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/all_contigs_EndAndStart.fasta ${longreads} > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_unfiltered.paf 2> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping.log
+#minimap2 -x map-pb -t ${threads} ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/all_contigs_EndAndStart.fasta ${longreads} > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_unfiltered.paf 2> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping.log
+
+
 awk -F "\t" '{OFS="\t"}{if($12>50) print $0}'  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_unfiltered.paf >  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping.paf
 
 #minimap2 -x map-ont -t ${threads} ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/${header}_EndAndStart_fitted.fasta ${longreads} > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping_unfiltered.paf 2> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.log
@@ -447,7 +450,7 @@ if [ "${overlaps}" -gt "10" ]; then
     #limitOverlaps=$((${mean_coverage}/2))
     mean_coverage=$(awk '{ sum += $5 } END { if (NR > 0) print sum / NR }' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.coverge|cut -d '.' -f 1)
     #echo -e "flanking mapping coverage of....."$mean_coverage
-    limitOverlaps=$(awk '{ sum += $5 } END { if (NR > 0) print (sum / NR)/2 }' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.coverge|cut -d '.' -f 1)
+    limitOverlaps=$(awk '{ sum += $5 } END { if (NR > 0) print (sum / NR)/3 }' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.coverge|cut -d '.' -f 1)
   else
     limitOverlaps=${limitOverlaps_set}
     mean_coverage=${limitOverlaps_set}
