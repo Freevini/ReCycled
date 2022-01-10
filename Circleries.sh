@@ -230,7 +230,7 @@ echo -e "       Seperating contigs..."
 for header in $(grep ">" ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.fasta)
 do
 header_short=$(echo ${header}|sed 's/>//g' )
-grep "${header}" -A 1 ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.fasta > ${outputFolderName}/tmp_${outName}/genome/${header_short}.fasta
+grep "${header}$" -A 1 ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.fasta > ${outputFolderName}/tmp_${outName}/genome/${header_short}.fasta
 genomeSize=$(grep ">" -v ${outputFolderName}/tmp_${outName}/genome/${header_short}.fasta |wc -c)
 echo -e "           "$header_short" (contigsize = "${genomeSize}" bp)"
 done
@@ -413,6 +413,8 @@ cat ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/${
 done
 
 ##-------------------------------------------- map to the new constructs together----------------------------------
+
+sed -i '/^$/d' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/all_contigs_EndAndStart.fasta
 
 ##map origin genes to the individual references and remove non-mapping or low quality mapping reads (mapq>50)
 minimap2 -x map-ont -F 6000 -t ${threads} ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/all_contigs_EndAndStart.fasta ${longreads} > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_unfiltered.paf 2> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping.log
