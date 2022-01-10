@@ -60,6 +60,7 @@ shortreads_2=03_test_Data/Ldel_24754/FAM24754_R2_val_2.fq.gz
     
 
 #circular contigs
+conda activate Circlers
 
 /home/vincent/Desktop/Projects/2020_circleries/Circleries.sh\
     -i /home/vincent/Desktop/Projects/2020_circleries/03_test_Data/Ldel_24754/assembly.fasta \
@@ -81,6 +82,14 @@ shortreads_2=03_test_Data/Ldel_24754/FAM24754_R2_val_2.fq.gz
 ```
 
 
+```{bash}
+cd /home/vincent/Desktop/Projects/2020_circleries/03_test_Data/tmp_test_02/
+
+less Start_end_readmapping/long_read/mapping/contig_1_mapping.coverge_all
+
+
+
+```
 
 
 

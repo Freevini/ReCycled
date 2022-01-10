@@ -417,7 +417,7 @@ done
 sed -i '/^$/d' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/all_contigs_EndAndStart.fasta
 
 ##map origin genes to the individual references and remove non-mapping or low quality mapping reads (mapq>50)
-minimap2 -x map-ont -F 6000 -t ${threads} ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/all_contigs_EndAndStart.fasta ${longreads} > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_unfiltered.paf 2> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping.log
+minimap2 -x map-ont -N 0 -F 6000 -t ${threads} ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/all_contigs_EndAndStart.fasta ${longreads} > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_unfiltered.paf 2>> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping.log
 #minimap2 -x map-pb -t ${threads} ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/all_contigs_EndAndStart.fasta ${longreads} > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_unfiltered.paf 2> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping.log
 
 
@@ -430,29 +430,48 @@ awk -F "\t" '{OFS="\t"}{if($12>50) print $0}'  ${outputFolderName}/tmp_${outName
 for header in $(grep ">" ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.fasta |sed 's/>//g')
 do
 
+##all all for testing
+echo -e ${header}"_EndAndStart\t1\t6000"  >>  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/bedCoverage_location_all.bed
+awk -F "\t" -v contigName="$header" '{OFS="\t"}{if($6==contigName"_EndAndStart")print $6,$8,$9}' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping.paf > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping_all.bed
+bedtools coverage -a ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/bedCoverage_location_all.bed -b ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping_all.bed -d > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.coverge_all
+
+
+
 ##with coverage find
 
-echo -e ${header}"_EndAndStart\t4\t2500"  > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/bedCoverage_location.bed
-echo -e ${header}"_EndAndStart\t3500\t6000"  >>  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/bedCoverage_location.bed
+echo -e ${header}"_EndAndStart\t1900\t2100"  > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/bedCoverage_location.bed
+echo -e ${header}"_EndAndStart\t3900\t4100"  >>  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/bedCoverage_location.bed
 
 awk -F "\t" -v contigName="$header" '{OFS="\t"}{if($6==contigName"_EndAndStart")print $0}' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping.paf > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.paf
 
-awk -F "\t" '{OFS="\t"}{if($10>1000 && $10>0.8*$11) print $6,$8,$9}' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.paf > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.bed
+awk -F "\t" '{OFS="\t"}{if($10>1000 && $8<1900 && $9> 2100 && $10>0.5*$11) print $6,$8,$9}' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.paf > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.bed
+awk -F "\t" '{OFS="\t"}{if($10>1000 && $8<3900 && $9> 4100 && $10>0.5*$11) print $6,$8,$9}' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.paf >> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.bed
+
 bedtools coverage -a ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/bedCoverage_location.bed -b ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.bed -d > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.coverge
 
 
 ##-------------------------------------------- set limitation that reads must map more then 1400bp----------------------------------
+echo -e ${header}"_EndAndStart\t2900\t3100"  > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/bedCoverage_location_overlap.bed
+awk -F "\t" '{OFS="\t"}{if($10>1000 && $8<2900 && $9> 3100 && $10>0.5*$11) print $6,$8,$9}' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.paf >${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping_overlaping.bed
 
+bedtools coverage -a ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/bedCoverage_location_overlap.bed -b ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping_overlaping.bed -d > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping_overlaping.coverge
 
-awk -F "\t" '{OFS="\t"}{if($10>1000 && $8<2900 && $9> 3100 && $10>0.8*$11) print $0}' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.paf > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping_overlaping_reads.paf
-overlaps=$(wc -l ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping_overlaping_reads.paf |cut -d ' ' -f 1)
+overlaps=$(awk '{ sum += $5 } END { if (NR > 0) print sum / NR }' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping_overlaping.coverge|cut -d '.' -f 1)
+overlaps=$( sort -k5 -n   ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping_overlaping.coverge| awk ' { a[i++]=$5; } END { print a[int(i/4)]; }' |cut -d '.' -f 1) #median
+
+#awk -F "\t" '{OFS="\t"}{if($10>1000 && $8<2900 && $9> 3100 && $10>0.5*$11) print $0}' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.paf > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping_overlaping_reads.paf
+#overlaps=$(wc -l ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping_overlaping_reads.paf |cut -d ' ' -f 1)
 
 
 if [ "${overlaps}" -gt "10" ]; then
     #limitOverlaps=$((${mean_coverage}/2))
     mean_coverage=$(awk '{ sum += $5 } END { if (NR > 0) print sum / NR }' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.coverge|cut -d '.' -f 1)
+    mean_coverage=$( sort -k5 -n  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.coverge| awk ' { a[i++]=$5; } END { print a[int(i/4)]; }' |cut -d '.' -f 1) #median
+
     #echo -e "flanking mapping coverage of....."$mean_coverage
-    limitOverlaps=$(awk '{ sum += $5 } END { if (NR > 0) print (sum / NR)/3 }' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.coverge|cut -d '.' -f 1)
+  #  limitOverlaps=$(awk '{ sum += $5 } END { if (NR > 0) print (sum / NR)/5 }' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.coverge|cut -d '.' -f 1)
+    limitOverlaps=$(sort -k5 -n  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.coverge| awk ' { a[i++]=$5; } END { print a[int(i/4)]/2; }' |cut -d '.' -f 1) #median
+
   else
     limitOverlaps=${limitOverlaps_set}
     mean_coverage=${limitOverlaps_set}
