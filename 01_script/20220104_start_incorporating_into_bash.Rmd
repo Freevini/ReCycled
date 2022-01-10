@@ -85,8 +85,12 @@ conda activate Circlers
 ```{bash}
 cd /home/vincent/Desktop/Projects/2020_circleries/03_test_Data/tmp_test_02/
 
-less Start_end_readmapping/long_read/mapping/contig_1_mapping.coverge_all
+#less Start_end_readmapping/long_read/mapping/contig_1_mapping.coverge_all
 
+header=contig_1
+outputFolderName=/home/vincent/Desktop/Projects/2020_circleries/03_test_Data
+outName=test_02
+header=contig_2
 
 
 ```

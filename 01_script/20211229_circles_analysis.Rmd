@@ -284,7 +284,11 @@ scp -r /home/vincent/Desktop/Projects/2020_circleries vincent@130.223.51.66:/dat
 
 cd /data/Project/2021_circlator/20220106_2020_circleries_tool/
 
+sudo rm -r Circleries/
+
 git clone https://github.com/Freevini/Circleries.git
+
+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
 
 scp -r /home/vincent/Desktop/Projects/2020_circleries/01_script/random_line.txt vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/
 
@@ -766,9 +770,10 @@ cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02
 ##==============================================================
 #DO ONLY CIRCLERES
 ##==============================================================
+conda activate Circlers
 
 tmpdir=tmp_07
-
+rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02_onlycirclers
 for SRA in $(awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |head -68)
 #for SRA in $(awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |head -30 |tail -20)
 do
@@ -785,7 +790,7 @@ start=`date +%s`
     -t 8 \
     -o ${SRA} \
     -d /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}/ \
-    -F 
+    -F -x
     
 end=`date +%s`
 runtime_circleres=$( echo "$end - $start" | bc -l )
@@ -803,7 +808,7 @@ cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/$
 cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}/${SRA}.fasta \
     /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}.fasta
    
-rm -r  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}/
+#rm -r  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}/
 
 ##final summary
 
@@ -811,7 +816,7 @@ echo -e ${SRA}"\tNA\t"${runtime_circleres} >> /data/Project/2021_circlator/NCBI_
 
 done
 
-
+SRA=SRR12953603
 ```
 
 
@@ -831,7 +836,7 @@ done
 #1. are all circular contigs recognised)
 #---------------------------------------------------
 echo -e "SRA\tcirclator\tcirclers" > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlular_analysis.final
-for SRA in $(awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |head -68)
+for SRA in $(awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |head -5)
 do
 echo "==========================="
 echo ${SRA}
@@ -839,6 +844,8 @@ echo ${SRA}
 
 grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt  |awk '{if($4=="Y") print $1}' |sort -n > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.flye
 
+
+cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt 
 echo -e "--------circlator"
 
 
