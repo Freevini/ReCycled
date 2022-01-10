@@ -671,42 +671,69 @@ awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $4}' /data/Proje
 
 ```
 
-## circlator vs. circleries
+### circlator vs. circleries
 
 ```{bash}
+
+##-----------------------------------------
+#gunzip
+##-----------------------------------------
+for SRA in $(awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |sed '1,47d'|head -20)
+do
+
+echo ${SRA}
+
+gunzip -c /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq.gz > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq
+
+done
+
+##-----------------------------------------
+#run circlator vs. circleries
+#overall first 68 are currently running
+##-----------------------------------------
+
+tmpdir=tmp_06
+
+for SRA in $(awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |sed '1,47d'|tail -10)
+#for SRA in $(awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |head -30 |tail -20)
+do
+echo ${SRA}
+
 ##-----------------------------------------circlator
 
-mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered/
-mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp
 
-rm -r  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp/${SRA}/
+#rm -r /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_03/
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_02/
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${tmpdir}
+
+rm -r  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${tmpdir}/${SRA}/
 start=`date +%s`
-circlator all --threads 8 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}.fasta /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp/${SRA}/
+circlator all --threads 8 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}.fasta /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${tmpdir}/${SRA}/
 
 end=`date +%s`
 runtime_circlator=$( echo "$end - $start" | bc -l )
 echo $runtime_circlator
 
-echo -e ${SRA}"\t"${runtime_circlator}"\tcirclator" >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered/runtimes.circlator
+#echo -e ${SRA}"\t"${runtime_circlator}"\tcirclator" >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered/runtimes.circlator
 
 
-cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp/${SRA}/06.fixstart.detailed.log /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered/${SRA}_fixstart.log
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${tmpdir}/${SRA}/06.fixstart.detailed.log /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_02/${SRA}_fixstart.log
 
-cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp/${SRA}/04.merge.circularise.log /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered/${SRA}_circularise.log
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${tmpdir}/${SRA}/04.merge.circularise.log /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_02/${SRA}_circularise.log
 
-rm -r /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp/${SRA}
+#rm -r /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp/${SRA}
 
 ##-----------------------------------------circleres
 
-mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp/${SRA}
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}
 start=`date +%s`
 
 /data/Project/2021_circlator/20220106_2020_circleries_tool/Circleries/Circleries.sh \
     -i /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}.fasta \
-    -l /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq.gz \
+    -l /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq \
     -t 8 \
     -o ${SRA} \
-    -d /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp/${SRA}/ \
+    -d /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}/ \
     -F 
     
 end=`date +%s`
@@ -714,86 +741,294 @@ runtime_circleres=$( echo "$end - $start" | bc -l )
 echo $runtime_circleres
 
 
-mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered/${SRA}
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}
 
-echo -e ${SRA}"\t"${runtime_circleres}"\tcircleres" >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered/runtimes.circleres
+#echo -e ${SRA}"\t"${runtime_circleres}"\tcircleres" >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered/runtimes.circleres
 
 
-cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp/${SRA}/${SRA}_analysis_circularity_extended.log  \
-    /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered/${SRA}_analysis_circularity_extended.log 
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}/${SRA}_analysis_circularity_extended.log  \
+    /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log 
     
-cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp/${SRA}/${SRA}.fasta \
-    /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered/${SRA}.fasta
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}/${SRA}.fasta \
+    /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}.fasta
    
-rm -r  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp/${SRA}/
-
-rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq
+rm -r  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}/
 
 ##final summary
 
-
-echo -e ${lineNUM}"\t"${genomeName}"\t"${SRA}"\t"${Pacbio_yes}"\t"${ONT_yes}"\t"${Illumina_yes}"\t"${runtime_circlator}"\t"${runtime_circleres} >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis
+echo -e ${SRA}"\t"${runtime_circlator}"\t"${runtime_circleres} >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02
 
 done
 
 
-cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/*_info.txt
+cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02
 
-cat  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered/*_analysis_circularity_extended.log 
+##==============================================================
+#DO ONLY CIRCLERES
+##==============================================================
 
-cat  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered/*_circularise.log
+tmpdir=tmp_07
+
+for SRA in $(awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |head -68)
+#for SRA in $(awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |head -30 |tail -20)
+do
+
+
+##-----------------------------------------circleres
+
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}
+start=`date +%s`
+
+/data/Project/2021_circlator/20220106_2020_circleries_tool/Circleries/Circleries.sh \
+    -i /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}.fasta \
+    -l /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq \
+    -t 8 \
+    -o ${SRA} \
+    -d /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}/ \
+    -F 
+    
+end=`date +%s`
+runtime_circleres=$( echo "$end - $start" | bc -l )
+echo $runtime_circleres
+
+
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}
+
+#echo -e ${SRA}"\t"${runtime_circleres}"\tcircleres" >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered/runtimes.circleres
+
+
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}/${SRA}_analysis_circularity_extended.log  \
+    /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log 
+    
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}/${SRA}.fasta \
+    /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}.fasta
+   
+rm -r  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}/
+
+##final summary
+
+echo -e ${SRA}"\tNA\t"${runtime_circleres} >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02_onlycirclers
+
+done
 
 
 ```
 
 
 
+### analysis
 
-# rerun without assembly
+1. are all circular contigs recognized?
+2. are the bacterial contigs start aligned?
+3. are the bacterial contigs not wrongly start aligned?
+4. are the contigs not wrongly circularised?
+4. how fast is it?
+
+#### 1. are all circular contigs recognized?
+
+```{bash}
+#---------------------------------------------------
+#1. are all circular contigs recognised)
+#---------------------------------------------------
+echo -e "SRA\tcirclator\tcirclers" > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlular_analysis.final
+for SRA in $(awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |head -68)
+do
+echo "==========================="
+echo ${SRA}
+##------flye
+
+grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt  |awk '{if($4=="Y") print $1}' |sort -n > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.flye
+
+echo -e "--------circlator"
+
+
+##------circlator
+
+#cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp/${SRA}/06.fixstart.log
+#cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp/${SRA}/04.merge.circularise.log
+awk -F "\t" '{OFS="\t"}{if($6==1) print $2}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp/${SRA}/04.merge.circularise.log |sort -n  > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.circlator
+
+echo -e "--------circles"
+
+##------circles
+#cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log 
+awk -F "\t" '{OFS="\t"}{if($8=="Y") print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log |sort -n > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.circlers 
+
+echo -e "--------analysis"
+difference_circlator=NA
+
+difference_circlator=$(diff /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.flye /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.circlator |wc -l)
+
+echo -e "--------analysis 02"
+difference_circler=NA
+
+difference_circler=$(diff /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.flye /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.circlers  |wc -l)
+
+rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.*
+
+echo -e "--------analysis total"
+
+echo -e ${SRA}"\t"${difference_circlator}"\t"${difference_circler} >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlular_analysis.final
+
+done
+
+cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlular_analysis.final
+
+```
+
+
+
+#### 2. are the bacterial contigs start aligned?
 
 ```{bash}
 
-for SRA in $(cut -f 3 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis |grep "SR")
+echo -e "SRA\tflye\tcirclator\tcirclers" > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis.final
+for SRA in $(awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |head -68)
 do
+echo "==========================="
+echo ${SRA}
+##------flye
 
-echo $SRA
-##---------------------------circleries
+#grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt | sort -k2 -n -r |head -1 |cut -f 1,4 > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.flye
 
-mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp/${SRA}
-start=`date +%s`
-
-/data/Project/2021_circlator/20220106_2020_circleries_tool/Circleries/Circleries.sh \
-    -i /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}.fasta \
-    -l /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq.gz \
-    -t 8 \
-    -o ${SRA} \
-    -d /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp/${SRA}/ \
-    -F 
-    
-end=`date +%s`
-runtime_circleres=$( echo "$end - $start" | bc -l )
-echo $runtime_circleres
+contigzz=$(grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt | sort -k2 -n -r |head -1 |cut -f 1)
 
 
-mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_again/
+contigzz_verdict=$(grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt | sort -k2 -n -r |head -1 |cut -f 4)
 
-#echo -e ${SRA}"\t"${runtime_circleres}"\tcircleres" >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_again/runtimes.circleres
+echo -e "--------circlator"
 
-cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp/${SRA}/${SRA}_analysis_circularity_extended.log  \
-    /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_again/${SRA}_analysis_circularity_extended.log 
-    
-cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp/${SRA}/${SRA}.fasta \
-    /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_again/${SRA}.fasta
-   
-rm -r  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp/${SRA}/
 
-##final summary
+circlator_circ=$(grep "${contigzz}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp/${SRA}/04.merge.circularise.log |cut -f 6)
+
+circlator_start=$(grep "${contigzz}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp/${SRA}/06.fixstart.log |cut -f 7)
+
+
+if [ $circlator_circ  ==  1 ] &&  [ $circlator_start  =  "-" ]; then
+circlator_final=$(echo "Y")
+echo "startaligned with Circlator"
+else
+circlator_final=$(echo "N")
+echo "non-startaligned with Circlator"
+fi
+
+
+echo -e "--------circles"
+
+circleres_circ=$(grep "^${contigzz}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log |cut -f 10)
+
+
+
+
+echo -e "--------analysis total"
+
+echo -e ${SRA}"\t"${contigzz_verdict}"\t"${circlator_final}"\t"${circleres_circ} >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis.final
 
 done
+
+cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis.final
+
+```
+
+
+#### 4. are the contigs not wrongly circularised?
+
+
+```{bash}
+
+echo -e "SRA\tcontig\tflye\tcirclator\tcirclers" > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/Circ_contig_analysis.final
+for SRA in $(awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |head -5)
+do
+echo "==========================="
+echo ${SRA}
+##------flye
+
+grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt | sort -k1 -n   |cut -f 1,4 > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.flye
+
+
+
+echo -e "--------circlator"
+
+
+grep -v "#Contig" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp/${SRA}/04.merge.circularise.log | sort -k2 -n |cut -f 2,6 > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.circlator
+
+
+echo -e "--------circles"
+
+
+grep -v "^#contigName" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log | sort -k1 -n   |cut -f 1,10 > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.circleries
+
+echo -e "--------analysis total"
+
+for contigss in $(cut -f 1 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.flye)
+do
+
+flye_circ=$(grep "^${contigss}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.flye |cut -f 2)
+circlator_circ=$(grep "^${contigss}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.circlator |cut -f 2 |sed 's/0/N/g'|sed 's/1/Y/g')
+circleres_circ=$(grep "^${contigss}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.circleries |cut -f 2)
+
+echo -e ${SRA}"\t"${contigss}"\t"${flye_circ}"\t"${circlator_circ}"\t"${circleres_circ} >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/Circ_contig_analysis.final
+
+
+done
+
+
+done
+
+cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/Circ_contig_analysis.final
+
 ```
 
 
 
 
+
+## final analysis
+
+
+```{bash}
+##---------------------------------------------
+#move local 
+##---------------------------------------------
+
+mkdir -p  /home/vincent/Desktop/Projects/2020_circleries/06_analysis/final_analysis/
+scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/SRA_analysis/*.final /home/vincent/Desktop/Projects/2020_circleries/06_analysis/final_analysis/
+
+scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02 /home/vincent/Desktop/Projects/2020_circleries/06_analysis/final_analysis/
+
+
+```
+
+
+
+```{r}
+
+library(tidyverse)
+
+##---------------------
+#1. circular bacterial cells aligned
+##---------------------
+
+startaligned_analysis <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/final_analysis/startaligned_analysis.final", delim = "\t", escape_double = FALSE,  trim_ws = TRUE)
+
+##---------------------
+#2. are all circular contigs recognized?
+##---------------------
+
+circ_analysis <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/final_analysis/Circ_contig_analysis.final", delim = "\t", escape_double = FALSE,  trim_ws = TRUE)
+
+##---------------------
+#4. are the contigs not wrongly circularised?
+##---------------------
+
+
+##---------------------
+#4 speed
+##---------------------
+
+circ_analysis <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/final_analysis/Circ_contig_analysis.final", delim = "\t", escape_double = FALSE,  trim_ws = TRUE)
+
+
+```
 
 
