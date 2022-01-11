@@ -192,7 +192,7 @@ library(tidyverse)
 dnaA_genes_stats <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/dnaA_genes.stats.chromosome", delim = "\t", escape_double = FALSE, col_names = c("genome","startpostion","orientation","startAligned"), trim_ws = TRUE)
 
 plot_chromsome <- ggplot(dnaA_genes_stats,aes(x=startAligned,fill=startAligned,color=startAligned))+geom_bar()+theme_classic()+labs(x="Genome start aligned\n at dnaA",y="Genomes",title = "Chromosome-level assemblies\non NCBI")+theme(legend.position = "none")
-
+plot_chromsome
 png("/home/vincent/Desktop/Projects/2020_circleries/07_figures/Plot_chromosome_startAligned_NCBI.png", width = 2200, height = 3000,res=400)
 # pdf("~/Desktop/Projects/2020_StarterCultureDiversity/97_Images/Sterm_phylogney_total.pdf",width=10,height=10)
 
@@ -207,8 +207,14 @@ dev.off()
 
 dnaA_genes_stats_complete <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/dnaA_genes.stats.Complete_Genome", delim = "\t", escape_double = FALSE, col_names = c("genome","startpostion","orientation","startAligned"), trim_ws = TRUE)
 
-plot_complete_genome <- ggplot(dnaA_genes_stats_complete,aes(x=startAligned,fill=startAligned,color=startAligned))+geom_bar()+theme_classic()+labs(x="Genome start aligned\n at dnaA",y="Genomes",title = "Complete genome assemblies\non NCBI")+theme(legend.position = "none")
+
+table(dnaA_genes_stats_complete$startAligned)
+
+plot_complete_genome <- ggplot(dnaA_genes_stats_complete,aes(x=startAligned,fill=startAligned,color=startAligned))+geom_bar()+theme_classic()+labs(x="Bacterial chromosome start aligned",y="Genomes",title = "Complete genome assemblies\non NCBI efSeq")+theme(legend.position = "none")+scale_y_continuous(breaks=c(0,5000,11496,13015)) 
 plot_complete_genome
+
+
+
 png("/home/vincent/Desktop/Projects/2020_circleries/07_figures/Plot_completeGenomes_startAligned_NCBI.png", width = 2200, height = 3000,res=400)
 # pdf("~/Desktop/Projects/2020_StarterCultureDiversity/97_Images/Sterm_phylogney_total.pdf",width=10,height=10)
 
@@ -889,6 +895,33 @@ cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlular_analysis.f
 #### 2. are the bacterial contigs start aligned?
 
 ```{bash}
+
+##----------------------------------------------
+#prepare
+#the outputs from circlator are distributed everyweher
+#here I first merge them
+##----------------------------------------------
+
+
+SRA=SRR10586120
+
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp/${SRA}/06.fixstart.log /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_02/${SRA}_fixstart.log
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp/${SRA}/04.merge.circularise.log /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_02/${SRA}_circularise.log
+
+SRA=SRR7253212
+
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp/${SRA}/06.fixstart.log /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_02/${SRA}_fixstart.log
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp/${SRA}/04.merge.circularise.log /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_02/${SRA}_circularise.log
+
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered/* /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_02/
+
+
+ll /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_02/ 
+##----------------------------------------------
+#run analysis
+##----------------------------------------------
+
+
 rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis.final
 #echo -e "SRA\tflye\tcirclator\tcirclers" > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis.final
 for SRA in $(awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |head -68)
@@ -907,24 +940,35 @@ contigzz_verdict=$(grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_a
 echo -e "--------circlator"
 
 
-circlator_circ=$(grep "${contigzz}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp/${SRA}/04.merge.circularise.log |cut -f 6)
+circlator_circ=$(grep "${contigzz}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_02/${SRA}_circularise.log |cut -f 6)
 
-circlator_start=$(grep "${contigzz}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp/${SRA}/06.fixstart.log |cut -f 7)
+circlator_start=$(grep "${contigzz}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_02/${SRA}_fixstart.log |cut -f 7)
 
+
+#if [ $circlator_circ  ==  1 ] &&  [ $circlator_start  =  "-" ]; then
+#circlator_final=$(echo "Y")
+#echo "startaligned with Circlator"
+#else
+#circlator_final=$(echo "N")
+#echo "non-startaligned with Circlator"
+#fi
 
 if [ $circlator_circ  ==  1 ] &&  [ $circlator_start  =  "-" ]; then
 circlator_final=$(echo "Y")
 echo "startaligned with Circlator"
-else
+elif  [ $circlator_circ  ==  0 ] ||  [ $circlator_start  =  "skipped" ]
+then
 circlator_final=$(echo "N")
+else 
+circlator_final=$(echo "NA")
 echo "non-startaligned with Circlator"
 fi
 
 
 echo -e "--------circles"
 
-#circleres_circ=$(grep "^${contigzz}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log |cut -f 12)
-circleres_circ=$(grep "^${contigzz}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log |sed 's/\\t/,/g' |sed 's/ /_/g')
+circleres_circ=$(grep "^${contigzz}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log |cut -f 12)
+#circleres_circ=$(grep "^${contigzz}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log |sed 's/\\t/,/g' |sed 's/ /_/g')
 
 
 
@@ -936,6 +980,8 @@ echo -e ${SRA}"\t"${contigzz_verdict}"\t"${circlator_final}"\t"${circleres_circ}
 done
 
 cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis.final
+sort /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis.final |uniq | cut -f 2,4 |sort|uniq -c
+grep -v "NA" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis.final |sort|uniq
 
 ```
 
@@ -946,7 +992,7 @@ cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysi
 ```{bash}
 
 echo -e "SRA\tcontig\tflye\tcirclator\tcirclers" > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/Circ_contig_analysis.final
-for SRA in $(awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |head -5)
+for SRA in $(awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |head -68)
 do
 echo "==========================="
 echo ${SRA}
@@ -959,13 +1005,14 @@ grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_ga
 echo -e "--------circlator"
 
 
-grep -v "#Contig" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp/${SRA}/04.merge.circularise.log | sort -k2 -n |cut -f 2,6 > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.circlator
+grep -v "#Contig" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_02/${SRA}_circularise.log | sort -k2 -n |cut -f 2,6 > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.circlator
+
 
 
 echo -e "--------circles"
 
 
-grep -v "^#contigName" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log | sort -k1 -n   |cut -f 1,10 > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.circleries
+grep -v "^#contigName" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log | sort -k1 -n   |cut -f 1,12 > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.circleries
 
 echo -e "--------analysis total"
 
@@ -985,6 +1032,9 @@ done
 done
 
 cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/Circ_contig_analysis.final
+
+sort /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/Circ_contig_analysis.final |uniq |cut -f 3,5 |sort|uniq -c
+
 
 ```
 
@@ -1018,13 +1068,38 @@ library(tidyverse)
 #1. circular bacterial cells aligned
 ##---------------------
 
-startaligned_analysis <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/final_analysis/startaligned_analysis.final", delim = "\t", escape_double = FALSE,  trim_ws = TRUE)
+startaligned_analysis <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/final_analysis/startaligned_analysis.final", delim = "\t", escape_double = FALSE,  trim_ws = TRUE,col_names = c("SRA","flye","circlator","circlers")) %>% filter(flye=="Y")
+
+startaligned_analysis <- startaligned_analysis[!duplicated(startaligned_analysis),]
+
+
+
+startaligned_analysis_long <- gather(startaligned_analysis, circulariation, outcome, c("circlator","circlers"), factor_key=TRUE,na.rm = TRUE) %>% filter(!is.na(outcome))
+
+startaligned_analysis_long$verdict <- ifelse(startaligned_analysis_long$flye==startaligned_analysis_long$outcome,"startaligned","left")
+
+totl_counts <- startaligned_analysis_long %>% group_by(circulariation) %>% summarise(total=n())
+
+startaligned_analysis_sum <- startaligned_analysis_long %>% group_by(circulariation,verdict) %>% summarise(grouping=n()) %>% left_join(.,totl_counts,by="circulariation") %>% mutate(percent=100*(grouping/total))
+
+plot_start <- ggplot(startaligned_analysis_sum,aes(x=circulariation,y=percent,fill=verdict,color=verdict))+geom_bar(stat = "identity")+theme_classic()
+plot_start
 
 ##---------------------
 #2. are all circular contigs recognized?
 ##---------------------
 
 circ_analysis <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/final_analysis/Circ_contig_analysis.final", delim = "\t", escape_double = FALSE,  trim_ws = TRUE)
+circ_analysis <- circ_analysis[!duplicated(circ_analysis),]
+
+circ_analysis_long <- gather(circ_analysis, circulariation, outcome, c("circlator","circlers"), factor_key=TRUE,na.rm = TRUE) %>% filter(!is.na(outcome))
+circ_analysis_long$verdict <- ifelse(circ_analysis_long$flye==circ_analysis_long$outcome,"correct","incorrect")
+totl_counts <- circ_analysis_long %>% group_by(circulariation) %>% summarise(total=n())
+
+circ_analysis_sum <- circ_analysis_long %>% group_by(circulariation,verdict) %>% summarise(grouping=n()) %>% left_join(.,totl_counts,by="circulariation") %>% mutate(percent=100*(grouping/total))
+
+plot_circular <- ggplot(circ_analysis_sum,aes(x=circulariation,y=percent,fill=verdict,color=verdict))+geom_bar(stat = "identity")+theme_classic()
+plot_circular
 
 ##---------------------
 #4. are the contigs not wrongly circularised?
@@ -1035,9 +1110,132 @@ circ_analysis <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/fina
 #4 speed
 ##---------------------
 
-circ_analysis <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/final_analysis/Circ_contig_analysis.final", delim = "\t", escape_double = FALSE,  trim_ws = TRUE)
+speed_analysis <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/final_analysis/overall_analysis_02", delim = "\t", escape_double = FALSE,  trim_ws = TRUE,col_names = c("SRA","circlator","circlers"))
+
+speed_analysis <- speed_analysis[!duplicated(speed_analysis),]
+
+startaligned_analysis_long <- gather(startaligned_analysis, circulariation, outcome, c("circlator","circlers"), factor_key=TRUE,na.rm = TRUE) %>% filter(!is.na(outcome))
+
+startaligned_analysis_long$verdict <- ifelse(startaligned_analysis_long$flye==startaligned_analysis_long$outcome,"startaligned","left")
+
+totl_counts <- startaligned_analysis_long %>% group_by(circulariation) %>% summarise(total=n())
+
+startaligned_analysis_sum <- startaligned_analysis_long %>% group_by(circulariation,verdict) %>% summarise(grouping=n()) %>% left_join(.,totl_counts,by="circulariation") %>% mutate(percent=100*(grouping/total))
+
+plot_start <- ggplot(startaligned_analysis_sum,aes(x=circulariation,y=percent,fill=verdict,color=verdict))+geom_bar(stat = "identity")+theme_classic()
+plot_start
+
+
+##---------------------
+#4 together
+##---------------------
+
+png("/home/vincent/Desktop/Projects/2020_circleries/07_figures/Plot_completeGenomes_startAligned_NCBI.png", width = 2200, height = 3000,res=400)
+# pdf("~/Desktop/Projects/2020_StarterCultureDiversity/97_Images/Sterm_phylogney_total.pdf",width=10,height=10)
+
+plot_complete_genome
+
+dev.off()
 
 
 ```
 
+# reassemble false positive cases to see the problem
+
+```{bash}
+
+for SRA in $(awk -F "\t" '{OFS="\t"}{if($2=="N" && $4=="Y") print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis.final )
+do
+echo "================================="
+
+echo ${SRA}
+
+awk -v srazzz="$SRA" '{if($1==srazzz)print $0}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names.sra.info_03
+
+
+awk -v srazzz="$SRA" '{if($1==srazzz)print $0}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names.sra.info_03 > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_10
+
+Pacbio_yes=$(grep "Illumina" -i -v  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_10 |head -1|grep "pacbio" -i|wc -l |cut -d ' ' -f 1)
+
+ONT_yes=$(grep "Illumina" -i -v  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_10 |head -1|grep "Oxford" -i|wc -l |cut -d ' ' -f 1)
+
+Illumina_yes=$(grep "Illumina" -i  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_10 |head -1|wc -l |cut -d ' ' -f 1)
+
+#echo ${Pacbio_yes}
+#echo ${ONT_yes}
+
+rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_10
+
+##-----------------------------------------assemble with flye
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp_02/
+
+if [ $Pacbio_yes -gt 0 ]
+then
+echo "Pacbio data"
+
+python /home/vincent/apps/flye/Flye/bin/flye --threads 20  --iterations 1 --pacbio-raw \
+      /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq \
+      --out-dir /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp_02/${SRA}
+
+elif [ $ONT_yes -gt 0 ]
+then
+echo "ONT data"
+
+python /home/vincent/apps/flye/Flye/bin/flye --threads 20  --iterations 1 --nano-raw \
+      /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq \
+      --out-dir /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp_02/${SRA}
+
+fi
+
+
+done
+
+
+###---------------------------
+#bring together assembly graphs
+###---------------------------
+rm -r /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp_02/together
+mkdir -p  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp_02/together
+
+for SRA in $(awk -F "\t" '{OFS="\t"}{if($2=="N" && $4=="Y") print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis.final )
+do
+
+echo ${SRA}
+
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp_02/${SRA}/assembly_graph.gfa  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp_02/together/${SRA}_assembly_graph.gfa
+
+done
+
+###---------------------------
+#bring local
+###---------------------------
+
+mkdir -p /home/vincent/Desktop/Projects/2020_circleries/06_analysis/strangeCases/
+scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp_02/together/ /home/vincent/Desktop/Projects/2020_circleries/06_analysis/strangeCases/
+
+
+
+###-----------------------------
+#special case
+###-----------------------------
+
+
+SRA=SRR17072975
+
+
+cd /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp_07/${SRA}/tmp_SRR17072975/
+cat ../SRR17072975_analysis_circularity_extended.log
+
+cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp_02/${SRA}/*_info*
+
+header=contig_6
+
+grep "${header}" Start_end_readmapping/long_read/mapping/all_contigs_mapping.paf 
+
+
+awk -F "\t" -v contigName="$header" '{OFS="\t"}{if($6==contigName"_EndAndStart"&& $8<2900 && $9> 3100 )print $0}' Start_end_readmapping/long_read/mapping/all_contigs_mapping.paf >  Start_end_readmapping/long_read/mapping/${header}_contigs_mapping.paf
+
+
+
+```
 

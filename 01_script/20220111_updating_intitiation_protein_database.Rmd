@@ -128,7 +128,7 @@ cd-hit-est -i /data/Project/2021_circlator/NCBI_analysis/analysis/initiation_pro
 
 cp /data/Project/2021_circlator/NCBI_analysis/analysis/cd_hit_v2/cd_hit_initiation_proteins_v2 /data/Project/2021_circlator/NCBI_analysis/analysis/cd_hit_v2/starting_genes_v2.fasta
 
-
+scp vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/analysis/cd_hit_v2/starting_genes_v2.fasta /home/vincent/Desktop/Projects/2020_circleries/05_startAlign_data/
 
 
 ```
