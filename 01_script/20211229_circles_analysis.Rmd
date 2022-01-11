@@ -546,7 +546,7 @@ done
 
 cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt
 
-for genomeName in $(awk -F "\t" '{OFS="\t"}{if( $4 == 1 || $5 == 1) print $2}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_assembly_final_test |uniq |head -100 )
+for genomeName in $(awk -F "\t" '{OFS="\t"}{if( $4 == 1 || $5 == 1) print $2}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_assembly_final_test |uniq |head -300 |tail -199 )
 do
 
 #genomeName=GCF_016889345.1_ASM1688934v1
@@ -672,7 +672,6 @@ awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $4}' /data/Proje
 
 
 
-
 ```
 
 ### circlator vs. circleries
@@ -791,6 +790,8 @@ start=`date +%s`
     -o ${SRA} \
     -d /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}/ \
     -F -x
+
+cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt
     
 end=`date +%s`
 runtime_circleres=$( echo "$end - $start" | bc -l )
@@ -888,8 +889,8 @@ cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlular_analysis.f
 #### 2. are the bacterial contigs start aligned?
 
 ```{bash}
-
-echo -e "SRA\tflye\tcirclator\tcirclers" > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis.final
+rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis.final
+#echo -e "SRA\tflye\tcirclator\tcirclers" > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis.final
 for SRA in $(awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |head -68)
 do
 echo "==========================="
@@ -922,7 +923,8 @@ fi
 
 echo -e "--------circles"
 
-circleres_circ=$(grep "^${contigzz}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log |cut -f 10)
+#circleres_circ=$(grep "^${contigzz}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log |cut -f 12)
+circleres_circ=$(grep "^${contigzz}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log |sed 's/\\t/,/g' |sed 's/ /_/g')
 
 
 

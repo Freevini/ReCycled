@@ -23,6 +23,7 @@ starts=`date +%s`
 outName="N"
 force="N"
 limitOverlaps_set=5 #not incorporated into parameters
+dna_database="N"
 
 shortreads_1=""
 shortreads_2=""
@@ -49,6 +50,7 @@ Help()
    echo "   -l     long read file (fq or fq.gz) (MANDATORY)" #longreads
    echo "   -f     short read forward read (read 1) (fq or fq.gz)" #shortreads_1
    echo "   -r     short read reverse read (read 2) (fq or fq.gz)" #shortreads_2
+   echo "   -a     add a own inition protein database (in nucleotide fasta)" #shortreads_2
    echo
    echo "OUTPUT"
    echo "   -d     output directory [.]" #outputFolderName
@@ -110,6 +112,8 @@ while getopts ":h :p: :i: :d: :o: :t: :l: :r: :f: :v :V :x :F" option; do
          tmpss="Y";;
       F) #print version
          force="Y";;
+      a) #add dnaA database
+         dna_database=$OPTARG;;
      \?) # Invalid option
          echo "Error: Invalid option"
          Help
@@ -185,7 +189,7 @@ echo -e "Dependencies:"
 fasta_shift_path=$(echo -e ${circleriesPATH}"/02_dependencies/fasta_shift")
 seqkit_path=$(echo -e ${circleriesPATH}"/02_dependencies/seqkit")
 #paftools_path=$(echo -e ${circleriesPATH}"/02_dependencies/paftools.js")
-startalining_genes=$(echo -e ${circleriesPATH}"/05_startAlign_data/starting_genes.fasta ")
+startalining_genes=$(echo -e ${circleriesPATH}"/05_startAlign_data/starting_genes_v2.fasta ")
 
 #${circleriesPATH}/05_startAlign_data/starting_genes.fasta
 
@@ -257,6 +261,10 @@ do
 ##map origin genes to the individual references and remove non-mapping or low quality mapping reads (mapq>50)
 minimap2 ${outputFolderName}/tmp_${outName}/genome/${header}.fasta $startalining_genes  > ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}_unfiltered.minimap 2> ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}.minimap.log
 #awk -F "\t" '{OFS="\t"}{if($12>50) print $0}' ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}_unfiltered.minimap > ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}.minimap
+#----map own dnaA database
+if [[ "$dna_database" != "Y" ]]; then
+  minimap2 ${outputFolderName}/tmp_${outName}/genome/${header}.fasta $dna_database  >> ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}_unfiltered.minimap 2>> ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}.minimap.log
+fi
 
 awk -F "\t" '{OFS="\t"}{if($12>50 && $11>(0.8*$2)&& $10>(0.7*$2) && $2>300) print $0}' ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}_unfiltered.minimap > ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}.minimap
 

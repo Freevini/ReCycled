@@ -1,0 +1,135 @@
+---
+title: "updating intitiation protein database"
+author: "Vincent Somerville"
+date: "11/01/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## original reference database 
+
+The original initiation protein reference database is from unicycler. 
+
+```{bash}
+grep ">" -c /home/vincent/Desktop/Projects/2020_circleries/05_startAlign_data/starting_genes.fasta
+
+grep "dnaa" -i -c  /home/vincent/Desktop/Projects/2020_circleries/05_startAlign_data/starting_genes.fasta
+grep "chromo" -i -c  /home/vincent/Desktop/Projects/2020_circleries/05_startAlign_data/starting_genes.fasta
+
+grep "plasmid" -i -c  /home/vincent/Desktop/Projects/2020_circleries/05_startAlign_data/starting_genes.fasta
+
+grep ">" /home/vincent/Desktop/Projects/2020_circleries/05_startAlign_data/starting_genes.fasta
+
+```
+
+
+# 1. add on
+
+The first round of add-ons includes all initiation proteins from the non-circular genomes. 
+
+```{bash}
+
+
+grep "${genomeName}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.txt
+cut -f 1 /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.Complete_Genome_non_circular 
+wc -l /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.Complete_Genome_non_circular 
+wc -l /data/Project/2021_circlator/NCBI_analysis/analysis/genes.identified.Complete_Genome
+wc -l /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.Complete_Genome
+
+
+##-----------------------------------------
+#download ffn files
+##----------------------------------------
+rm /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.download_Complete_Genome_genes
+for genomeName in $(cut -f 1 /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.Complete_Genome_non_circular )
+do
+
+grep "${genomeName}_"  /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.download_Complete_Genome |sed 's/_genomic.gff.gz/_cds_from_genomic.fna.gz/g' >>  /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.download_Complete_Genome_genes
+
+done 
+
+wc -l /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.download_Complete_Genome_genes
+wc -l /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.Complete_Genome_non_circular 
+
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/download/FFN/
+cd /data/Project/2021_circlator/NCBI_analysis/download/FFN/
+wget -i /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.download_Complete_Genome_genes
+
+
+##-----------------------------------------
+#identify dnaA in gff of non-startaligned genomes
+##-----------------------------------------
+
+
+rm /data/Project/2021_circlator/NCBI_analysis/analysis/initiation_proteins_nonCirculargenomes.fna
+for genomeName in $(cut -f 1 /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.Complete_Genome_non_circular )
+do
+
+geneNAME_02=NA
+geneNAME_01=NA
+
+#zgrep "=dnaA;" -i /data/Project/2021_circlator/NCBI_analysis/download/gff/${genomeName}_*gff.gz | awk '{if($2=="RefSeq")print $0}' #>> /data/Project/2021_circlator/NCBI_analysis/analysis/genes.identified.Complete_Genome
+geneNAME_01=$(zgrep "=dnaA;" -i /data/Project/2021_circlator/NCBI_analysis/download/gff/${genomeName}_*gff.gz | awk '{if($2=="RefSeq")print $0}' |cut -f 9 |cut -d ';' -f 1 |sed 's/ID=gene-//g')
+
+geneNAME_02=$(zgrep "${geneNAME_01}"  /data/Project/2021_circlator/NCBI_analysis/download/FFN/${genomeName}_*fna.gz |cut -d ' ' -f 1 |sed 's/>//g')
+
+echo -e ${genomeName}"  has  "${geneNAME_01}"  which is  "${geneNAME_02}
+
+gunzip -c /data/Project/2021_circlator/NCBI_analysis/download/FFN/${genomeName}_cds_from_genomic.fna.gz > /data/Project/2021_circlator/NCBI_analysis/download/FFN/${genomeName}_cds_from_genomic.fna
+
+samtools faidx /data/Project/2021_circlator/NCBI_analysis/download/FFN/${genomeName}_cds_from_genomic.fna
+
+samtools faidx /data/Project/2021_circlator/NCBI_analysis/download/FFN/${genomeName}_cds_from_genomic.fna ${geneNAME_02} >> /data/Project/2021_circlator/NCBI_analysis/analysis/initiation_proteins_nonCirculargenomes.fna
+
+done
+
+ls  /data/Project/2021_circlator/NCBI_analysis/download/FFN/ |grep ".gz" |wc -l 
+ls  /data/Project/2021_circlator/NCBI_analysis/download/FFN/ |wc -l 
+grep ">" -c /data/Project/2021_circlator/NCBI_analysis/analysis/initiation_proteins_nonCirculargenomes.fna
+
+###------------------------------------------------
+#rename contigs
+###------------------------------------------------
+
+awk 'BEGIN{RS=">";OFS="\n"}(NR>1){print ">"$1" N"(NR-1)" chromosomal replication initiator protein DnaA\n";$1="";print $0}' /data/Project/2021_circlator/NCBI_analysis/analysis/initiation_proteins_nonCirculargenomes.fna | awk '$0' > /data/Project/2021_circlator/NCBI_analysis/analysis/initiation_proteins_nonCirculargenomes_renamed.fna
+
+
+###------------------------------------------------
+#merge with current database and 
+###------------------------------------------------
+
+
+cat /data/Project/2021_circlator/20220106_2020_circleries_tool/Circleries/05_startAlign_data/starting_genes.fasta /data/Project/2021_circlator/NCBI_analysis/analysis/initiation_proteins_nonCirculargenomes_renamed.fna > /data/Project/2021_circlator/NCBI_analysis/analysis/initiation_proteins_nonCirculargenomes_extended.fna
+
+#cat /data/Project/2021_circlator/20220106_2020_circleries_tool/Circleries/05_startAlign_data/starting_genes.fasta > /data/Project/2021_circlator/NCBI_analysis/analysis/initiation_proteins_nonCirculargenomes_extended.fna
+
+
+###------------------------------------------------
+#deduplicate with cd-hit
+###------------------------------------------------
+
+rm -r /data/Project/2021_circlator/NCBI_analysis/analysis/cd_hit_v2/
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/analysis/cd_hit_v2/
+
+cd-hit-est -i /data/Project/2021_circlator/NCBI_analysis/analysis/initiation_proteins_nonCirculargenomes_extended.fna \
+    -o /data/Project/2021_circlator/NCBI_analysis/analysis/cd_hit_v2/cd_hit_initiation_proteins_v2 -c 0.98 -M 30000 -T 30 
+    
+#with 97-----> 6718  clusters (total 7171)    
+#with 98-----> 6821  clusters (total 7171)    
+#with 99-----> 6914  clusters (total 7171)    
+
+    
+###------------------------------------------------
+#move local to put into new github
+###------------------------------------------------
+
+cp /data/Project/2021_circlator/NCBI_analysis/analysis/cd_hit_v2/cd_hit_initiation_proteins_v2 /data/Project/2021_circlator/NCBI_analysis/analysis/cd_hit_v2/starting_genes_v2.fasta
+
+
+
+
+```
+
