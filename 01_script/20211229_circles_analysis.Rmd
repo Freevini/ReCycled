@@ -1309,34 +1309,41 @@ cut -f 1,3,5 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/Circ_contig
 
 ##-----------------two circular contigs
 SRA=SRR3880379
-name=twoCircularContigs
+name=oneCircularContigs
 
 mkdir -p /data/Project/2021_circlator/NCBI_analysis/test_cases/
 
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}
+start=`date +%s`
+
+/data/Project/2021_circlator/20220106_2020_circleries_tool/Circleries/Circleries.sh \
+    -i /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}.fasta \
+    -l /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq \
+    -t 8 \
+    -o ${SRA} \
+    -d /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}/ \
+    -F -x
+
+cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt
+    
+samtools flagstat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}/tmp_${SRA}//Start_end_readmapping/long_read/mapping/all_contigs_mapping_unfiltered.bam
+    
+    
+    samtools flagstat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}/tmp_${SRA}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_mapped.bam
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}/tmp_${SRA}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_mapped.fq /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fq
+ 
 
 cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}.fasta /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fasta
 
 
-rm /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fastq
-for gene in $(cut -f 1 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp_07/${SRA}/tmp_${SRA}/Start_end_readmapping/long_read/mapping/all_contigs_mapping.paf)
-do
+gzip -c   /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fq >  /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fq.gz
 
-echo $gene
-
-grep "^@${gene} " -A 3 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq >> /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fastq
-
-done
-
-grep "^+$" /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fastq
-
-gzip -c   /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fastq >  /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fastq.gz
-
-rm  /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fastq 
+rm   /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fq
 
 
 /data/Project/2021_circlator/20220106_2020_circleries_tool/Circleries/Circleries.sh \
     -i /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fasta \
-    -l /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fastq.gz \
+    -l /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fq.gz \
     -t 8 \
     -o ${SRA} \
     -d /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp_testCASE/${SRA}/ \
@@ -1344,35 +1351,70 @@ rm  /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fastq
 
 
 
-
-
-##-----------------one circular contigs +8 non-circular
+##-----------------one circular  +8 non-circular contigs
 SRA=SRR15376163
 name=oneCircular_eigthNonCircular
 
+
 mkdir -p /data/Project/2021_circlator/NCBI_analysis/test_cases/
+
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}
+start=`date +%s`
+
+/data/Project/2021_circlator/20220106_2020_circleries_tool/Circleries/Circleries.sh \
+    -i /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}.fasta \
+    -l /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq \
+    -t 8 \
+    -o ${SRA} \
+    -d /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}/ \
+    -F -x
+
+cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt
+    
+samtools flagstat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}/tmp_${SRA}//Start_end_readmapping/long_read/mapping/all_contigs_mapping_unfiltered.bam
+    
+    
+    samtools flagstat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}/tmp_${SRA}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_mapped.bam
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}/tmp_${SRA}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_mapped.fq /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fq
+ 
 
 cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}.fasta /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fasta
 
-rm /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fastq
-for gene in $(cut -f 1 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp_07/${SRA}/tmp_${SRA}/Start_end_readmapping/long_read/mapping/all_contigs_mapping.paf|uniq)
-do
 
-echo $gene
+gzip -c   /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fq >  /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fq.gz
 
-grep "^@${gene} " -A 3 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq >> /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fastq
-
-done
-
-grep "^+$" -c /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fastq
-
-zcat   /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fastq >  /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fastq.gz
-
-rm  /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fastq 
+rm   /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fq
 
 
-##-----------------16 non-circular
-SRA=SRR7508528
+/data/Project/2021_circlator/20220106_2020_circleries_tool/Circleries/Circleries.sh \
+    -i /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fasta \
+    -l /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fq.gz \
+    -t 8 \
+    -o ${SRA} \
+    -d /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp_testCASE/${SRA}/ \
+    -F -x
+
+rm /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}_02.fq.gz
+
+reformat.sh in=/data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fq.gz out=/data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}_02.fq.gz samplerate=0.05 interleaved
+
+/data/Project/2021_circlator/20220106_2020_circleries_tool/Circleries/Circleries.sh \
+    -i /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fasta \
+    -l /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}_02.fq.gz \
+    -t 8 \
+    -o ${SRA} \
+    -d /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp_testCASE/${SRA}/ \
+    -F -x
+
+rm /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fq.gz
+cp /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}_02.fq.gz /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fq.gz
+
+###------------------------------
+#move local
+###------------------------------
+
+scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/test_cases/* /home/vincent/Desktop/Projects/2020_circleries/03_TestData/
+
 
 ```
 

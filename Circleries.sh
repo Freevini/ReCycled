@@ -429,9 +429,9 @@ minimap2 -x map-ont --secondary=no -F 6000 -t ${threads} ${outputFolderName}/tmp
 #minimap2 -x map-pb -t ${threads} ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/all_contigs_EndAndStart.fasta ${longreads} > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_unfiltered.paf 2> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping.log
 
 ##--------------------------------------------to extract mapping reads----------------------------------
-minimap2 -ax map-ont --secondary=no -F 6000 -t ${threads} ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/all_contigs_EndAndStart.fasta ${longreads} | samtools sort -@${threads} -O BAM -o  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_unfiltered.bam -
-samtools view -b -F 4 ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_unfiltered.bam > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_mapped.bam
-bedtools bamtofastq -i ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_mapped.bam -fq ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_mapped.fq
+#minimap2 -ax map-ont --secondary=no -F 6000 -t ${threads} ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/all_contigs_EndAndStart.fasta ${longreads} | samtools sort -@${threads} -O BAM -o  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_unfiltered.bam -
+#samtools view -b -F 4 ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_unfiltered.bam > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_mapped.bam
+#bedtools bamtofastq -i ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_mapped.bam -fq ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_mapped.fq
 
 
 ##--------------------------------------------mapping filtering---------------------------------
@@ -775,7 +775,7 @@ for header in $(grep ">" ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.
   #grep "^#" -v  ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap |awk -F "\t" '{OFS="\t"}{if($2!="bacterial_contig")print $0}'
 echo
 
-  echo -e "The location of origin on the "${BacContigs}" Bacterial contigs..."
+  echo -e "The location of origin on the "${BacContigs}" Bacterial and Plasmid contigs..."
   #grep "^#"  ${outputFolderName}/start_alignment_mapping/After_StartAlignment_contigs.minimap
   #grep "^#" -v  ${outputFolderName}/start_alignment_mapping/After_StartAlignment_contigs.minimap|awk -F "\t" '{OFS="\t"}{if($2=="bacterial_contig")print $0}'
   cat ${outputFolderName}/tmp_${outName}/start_alignment_mapping/After_StartAlignment_contigs.minimap
