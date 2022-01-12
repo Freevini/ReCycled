@@ -189,16 +189,22 @@ library(tidyverse)
 #chromosome
 #-----------------------------------------------------------------------
 
-dnaA_genes_stats <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/dnaA_genes.stats.chromosome", delim = "\t", escape_double = FALSE, col_names = c("genome","startpostion","orientation","startAligned"), trim_ws = TRUE)
+dnaA_genes_stats <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/dnaA_genes.stats.Complete_Genome", delim = "\t", escape_double = FALSE, col_names = c("genome","startpostion","orientation","startAligned"), trim_ws = TRUE)
 
-plot_chromsome <- ggplot(dnaA_genes_stats,aes(x=startAligned,fill=startAligned,color=startAligned))+geom_bar()+theme_classic()+labs(x="Genome start aligned\n at dnaA",y="Genomes",title = "Chromosome-level assemblies\non NCBI")+theme(legend.position = "none")
-plot_chromsome
-png("/home/vincent/Desktop/Projects/2020_circleries/07_figures/Plot_chromosome_startAligned_NCBI.png", width = 2200, height = 3000,res=400)
-# pdf("~/Desktop/Projects/2020_StarterCultureDiversity/97_Images/Sterm_phylogney_total.pdf",width=10,height=10)
+dnaA_genes_stats$startAligned = factor(dnaA_genes_stats$startAligned, levels=c("Yes","NO"))
 
-plot_chromsome
+colorss <- rev(c("#F25F5C","#50514F"))
+colorss <- rev(c("#6B717E","#EFAAC4"))
+colorss <- rev(c("#ECCBD9","#E1EFF6"))
+colorss <- rev(c("#D0FEF5","#FAB2EA"))
+colorss <- rev(c("#B80C09","#6B2B06"))
+colorss <- (c("#F4F1BB","#ED6A5A"))
+colorss <- (c("#BBBE64","#8E5572"))
+# colorss <- (c("#982649","#7C8483"))
 
-dev.off()
+plot_complete_genome <- ggplot(dnaA_genes_stats,aes(x=startAligned,fill=startAligned,color=startAligned))+geom_bar()+theme_classic()+labs(x="Genome start aligned\n at dnaA",y="Genomes",title = "Chromosome-level assemblies\non NCBI")+theme(legend.position = "none")+scale_fill_manual(values=colorss)+scale_color_manual(values=colorss)
+plot_complete_genome
+
 
 
 #-----------------------------------------------------------------------
@@ -228,7 +234,7 @@ dev.off()
 #-----------------------------------------------------------------------
 
 library(patchwork)
-plot_complete_genome+plot_chromsome
+plot_complete_genome
 
 png("/home/vincent/Desktop/Projects/2020_circleries/07_figures/Plot_both_startAligned_NCBI.png", width = 4400, height = 3000,res=400)
 
@@ -1065,6 +1071,27 @@ scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/SRA_anal
 library(tidyverse)
 
 ##---------------------
+#0. genome assemblies on NCBI
+##---------------------
+
+dnaA_genes_stats <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/dnaA_genes.stats.Complete_Genome", delim = "\t", escape_double = FALSE, col_names = c("genome","startpostion","orientation","startAligned"), trim_ws = TRUE)
+
+dnaA_genes_stats$startAligned = factor(dnaA_genes_stats$startAligned, levels=c("Yes","NO"))
+nrow(dnaA_genes_stats)
+colorss <- rev(c("#F25F5C","#50514F"))
+colorss <- rev(c("#6B717E","#EFAAC4"))
+colorss <- rev(c("#ECCBD9","#E1EFF6"))
+colorss <- rev(c("#D0FEF5","#FAB2EA"))
+colorss <- rev(c("#B80C09","#6B2B06"))
+colorss <- (c("#F4F1BB","#ED6A5A"))
+colorss <- (c("#BBBE64","#8E5572"))
+# colorss <- (c("#982649","#7C8483"))
+
+plot_complete_genome <- ggplot(dnaA_genes_stats,aes(x=startAligned,fill=startAligned,color=startAligned))+geom_bar()+theme_classic()+labs(x="Genome start aligned\n at OriC",y="Genomes",title = "Chromosome-level\nassemblies on RefSeq")+theme(legend.position = "none")+scale_fill_manual(values=colorss)+scale_color_manual(values=colorss)+scale_y_continuous(breaks=c(0,5000,11496,13015)) 
+plot_complete_genome
+
+
+##---------------------
 #1. circular bacterial cells aligned
 ##---------------------
 
@@ -1076,13 +1103,18 @@ startaligned_analysis <- startaligned_analysis[!duplicated(startaligned_analysis
 
 startaligned_analysis_long <- gather(startaligned_analysis, circulariation, outcome, c("circlator","circlers"), factor_key=TRUE,na.rm = TRUE) %>% filter(!is.na(outcome))
 
-startaligned_analysis_long$verdict <- ifelse(startaligned_analysis_long$flye==startaligned_analysis_long$outcome,"startaligned","left")
+startaligned_analysis_long$verdict <- ifelse(startaligned_analysis_long$flye==startaligned_analysis_long$outcome,"startaligned","not aligned")
 
 totl_counts <- startaligned_analysis_long %>% group_by(circulariation) %>% summarise(total=n())
 
 startaligned_analysis_sum <- startaligned_analysis_long %>% group_by(circulariation,verdict) %>% summarise(grouping=n()) %>% left_join(.,totl_counts,by="circulariation") %>% mutate(percent=100*(grouping/total))
 
-plot_start <- ggplot(startaligned_analysis_sum,aes(x=circulariation,y=percent,fill=verdict,color=verdict))+geom_bar(stat = "identity")+theme_classic()
+colorss <- rev(c("#BBBE64","#8E5572"))
+
+countsGenomes <- startaligned_analysis_long$SRA %>% unique() %>% length()
+plot_start <- ggplot(startaligned_analysis_sum,aes(x=circulariation,y=percent,fill=verdict,color=verdict))+geom_bar(stat = "identity")+theme_classic()+scale_fill_manual(values=colorss)+scale_color_manual(values=colorss)+
+  labs(y="Genomes [%]",title = paste0("Startalignment of bacterial\nchromosomes (n=",countsGenomes,")"))+
+  theme(legend.title = element_blank(),axis.title.x = element_blank(),legend.position = "bottom")
 plot_start
 
 ##---------------------
@@ -1098,12 +1130,25 @@ totl_counts <- circ_analysis_long %>% group_by(circulariation) %>% summarise(tot
 
 circ_analysis_sum <- circ_analysis_long %>% group_by(circulariation,verdict) %>% summarise(grouping=n()) %>% left_join(.,totl_counts,by="circulariation") %>% mutate(percent=100*(grouping/total))
 
-plot_circular <- ggplot(circ_analysis_sum,aes(x=circulariation,y=percent,fill=verdict,color=verdict))+geom_bar(stat = "identity")+theme_classic()
+colorss <- rev(c("#BBBE64","#8E5572"))
+
+circ_analysis_sum$verdict = factor(circ_analysis_sum$verdict, levels=c("incorrect","correct"))
+countsGenomes <- circ_analysis_long %>% select(SRA,contig) %>% unique() %>% nrow()
+
+colorss <- rev(c("#BBBE64","#8E5572"))
+
+
+plot_circular <- ggplot(circ_analysis_sum,aes(x=circulariation,y=percent,fill=verdict,color=verdict))+geom_bar(stat = "identity")+theme_classic()+scale_fill_manual(values=colorss)+scale_color_manual(values=colorss)+
+  labs(y="Genomes [%]",title = paste0("Correctly identified\ncircular contigs (n=",countsGenomes,")"))+
+  theme(legend.title = element_blank(),axis.title.x = element_blank(),legend.position = "bottom")
+
 plot_circular
 
 ##---------------------
 #4. are the contigs not wrongly circularised?
 ##---------------------
+
+
 
 
 ##---------------------
@@ -1114,27 +1159,36 @@ speed_analysis <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/fin
 
 speed_analysis <- speed_analysis[!duplicated(speed_analysis),]
 
-startaligned_analysis_long <- gather(startaligned_analysis, circulariation, outcome, c("circlator","circlers"), factor_key=TRUE,na.rm = TRUE) %>% filter(!is.na(outcome))
+speed_analysis_long <- gather(speed_analysis, circulariation, outcome, c("circlator","circlers"), factor_key=TRUE,na.rm = TRUE) %>% filter(!is.na(outcome)) %>% filter(outcome<50000)
 
-startaligned_analysis_long$verdict <- ifelse(startaligned_analysis_long$flye==startaligned_analysis_long$outcome,"startaligned","left")
 
-totl_counts <- startaligned_analysis_long %>% group_by(circulariation) %>% summarise(total=n())
 
-startaligned_analysis_sum <- startaligned_analysis_long %>% group_by(circulariation,verdict) %>% summarise(grouping=n()) %>% left_join(.,totl_counts,by="circulariation") %>% mutate(percent=100*(grouping/total))
+countsGenomes <- speed_analysis_long$SRA %>% unique() %>% length()
+# 
+# startaligned_analysis_sum <- startaligned_analysis_long %>% group_by(circulariation,verdict) %>% summarise(grouping=n()) %>% left_join(.,totl_counts,by="circulariation") %>% mutate(percent=100*(grouping/total))
+library(ggquiver)
+plot_speed <- ggplot(speed_analysis_long,aes(x=circulariation,y=outcome,fill=circulariation ,color=circulariation ))+geom_violin(alpha=0.4)+ geom_jitter(shape=16, position=position_jitter(0.2))+theme_classic()+scale_y_continuous(trans = "log10",breaks=c(10,100,1000,10000))+  #+coord_trans(y="log10")+
+  scale_fill_manual(values=colorss)+scale_color_manual(values=colorss)+
+  labs(y="Runtime [seconds]",title = paste0("Runtime of the two tools\n(n=",countsGenomes,")"))+
+  theme(legend.position = "none",axis.title.x = element_blank())
+plot_speed
 
-plot_start <- ggplot(startaligned_analysis_sum,aes(x=circulariation,y=percent,fill=verdict,color=verdict))+geom_bar(stat = "identity")+theme_classic()
-plot_start
 
+speed_analysis_long %>%  group_by(circulariation) %>% summarise(meanss=mean(outcome))
 
 ##---------------------
 #4 together
 ##---------------------
 
-png("/home/vincent/Desktop/Projects/2020_circleries/07_figures/Plot_completeGenomes_startAligned_NCBI.png", width = 2200, height = 3000,res=400)
-# pdf("~/Desktop/Projects/2020_StarterCultureDiversity/97_Images/Sterm_phylogney_total.pdf",width=10,height=10)
+library(patchwork)
 
-plot_complete_genome
+plot_complete_genome+plot_start+plot_circular+plot_speed+ plot_layout(nrow=1)
 
+
+# png("/home/vincent/Desktop/Projects/2020_circleries/07_figures/Plot_all.png", width = 4400, height = 3000,res=400)
+pdf("/home/vincent/Desktop/Projects/2020_circleries/07_figures/Plot_all.pdf",width=11,height=7)
+
+plot_complete_genome+plot_start+plot_circular+plot_speed+ plot_layout(nrow=1)
 dev.off()
 
 
@@ -1238,4 +1292,89 @@ awk -F "\t" -v contigName="$header" '{OFS="\t"}{if($6==contigName"_EndAndStart"&
 
 
 ```
+
+# create test cases
+
+```{bash}
+
+
+SRA=SRR5629777
+cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt
+
+cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis.final |sort
+
+cut -f 1,3,5 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/Circ_contig_analysis.final |sort|uniq -c
+
+
+
+##-----------------two circular contigs
+SRA=SRR3880379
+name=twoCircularContigs
+
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/test_cases/
+
+
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}.fasta /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fasta
+
+
+rm /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fastq
+for gene in $(cut -f 1 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp_07/${SRA}/tmp_${SRA}/Start_end_readmapping/long_read/mapping/all_contigs_mapping.paf)
+do
+
+echo $gene
+
+grep "^@${gene} " -A 3 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq >> /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fastq
+
+done
+
+grep "^+$" /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fastq
+
+gzip -c   /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fastq >  /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fastq.gz
+
+rm  /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fastq 
+
+
+/data/Project/2021_circlator/20220106_2020_circleries_tool/Circleries/Circleries.sh \
+    -i /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fasta \
+    -l /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fastq.gz \
+    -t 8 \
+    -o ${SRA} \
+    -d /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp_testCASE/${SRA}/ \
+    -F -x
+
+
+
+
+
+##-----------------one circular contigs +8 non-circular
+SRA=SRR15376163
+name=oneCircular_eigthNonCircular
+
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/test_cases/
+
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}.fasta /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fasta
+
+rm /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fastq
+for gene in $(cut -f 1 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp_07/${SRA}/tmp_${SRA}/Start_end_readmapping/long_read/mapping/all_contigs_mapping.paf|uniq)
+do
+
+echo $gene
+
+grep "^@${gene} " -A 3 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq >> /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fastq
+
+done
+
+grep "^+$" -c /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fastq
+
+zcat   /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fastq >  /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fastq.gz
+
+rm  /data/Project/2021_circlator/NCBI_analysis/test_cases/${name}_${SRA}.fastq 
+
+
+##-----------------16 non-circular
+SRA=SRR7508528
+
+```
+
+
 

@@ -1,5 +1,4 @@
 # Circles
-Michael Schmid & Vincent Somerville
 
 Circles is a tool to check the circularity of bacterial genome assemblies and circularise them according to the location of origin of replication.
 
@@ -9,7 +8,7 @@ Circles was designed and implemented by Vincent Somerville and Michael Schmid as
 
 # Table of contents
 
-* [idea](#idea)
+* [Idea](#idea)
 * [Requirements](#requirements)
 * [Installation](#installation)
     * [Build and run without installation](#build-and-run-without-installation)
@@ -22,7 +21,7 @@ Circles was designed and implemented by Vincent Somerville and Michael Schmid as
 
 # Idea
 
-*Sensu stricto* circular genomes do not have a start and end. However bacterial chromosomes have a single, unique origin of replication (oriC). DNA replication starts at the first position of the replication initiator protein, also called *dnaA* This results in a skewed read coverage distribution when sequencing growing bacteria. They generally show higher coverages at the origin of replication (i.e. *dnaA*) then at the terminus (Fig. 1).
+*Sensu stricto* circular genomes do not have a start and end. However bacterial chromosomes have a single, unique origin of replication (oriC). DNA replication starts at the first position of the replication initiator protein, also called *dnaA*. This results in a skewed read coverage distribution when sequencing growing bacteria. They generally show higher coverages at the origin of replication (i.e. *dnaA*) then at the terminus (Fig. 1).
 
 <p align = "center">
 <img src = "07_figures/PTR_figure.png" width="400">
@@ -48,7 +47,7 @@ Aims:
 
 1. Create a tool that identifies and circularises complete bacterial contigs
 2. Create a fast and scalable approach
-3. use as few dependencies as possible
+3. Use as few dependencies as possible
 
 
 # Requirements
@@ -140,8 +139,15 @@ minimal syntax: Circleries -i <genome_input.fasta> -l <raw_long_read.fastq.gz>
 
 # How Circleries works
 
-A in-depth description of Circleries can be found in the bioXriv.
+Test Circleries with the two provided test cases:
 
+1. two circular contigs
+
+`Circleries.sh -i 03_test_Data/twoCircularContigs_SRR3880379.fasta -l 03_test_Data/twoCircularContigs_SRR3880379.fastq.gz `
+
+2. one circular and eigth non-circular contigs
+
+`Circleries.sh -i 03_test_Data/oneCircular_eigthNonCircular_SRR15376163.fasta -l 03_test_Data/oneCircular_eigthNonCircular_SRR15376163.fastq.gz `
 
 
 # Known limitations

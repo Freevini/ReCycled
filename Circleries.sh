@@ -425,9 +425,16 @@ done
 sed -i '/^$/d' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/all_contigs_EndAndStart.fasta
 
 ##map origin genes to the individual references and remove non-mapping or low quality mapping reads (mapq>50)
-minimap2 -x map-ont -N 0 -F 6000 -t ${threads} ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/all_contigs_EndAndStart.fasta ${longreads} > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_unfiltered.paf 2>> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping.log
+minimap2 -x map-ont --secondary=no -F 6000 -t ${threads} ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/all_contigs_EndAndStart.fasta ${longreads} > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_unfiltered.paf 2>> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping.log
 #minimap2 -x map-pb -t ${threads} ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/all_contigs_EndAndStart.fasta ${longreads} > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_unfiltered.paf 2> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping.log
 
+##--------------------------------------------to extract mapping reads----------------------------------
+minimap2 -ax map-ont --secondary=no -F 6000 -t ${threads} ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/all_contigs_EndAndStart.fasta ${longreads} | samtools sort -@${threads} -O BAM -o  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_unfiltered.bam -
+samtools view -b -F 4 ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_unfiltered.bam > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_mapped.bam
+bedtools bamtofastq -i ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_mapped.bam -fq ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_mapped.fq
+
+
+##--------------------------------------------mapping filtering---------------------------------
 
 awk -F "\t" '{OFS="\t"}{if($12>50) print $0}'  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_unfiltered.paf >  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping.paf
 
@@ -437,7 +444,7 @@ do
 
 ##all all for testing
 echo -e ${header}"_EndAndStart\t1\t6000"  >  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/bedCoverage_location_all.bed
-awk -F "\t" -v contigName="$header" '{OFS="\t"}{if($6==contigName"_EndAndStart"&& $8<2900 && $9> 3100 )print $0' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping.paf > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping_all.paf
+awk -F "\t" -v contigName="$header" '{OFS="\t"}{if($6==contigName"_EndAndStart"&& $8<2900 && $9> 3100 )print $0}' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping.paf > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping_all.paf
 awk -F "\t" -v contigName="$header" '{OFS="\t"}{if($6==contigName"_EndAndStart"&& $8<2900 && $9> 3100 )print $6,$8,$9}' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping.paf > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping_all.bed
 bedtools coverage -a ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/bedCoverage_location_all.bed -b ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping_all.bed -d  |grep "${header}_EndAndStart" > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/${header}_mapping.coverge_all
 
