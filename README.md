@@ -15,7 +15,7 @@ Circles was designed and implemented by Vincent Somerville and Michael Schmid as
 * [Usage examples](#usage-examples)
 * [Output of a Circleries run](#output-of-a-Circleries-run)
 * [Full usage](#full-usage)
-* [How it works](#how-it-works)
+* [ How Circleries works](#How-Circleries-works)
 * [Known limitations](#known-limitations)
 * [License](#license)
 
@@ -145,7 +145,7 @@ Test Circleries with the two provided test cases:
 
 `Circleries.sh -i 03_test_Data/twoCircularContigs_SRR3880379.fasta -l 03_test_Data/twoCircularContigs_SRR3880379.fastq.gz `
 
-2. one circular and eigth non-circular contigs
+2. one circular and eight non-circular contigs
 
 `Circleries.sh -i 03_test_Data/oneCircular_eigthNonCircular_SRR15376163.fasta -l 03_test_Data/oneCircular_eigthNonCircular_SRR15376163.fastq.gz `
 
