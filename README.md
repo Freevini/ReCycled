@@ -59,11 +59,9 @@ Aims:
 
 
 
-Circles is currently not tested on macOS or Windows.
+Circles currently does not support macOS and Windows.
 
 #  Installation
-
-### Build and run without installation
 
 By simply cloning Circleries from this GitHub repository you are good to go:
 
