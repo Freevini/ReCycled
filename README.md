@@ -2,7 +2,7 @@
 
 Circles is a tool to check the circularity of bacterial genome assemblies and circularise them according to the location of origin of replication.
 
-In brief, it detects the presence of the origin of replication (i.e. *dnaA*). Moreover it checks the ciruclarity of contigs bying looking for overlap at the contig edges and mapping the raw data to identify overlaping reads. Based on this information it circularises and start aligns the bacterial contigs upstream of *dnaA* gene.
+In brief, it detects the presence of the origin of replication (i.e. *dnaA*). Moreover it checks the ciruclarity of contigs by looking for overlap at the contig edges and mapping the raw data to identify overlaping reads. Based on this information it circularises and start aligns the bacterial contigs upstream of *dnaA* gene.
 
 Circles was designed and implemented by Vincent Somerville and Michael Schmid as a free software under the GPLv3 license.
 
@@ -65,7 +65,7 @@ Circles is currently not tested on macOS or Windows.
 
 ### Build and run without installation
 
-By simply running `make` in CircAidMe's directory, you can compile the C++ components but not install an executable. The program can then be executed by directly calling the `circaidme-runner.py` script.
+By simply cloning Circleries from this GitHub repository you are good to go:
 
 ```bash
 git clone https://github.com/Freevini/Circleries.git
@@ -73,6 +73,8 @@ cd Circleries
 
 Circleries.sh -h
 ```
+
+In addition you have to install Minimap2 and bedtools. Make sure that bash will find them either via adding to PATH variable or installation into a systems folder.
 
 
 # Usage examples
