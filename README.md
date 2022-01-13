@@ -71,7 +71,7 @@ cd Circleries
 Circleries.sh -h
 ```
 
-In addition you have to install Minimap2 and bedtools. Make sure that bash will find them either via adding to PATH variable or installation into a systems folder.
+In addition you have to install Minimap2 and bedtools. Make sure that bash will find them either via adding to PATH variable or installation into a system folder.
 
 
 # Usage examples
