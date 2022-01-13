@@ -11,7 +11,6 @@ Circles was designed and implemented by Vincent Somerville and Michael Schmid as
 * [Idea](#idea)
 * [Requirements](#requirements)
 * [Installation](#installation)
-    * [Build and run without installation](#build-and-run-without-installation)
 * [Usage examples](#usage-examples)
 * [Output of a Circleries run](#output-of-a-Circleries-run)
 * [Full usage](#full-usage)
