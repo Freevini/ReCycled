@@ -133,3 +133,76 @@ scp vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/analysis/cd
 
 ```
 
+
+# 2. add doriC database
+
+The second round of add-ons includes oriC genes deposited in doriC V10.
+
+
+```{bash}
+##----------------------
+#first I delete all other columns than the first and last column in excel
+#somehow it did not work on the command line
+##----------------------
+
+
+/home/vincent/Desktop/Projects/2020_circleries/05_startAlign_data/starting_genes_v2.fasta
+##----------------------
+#second i make a fasta out of the csv
+#including all archae, plasmid and bacterial dnaAs
+##----------------------
+
+
+cut -d ',' -f 2 doric10/tubic_bacteria_curated.csv |head
+
+
+sed '1d' /home/vincent/Downloads/doric10/tubic_bacteria_curated.csv| sed 's/^/>/g' | sed 's/,/\n/g' |awk -v FS= '/^>/{print;next}{for (i=0;i<=NF/60;i++) {for (j=1;j<=60;j++) printf "%s", $(i*60 +j); print ""}}'   | awk 'BEGIN{RS=">";OFS="\n"}(NR>1){print ">"$1" VN"(NR-1)" chromosomal replication initiator protein \n";$1="";print $0}' | awk '$0'  > /home/vincent/Desktop/Projects/2020_circleries/06_analysis/start_align_database/doriC_V3_update/doriC_update.fasta
+
+wc -l /home/vincent/Desktop/Projects/2020_circleries/06_analysis/start_align_database/doriC_V3_update/doriC_update.fasta
+sed '1d' /home/vincent/Downloads/doric10/tubic_plasmid_curated.csv | sed 's/^/>/g' | sed 's/,/\n/g' |awk -v FS= '/^>/{print;next}{for (i=0;i<=NF/60;i++) {for (j=1;j<=60;j++) printf "%s", $(i*60 +j); print ""}}'   | awk 'BEGIN{RS=">";OFS="\n"}(NR>1){print ">"$1" VN"(NR-1)" chromosomal replication initiator protein \n";$1="";print $0}' | awk '$0'  >> /home/vincent/Desktop/Projects/2020_circleries/06_analysis/start_align_database/doriC_V3_update/doriC_update.fasta
+
+wc -l /home/vincent/Desktop/Projects/2020_circleries/06_analysis/start_align_database/doriC_V3_update/doriC_update.fasta
+
+sed '1d' /home/vincent/Downloads/doric10/tubic_archaea_curated.csv | sed 's/^/>/g' | sed 's/,/\n/g' |awk -v FS= '/^>/{print;next}{for (i=0;i<=NF/60;i++) {for (j=1;j<=60;j++) printf "%s", $(i*60 +j); print ""}}'   | awk 'BEGIN{RS=">";OFS="\n"}(NR>1){print ">"$1" VN"(NR-1)" chromosomal replication initiator protein \n";$1="";print $0}' | awk '$0' >> /home/vincent/Desktop/Projects/2020_circleries/06_analysis/start_align_database/doriC_V3_update/doriC_update.fasta
+wc -l /home/vincent/Desktop/Projects/2020_circleries/06_analysis/start_align_database/doriC_V3_update/doriC_update.fasta
+
+
+
+###------------------------------------------------
+#merge with current database and 
+###------------------------------------------------
+
+
+cat /home/vincent/Desktop/Projects/2020_circleries/05_startAlign_data/starting_genes_v2.fasta /home/vincent/Desktop/Projects/2020_circleries/06_analysis/start_align_database/doriC_V3_update/doriC_update.fasta  > /home/vincent/Desktop/Projects/2020_circleries/06_analysis/start_align_database/doriC_V3_update/doriC_update_merged_with_V2.fasta
+
+#cat /data/Project/2021_circlator/20220106_2020_circleries_tool/Circleries/05_startAlign_data/starting_genes.fasta > /data/Project/2021_circlator/NCBI_analysis/analysis/initiation_proteins_nonCirculargenomes_extended.fna
+
+
+###------------------------------------------------
+#deduplicate with cd-hit
+###------------------------------------------------
+
+rm -r /home/vincent/Desktop/Projects/2020_circleries/06_analysis/start_align_database/doriC_V3_update//cd_hit_v3/
+mkdir -p /home/vincent/Desktop/Projects/2020_circleries/06_analysis/start_align_database/doriC_V3_update//cd_hit_v3/
+
+cd-hit-est -i /home/vincent/Desktop/Projects/2020_circleries/06_analysis/start_align_database/doriC_V3_update/doriC_update_merged_with_V2.fasta \
+    -o /home/vincent/Desktop/Projects/2020_circleries/06_analysis/start_align_database/doriC_V3_update//cd_hit_v3//cd_hit_initiation_proteins_v3 -c 0.98 -M 30000 -T 30 
+    
+#with 97-----> 6718  clusters (total 7171)    
+#with 98-----> 6821  clusters (total 7171)    
+#with 99-----> 6914  clusters (total 7171)    
+
+###------------------------------------------------
+#move local
+###------------------------------------------------   
+
+cp  /home/vincent/Desktop/Projects/2020_circleries/06_analysis/start_align_database/doriC_V3_update//cd_hit_v3//cd_hit_initiation_proteins_v3 /home/vincent/Desktop/Projects/2020_circleries/05_startAlign_data/starting_genes_v3.fasta
+
+```
+
+
+
+
+
+
+

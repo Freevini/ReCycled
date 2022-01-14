@@ -51,7 +51,7 @@ Help()
    echo "   -l     long read file (fq or fq.gz) (MANDATORY)" #longreads
    echo "   -f     short read forward read (read 1) (fq or fq.gz)" #shortreads_1
    echo "   -r     short read reverse read (read 2) (fq or fq.gz)" #shortreads_2
-   echo "   -a     add a own inition protein database (in nucleotide fasta)" #shortreads_2
+   echo "   -a     add an own initiation protein database (in nucleotide fasta)" #shortreads_2
    echo
    echo "OUTPUT"
    echo "   -d     output directory [.]" #outputFolderName
@@ -188,7 +188,7 @@ echo -e "Dependencies:"
 
 
 seqkit_path=$(echo -e ${circleriesPATH}"/02_dependencies/seqkit")
-startalining_genes=$(echo -e ${circleriesPATH}"/05_startAlign_data/starting_genes_v2.fasta ")
+startalining_genes=$(echo -e ${circleriesPATH}"/05_startAlign_data/starting_genes_v3.fasta ")
 
 #${circleriesPATH}/05_startAlign_data/starting_genes.fasta
 
