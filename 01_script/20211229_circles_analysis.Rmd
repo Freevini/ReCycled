@@ -783,9 +783,9 @@ cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02
 ##==============================================================
 conda activate Circlers
 
-tmpdir=tmp_07
+tmpdir=tmp_08
 rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02_onlycirclers
-for SRA in $(awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |head -68)
+for SRA in $(awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt  |sort|uniq)
 #for SRA in $(awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |head -30 |tail -20)
 do
 
@@ -825,11 +825,21 @@ cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/$
 
 ##final summary
 
-echo -e ${SRA}"\tNA\t"${runtime_circleres} >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02_onlycirclers
+echo -e ${SRA}"\tNA\t"${runtime_circleres} >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_03_onlycirclers
 
 done
 
 SRA=SRR12953603
+
+wc -l /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02
+cut -f 1 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02 |sort|uniq |wc -l
+awk '{if($2>10)print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02|sort|uniq|wc -l
+
+
+##----Current SRA of interest--> contain flye assembly, circlator and circles--------------
+
+awk '{if($2>10)print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02|sort|uniq
+
 ```
 
 
@@ -841,60 +851,6 @@ SRA=SRR12953603
 3. are the bacterial contigs not wrongly start aligned?
 4. are the contigs not wrongly circularised?
 4. how fast is it?
-
-#### 1. are all circular contigs recognized?
-
-```{bash}
-#---------------------------------------------------
-#1. are all circular contigs recognised)
-#---------------------------------------------------
-echo -e "SRA\tcirclator\tcirclers" > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlular_analysis.final
-for SRA in $(awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |head -5)
-do
-echo "==========================="
-echo ${SRA}
-##------flye
-
-grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt  |awk '{if($4=="Y") print $1}' |sort -n > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.flye
-
-
-cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt 
-echo -e "--------circlator"
-
-
-##------circlator
-
-#cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp/${SRA}/06.fixstart.log
-#cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp/${SRA}/04.merge.circularise.log
-awk -F "\t" '{OFS="\t"}{if($6==1) print $2}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp/${SRA}/04.merge.circularise.log |sort -n  > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.circlator
-
-echo -e "--------circles"
-
-##------circles
-#cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log 
-awk -F "\t" '{OFS="\t"}{if($8=="Y") print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log |sort -n > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.circlers 
-
-echo -e "--------analysis"
-difference_circlator=NA
-
-difference_circlator=$(diff /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.flye /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.circlator |wc -l)
-
-echo -e "--------analysis 02"
-difference_circler=NA
-
-difference_circler=$(diff /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.flye /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.circlers  |wc -l)
-
-rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.*
-
-echo -e "--------analysis total"
-
-echo -e ${SRA}"\t"${difference_circlator}"\t"${difference_circler} >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlular_analysis.final
-
-done
-
-cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlular_analysis.final
-
-```
 
 
 
@@ -930,7 +886,9 @@ ll /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathere
 
 rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis.final
 #echo -e "SRA\tflye\tcirclator\tcirclers" > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis.final
-for SRA in $(awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |head -68)
+#for SRA in $(awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |head -68)
+
+for SRA in $(awk '{if($2>10)print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02|sort|uniq)
 do
 echo "==========================="
 echo ${SRA}
@@ -950,6 +908,8 @@ circlator_circ=$(grep "${contigzz}$(printf '\t')" /data/Project/2021_circlator/N
 
 circlator_start=$(grep "${contigzz}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_02/${SRA}_fixstart.log |cut -f 7)
 
+
+ /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${tmpdir}/${SRA}/04.merge.circularise.log
 
 #if [ $circlator_circ  ==  1 ] &&  [ $circlator_start  =  "-" ]; then
 #circlator_final=$(echo "Y")
@@ -1418,5 +1378,61 @@ scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/test_cas
 
 ```
 
+#backup
+
+
+#### 1. are all circular contigs recognized?
+
+```{bash}
+#---------------------------------------------------
+#1. are all circular contigs recognised)
+#---------------------------------------------------
+echo -e "SRA\tcirclator\tcirclers" > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlular_analysis.final
+for SRA in $(awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |head -5)
+do
+echo "==========================="
+echo ${SRA}
+##------flye
+
+grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt  |awk '{if($4=="Y") print $1}' |sort -n > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.flye
+
+
+cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt 
+echo -e "--------circlator"
+
+
+##------circlator
+
+#cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp/${SRA}/06.fixstart.log
+#cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp/${SRA}/04.merge.circularise.log
+awk -F "\t" '{OFS="\t"}{if($6==1) print $2}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/tmp/${SRA}/04.merge.circularise.log |sort -n  > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.circlator
+
+echo -e "--------circles"
+
+##------circles
+#cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log 
+awk -F "\t" '{OFS="\t"}{if($8=="Y") print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log |sort -n > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.circlers 
+
+echo -e "--------analysis"
+difference_circlator=NA
+
+difference_circlator=$(diff /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.flye /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.circlator |wc -l)
+
+echo -e "--------analysis 02"
+difference_circler=NA
+
+difference_circler=$(diff /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.flye /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.circlers  |wc -l)
+
+rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.*
+
+echo -e "--------analysis total"
+
+echo -e ${SRA}"\t"${difference_circlator}"\t"${difference_circler} >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlular_analysis.final
+
+done
+
+cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlular_analysis.final
+
+```
 
 

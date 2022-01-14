@@ -230,10 +230,21 @@ if [[ "$check_fasta" !=  "1" ]]; then
   exit
 fi
 
-##--------------------------------------------check if long reads is a fastq file----------------------------------------
+##--------------------------------------------check if long reads is a fastq or fasta (here give warning) ----------------------------------------
 check_fastq=$(less ${longreads}|head -1 |grep "^@" -c)
+check_fasta=$(less ${longreads}|head -1 |grep "^>" -c)
 
-if [[ "$check_fastq" !=  "1" ]]; then
+if [[ "$check_fasta" ==  "1" ]]; then
+    echo -e "!! WARNING !!"
+  echo "long reads appear to be FASTA format, most commenly long reads are in fastq format!"
+  echo "Are your sure?"
+  echo "We will proceed for now..."
+  echo
+fi
+
+if [[ "$check_fastq" !=  "1" ]] && [[ "$check_fasta" !=  "1" ]]
+  then
+  echo "!! ERROR !!"
   echo "long reads do not appear to be FASTQ format (lacks a descriptor line @ at the beginning)"
   exit
 fi
