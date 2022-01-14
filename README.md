@@ -63,10 +63,6 @@ Circles is currently not tested on macOS or Windows.
 
 #  Installation
 
-### Build and run without installation
-
-By simply running `make` in CircAidMe's directory, you can compile the C++ components but not install an executable. The program can then be executed by directly calling the `circaidme-runner.py` script.
-
 ```bash
 git clone https://github.com/Freevini/Circleries.git
 cd Circleries
