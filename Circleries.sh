@@ -30,6 +30,7 @@ shortreads_2=""
 
 unset genomeFASTAname
 unset longreads
+unset check_fasta
 #unset shortreads_1
 #unset shortreads_2
 
@@ -57,7 +58,7 @@ Help()
    echo "   -o     output file name " #threads #outName
    echo
    echo "RUNNING OPTIONS"
-   echo "   -p     circleries script directory (with all dependencies) [PATH]" #circleriesPATH
+   echo "   -p     circleries script directory (If not in PATH) [PATH]" #circleriesPATH
    echo "   -t     number of threads to use [4]" #threads
    echo "   -x     keep all tmp files created [N]" #threads
    echo "   -F     Force everything to run again [N]" #threads
@@ -186,18 +187,14 @@ echo
 echo -e "Dependencies:"
 
 
-fasta_shift_path=$(echo -e ${circleriesPATH}"/02_dependencies/fasta_shift")
 seqkit_path=$(echo -e ${circleriesPATH}"/02_dependencies/seqkit")
-#paftools_path=$(echo -e ${circleriesPATH}"/02_dependencies/paftools.js")
 startalining_genes=$(echo -e ${circleriesPATH}"/05_startAlign_data/starting_genes_v2.fasta ")
 
 #${circleriesPATH}/05_startAlign_data/starting_genes.fasta
 
-#$fasta_shift_path --help
 #type baloooihok >/dev/null 2>&1 && echo -e "   baloooihok......OK" || { echo >&2 "   baloooihok is not installed.  Aborting."; exit 1; }
 
 type minimap2 >/dev/null 2>&1 && echo -e "   Minimap2......OK" || { echo >&2 "   Minimap2 is not installed.  Aborting."; exit 1; }
-#type $fasta_shift_path >/dev/null 2>&1 && echo -e "   fasta_shift......OK" || { echo >&2 "   fasta_shift is not installed.  Aborting."; exit 1; }
 #type revseq >/dev/null 2>&1 && echo -e "   revseq......OK" || { echo >&2 "   revseq is not installed.  Aborting."; exit 1; }
 type bedtools >/dev/null 2>&1 && echo -e "   bedtools......OK" || { echo >&2 "   bedtools is not installed.  Aborting."; exit 1; }
 type $seqkit_path >/dev/null 2>&1 && echo -e "   seqkit......OK" || { echo >&2 "   seqkit is not installed.  Aborting."; exit 1; }
@@ -224,6 +221,22 @@ if [[ "$force" == "Y" ]]; then
 fi
 
 mkdir -p ${outputFolderName}/tmp_${outName}/genome/
+
+##--------------------------------------------check if input is a fasta file----------------------------------------
+check_fasta=$(head -1 ${genomeFASTAname}|grep "^>" -c)
+
+if [[ "$check_fasta" !=  "1" ]]; then
+  echo "Input does not appear to be FASTA format (lacks a descriptor line > at the beginning)"
+  exit
+fi
+
+##--------------------------------------------check if long reads is a fastq file----------------------------------------
+check_fastq=$(less ${longreads}|head -1 |grep "^@" -c)
+
+if [[ "$check_fastq" !=  "1" ]]; then
+  echo "long reads do not appear to be FASTQ format (lacks a descriptor line @ at the beginning)"
+  exit
+fi
 
 ##--------------------------------------------put every contig on one line----------------------------------------
 sed '/>/s/\t/_/g' ${genomeFASTAname}|sed '/>/s/ /_/g'|sed '/>/s/$/\t/g' | tr -d '\n' | sed 's/\t/\n/g' | sed 's/>/\n>/g' | sed '/^[[:space:]]*$/d'  >  ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.fasta
@@ -614,8 +627,6 @@ do
     then
 
 
-    #  $fasta_shift_path -i ${outputFolderName}/tmp_${outName}/genome/${contigName}.fasta -p ${contigStart} > \
-    #          ${outputFolderName}/tmp_${outName}/StartAlignedContigs/${contigName}_startAligned_old.fasta
 
         cat ${outputFolderName}/tmp_${outName}/genome/${contigName}.fasta  | $seqkit_path restart -i ${contigStart} > \
         ${outputFolderName}/tmp_${outName}/StartAlignedContigs/${contigName}_startAligned.fasta
@@ -626,8 +637,6 @@ do
 
       #  echo "reverse oriented and start align at:  "${contigStart}
 
-      #$fasta_shift_path -i ${outputFolderName}/tmp_${outName}/genome/${contigName}.fasta -p ${contigStart} > \
-      #      ${outputFolderName}/tmp_${outName}/tmp/${contigName}_startAligned_wrongOrientation_old.fasta
 
       cat ${outputFolderName}/tmp_${outName}/genome/${contigName}.fasta  | $seqkit_path restart -i ${contigStart} > \
                   ${outputFolderName}/tmp_${outName}/tmp/${contigName}_startAligned_wrongOrientation.fasta
