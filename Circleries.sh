@@ -17,7 +17,7 @@ tmpss="N"
 # Set Infos
 AUTHOR="Vincent Somerville"
 EXE="Circleries"
-VERSION="V0.0.1"
+VERSION="V0.0.9"
 starttime=$(date)
 starts=`date +%s`
 outName="N"
@@ -199,12 +199,15 @@ type minimap2 >/dev/null 2>&1 && echo -e "   Minimap2......OK" || { echo >&2 "  
 type bedtools >/dev/null 2>&1 && echo -e "   bedtools......OK" || { echo >&2 "   bedtools is not installed.  Aborting."; exit 1; }
 type $seqkit_path >/dev/null 2>&1 && echo -e "   seqkit......OK" || { echo >&2 "   seqkit is not installed.  Aborting."; exit 1; }
 #type $paftools_path >/dev/null 2>&1 && echo -e "   paftools.js......OK" || { echo >&2 "   paftools.js is not installed.  Aborting."; exit 1; }
-[ -f $startaligning_genes ] && echo "   startaligning_genes......OK" || { echo "   startaligning_genes is not installed.  Aborting."; exit 1; }
 
 
 #type $startalining_genes >/dev/null 2>&1 && echo -e "   startalining_genes......OK" || { echo >&2 "   startalining_genes is not installed.  Aborting."; exit 1; }
 
 
+echo
+
+echo -e "Checking database blablalba::"
+[ -f $startaligning_genes ] && echo "   startaligning_genes......OK" || { echo "   startaligning_genes is not installed.  Aborting."; exit 1; }
 echo
 
 ###########################################################
@@ -231,8 +234,12 @@ if [[ "$check_fasta" !=  "1" ]]; then
 fi
 
 ##--------------------------------------------check if long reads is a fastq or fasta (here give warning) ----------------------------------------
-check_fastq=$(less ${longreads}|head -1 |grep "^@" -c)
-check_fasta=$(less ${longreads}|head -1 |grep "^>" -c)
+#check_fastq=$(less ${longreads}|head -1 |grep "^@" -c)
+#check_fasta=$(less ${longreads}|head -1 |grep "^>" -c)
+
+check_fastq=$(${seqkit} head -n 1 ${longreads} |grep "^@" -c)
+check_fasta=$(${seqkit head -n 1 ${longreads} |grep "^>" -c)
+
 
 if [[ "$check_fasta" ==  "1" ]]; then
     echo -e "!! WARNING !!"

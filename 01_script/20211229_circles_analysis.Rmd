@@ -304,6 +304,8 @@ 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
 
 scp -r /home/vincent/Desktop/Projects/2020_circleries/01_script/random_line.txt vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/
 
+
+
 ```
 
 
