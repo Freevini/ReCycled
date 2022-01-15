@@ -236,9 +236,10 @@ fi
 ##--------------------------------------------check if long reads is a fastq or fasta (here give warning) ----------------------------------------
 #check_fastq=$(less ${longreads}|head -1 |grep "^@" -c)
 #check_fasta=$(less ${longreads}|head -1 |grep "^>" -c)
+${seqkit_path} head -n 1 ${longreads}|head -1
 
-check_fastq=$(${seqkit} head -n 1 ${longreads} |grep "^@" -c)
-check_fasta=$(${seqkit head -n 1 ${longreads} |grep "^>" -c)
+check_fastq=$(${seqkit_path} head -n 1 ${longreads}|head -1 |grep "^@" -c)
+check_fasta=$(${seqkit_path} head -n 1 ${longreads} |head -1|grep "^>" -c)
 
 
 if [[ "$check_fasta" ==  "1" ]]; then
