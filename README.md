@@ -66,7 +66,7 @@ Circles currently does not support macOS and Windows.
 git clone https://github.com/Freevini/Circleries.git
 cd Circleries
 
-Circleries.sh -h
+./Circleries.sh -h
 ```
 
 In addition you have to install Minimap2 and bedtools. Make sure that bash will find them either via adding to PATH variable or installation into a system folder.
@@ -75,19 +75,19 @@ In addition you have to install Minimap2 and bedtools. Make sure that bash will 
 # Usage examples
 
 __Minimally parameterized run of Circleries:__<br>
-`Circleries.sh -i input_assembly.fasta -l input_long reads `
+`Circleries.sh -i input_assembly.fasta -l input_long_reads `
 
 __If you want to run it in multithread mode use flag `-t`:__<br>
-`Circleries.sh -i input_assembly.fasta -l input_long reads -t 8 `
+`Circleries.sh -i input_assembly.fasta -l input_long_reads -t 8 `
 
 __If you want to overwrite the previous run use flag `-F`:__<br>
-`Circleries.sh -i input_assembly.fasta -l input_long reads -F `
+`Circleries.sh -i input_assembly.fasta -l input_long_reads -F `
 
 __If you want to keep all tmp files use flag `-x`:__<br>
-`Circleries.sh -i input_assembly.fasta -l input_long reads -x `
+`Circleries.sh -i input_assembly.fasta -l input_long_reads -x `
 
 __If you want to define a specific output file name use `-o` or output file directory use `-d` :__<br>
-`Circleries.sh -i input_assembly.fasta -l input_long reads -o results -d results/out/directory/ `
+`Circleries.sh -i input_assembly.fasta -l input_long_reads -o results -d results/out/directory/ `
 
 # Output of a Circleries run
 
@@ -136,7 +136,7 @@ minimal syntax: Circleries -i <genome_input.fasta> -l <raw_long_read.fastq.gz>
 
 # How Circleries works
 
-Test Circleries with the two provided test cases:
+Test Circleries with the two provided test data sets:
 
 1. two circular contigs
 
