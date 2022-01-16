@@ -832,5 +832,6 @@ fi
 
 ##--------------------------------------------say goodbye----------------------------------------
 
+echo
 echo -e "Thanks for using Circleries. See you soon!"
 echo
