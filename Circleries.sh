@@ -142,6 +142,15 @@ fi
 : ${longreads:?Missing: "-l" which is the long read file. This information is mandatory}
 : ${genomeFASTAname:?Missing: "-i" which is the input genome name (\in fasta format). This information is mandatory}
 
+if [ ! -f "$longreads" ]; then
+    echo "Can not find file \"$longreads\". Exiting."; exit 22
+fi
+
+if [ ! -f "$genomeFASTAname" ]; then
+    echo "Can not find file \"$genomeFASTAname\". Exiting."; exit 22
+fi
+
+
 ##--------------------------------------------prepare outName if necessary----------------------------------------
 if [ "$outName" == "N" ]
 then
@@ -200,7 +209,7 @@ type $seqkit_path >/dev/null 2>&1 && echo -e "   seqkit......OK" || { echo >&2 "
 
 echo
 
-echo -e "Checking database blablalba::"
+echo -e "Checking database:"
 [ -f $startaligning_genes ] && echo "   startaligning_genes......OK" || { echo "   startaligning_genes is not installed.  Aborting."; exit 1; }
 echo
 
@@ -832,6 +841,7 @@ echo
 
 echo
 
+
 ##--------------------------------------------remove tmp files----------------------------------------
 
 if [ "$tmpss" == "N" ]
@@ -839,5 +849,10 @@ then
     rm -r ${outputFolderName}/tmp_${outName}
     echo -e "      removing all tmps files......Done"
 fi
-echo -e "      See you soon!"
+
+
+##--------------------------------------------say goodbye----------------------------------------
+
+echo
+echo -e "Thanks for using Circleries. See you soon!"
 echo
