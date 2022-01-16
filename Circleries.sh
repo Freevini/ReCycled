@@ -206,7 +206,7 @@ type $seqkit_path >/dev/null 2>&1 && echo -e "   seqkit......OK" || { echo >&2 "
 
 echo
 
-echo -e "Checking database blablalba::"
+echo -e "Checking database:"
 [ -f $startaligning_genes ] && echo "   startaligning_genes......OK" || { echo "   startaligning_genes is not installed.  Aborting."; exit 1; }
 echo
 
