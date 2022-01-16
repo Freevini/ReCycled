@@ -142,6 +142,15 @@ fi
 : ${longreads:?Missing: "-l" which is the long read file. This information is mandatory}
 : ${genomeFASTAname:?Missing: "-i" which is the input genome name (\in fasta format). This information is mandatory}
 
+if [ ! -f "$longreads" ]; then
+    echo "Can not find file \"$longreads\". Exiting."; exit 22
+fi
+
+if [ ! -f "$genomeFASTAname" ]; then
+    echo "Can not find file \"$genomeFASTAname\". Exiting."; exit 22
+fi
+
+
 ##--------------------------------------------prepare outName if necessary----------------------------------------
 if [ "$outName" == "N" ]
 then
