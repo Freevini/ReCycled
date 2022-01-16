@@ -820,6 +820,7 @@ echo
 
 echo
 
+
 ##--------------------------------------------remove tmp files----------------------------------------
 
 if [ "$tmpss" == "N" ]
@@ -827,5 +828,9 @@ then
     rm -r ${outputFolderName}/tmp_${outName}
     echo -e "      removing all tmps files......Done"
 fi
-echo -e "      See you soon!"
+
+
+##--------------------------------------------say goodbye----------------------------------------
+
+echo -e "Thanks for using Circleries. See you soon!"
 echo
