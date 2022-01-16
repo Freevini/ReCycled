@@ -150,12 +150,6 @@ fi
 
 
 # ###########################################################
-#Test
-############################################################
-
-#echo "hello World"
-
-# ###########################################################
 #prep and dependencies
 ############################################################
 
@@ -271,6 +265,24 @@ genomeSize=$(grep ">" -v ${outputFolderName}/tmp_${outName}/genome/${header_shor
 echo -e "           "$header_short" (contigsize = "${genomeSize}" bp)"
 done
 echo
+
+
+
+##--------------------------------------------GC-skew ------------------------------------
+
+echo -e "       GC-skew..."
+
+
+for header in $(grep ">" ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.fasta)
+do
+header_short=$(echo ${header}|sed 's/>//g' )
+
+${seqkit_path} fx2tab  --name  --gc-skew ${outputFolderName}/tmp_${outName}/genome/${header_short}.fasta
+
+done
+echo
+
+#infoseq test.fa  -only -desc -name -length -pgc
 
 ###########################################################
 #origin search
@@ -763,7 +775,7 @@ for header in $(grep ">" ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.
    if [ $circular == "Y" ];
       then
        echo -e "              Circularized contig name......" ${header}
-       cat ${outputFolderName}/tmp_${outName}/StartAlignedContigs/${contigName}_startAligned.fasta  >> ${outputFolderName}/${outName}.fasta
+       cat ${outputFolderName}/tmp_${outName}/StartAlignedContigs/${header}_startAligned.fasta  >> ${outputFolderName}/${outName}.fasta
 
     else
       echo -e "              Non-Circularized contig name......" ${header}

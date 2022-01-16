@@ -79,6 +79,36 @@ conda activate Circlers
 #cd /home/vincent/Desktop/Projects/2020_circleries/01_script/
 #./test.sh
 
+
+##----------------------------test case 1
+
+
+conda activate Circlers
+
+/home/vincent/Desktop/Projects/2020_circleries/Circleries.sh\
+    -i /home/vincent/Desktop/Projects/2020_circleries/03_TestData/oneCircularContigs_SRR3880379.fasta \
+    -l /home/vincent/Desktop/Projects/2020_circleries/03_TestData/oneCircularContigs_SRR3880379.fq.gz \
+    -t 8 \
+    -o test_03 \
+    -d /home/vincent/Desktop/Projects/2020_circleries/03_test_Data \
+    -F \
+    -x
+    
+##----------------------------test case 1
+
+conda activate Circlers
+
+/home/vincent/Desktop/Projects/2020_circleries/Circleries.sh\
+    -i /home/vincent/Desktop/Projects/2020_circleries/03_TestData/oneCircular_eigthNonCircular_SRR15376163.fasta \
+    -l /home/vincent/Desktop/Projects/2020_circleries/03_TestData/oneCircular_eigthNonCircular_SRR15376163.fq.gz \
+    -t 8 \
+    -o test_03 \
+    -d /home/vincent/Desktop/Projects/2020_circleries/03_test_Data \
+    -F \
+    -x
+    
+
+
 ```
 
 
