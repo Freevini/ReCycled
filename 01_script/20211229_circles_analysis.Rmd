@@ -482,7 +482,6 @@ genomeName=GCF_016889345.1_ASM1688934v1
 
 grep "${genomeName}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.txt |cut -f 3 > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names_tmp
 
-
 SRA=NA
 
 epost -db biosample -input /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names_tmp -format acc | \
@@ -986,8 +985,8 @@ rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis
 #echo -e "SRA\tflye\tcirclator\tcirclers" > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis.final
 #for SRA in $(awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |head -68)
 
-#for SRA in $(awk '{if($2>10)print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02|sort|uniq)
-for SRA in $(cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis_prepSofar.txt )
+for SRA in $(awk '{if($2>10)print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02|sort|uniq)
+#for SRA in $(cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis_prepSofar.txt )
 do
 echo "==========================="
 echo ${SRA}
@@ -1131,17 +1130,116 @@ contigzz=$(grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/
 grep "${contigzz}_StartAligned" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}.fasta
 #grep ">" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}.fasta
 
-#minimap2 -ax map-ont --secondary=no -F 6000 -t 20 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}.fasta \
-#/data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq  |samtools sort -@8 -O BAM \
-#-o /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SMILEY/coverage_smiley_${SRA}.bam -
+minimap2 -ax map-ont --secondary=no -F 6000 -t 20 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}.fasta \
+/data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq  |samtools sort -@8 -O BAM \
+-o /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SMILEY/coverage_smiley_${SRA}.bam -
 
 
-#samtools depth -a <ESL0xxx>_sorted.bam > <ESL0xxx>_depth.txt
-
-
+samtools depth -a /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SMILEY/coverage_smiley_${SRA}.bam > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SMILEY/coverage_smiley_${SRA}.depth
 
 done
+
+##-----------------------------------------
+#merge files together
+##-----------------------------------------
+
+rm  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SMILEY/all.depth
+for SRA in $(awk -F "\t" '{if ($2=="Y")print $1}'  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis.final |sort|uniq )
+do
+echo "==========================="
+echo ${SRA}
+contigzz=$(grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt | sort -k2 -n -r |head -1 |cut -f 1)
+
+
+grep "${contigzz}_StartAligned" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SMILEY/coverage_smiley_${SRA}.depth | awk -v SRAzzz="$SRA" '{print SRAzzz,$2,$3}' >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SMILEY/all.depth
+
+done
+
+
+
+##-----------------------------------------
+#merge files together
+##-----------------------------------------
+
+
+
+mkdir -p /home/vincent/Desktop/Projects/2020_circleries/06_analysis/final_analysis/SMILEY/
+scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SMILEY/all.depth /home/vincent/Desktop/Projects/2020_circleries/06_analysis/final_analysis/SMILEY/
+
 ```
+
+
+```{r}
+library(tidyverse)
+require(zoo)
+
+
+all <- read_table2("~/Desktop/Projects/2020_circleries/06_analysis/final_analysis/SMILEY/all.depth",  col_names = FALSE)
+
+averaged_all <- data.frame()
+for (contigss in unique(all$X1)) {
+  
+tmps_1 <- all %>% filter(X1==contigss)
+  
+tmp_2 <- rollapply(tmps_1$X3, width = 100000, by = 5000, FUN = median, align = "left")
+
+
+tmp_3 <- data.frame(contig=contigss,bin=1:length(tmp_2),coverage=tmp_2)
+averaged_all <- rbind(averaged_all,tmp_3) %>% as_tibble()
+  
+}
+
+averaged_all
+
+
+averaged_all_norm<- averaged_all %>% group_by(contig) %>% summarise(bin_max=max(bin),coverage_max=max(coverage))
+
+table(averaged_all_norm$contig)
+
+averaged_all_normalised <- merge(averaged_all,averaged_all_norm,by="contig") %>% mutate(bin_norm=bin/bin_max,coverage_norm=coverage/coverage_max)# %>% filter(contig!="DRR161292")
+
+##-----------------------------------------
+#plot
+##-----------------------------------------
+
+ggplot(averaged_all_normalised,aes(x=bin_norm,y=coverage_norm,group=contig,color=contig,fill=contig))+geom_line()+theme_classic()+lims(y=c(0,1))
+
+
+
+```
+
+
+
+#### 6. GC skew
+
+Here, i calculate the GC-skew 
+
+```{bash}
+
+
+for SRA in $(awk -F "\t" '{if ($2=="Y")print $1}'  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis.final |sort|uniq )
+do
+echo "==========================="
+echo ${SRA}
+##------flye
+
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/GC_skew
+
+contigzz=$(grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt | sort -k2 -n -r |head -1 |cut -f 1)
+
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}.fasta /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/GC_skew/
+
+samtools faidx /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/GC_skew/${SRA}.fasta
+samtools faidx /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/GC_skew/${SRA}.fasta ${contigzz}_StartAligned > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/GC_skew/${SRA}_startAligned.fasta 
+
+python /home/vincent/Desktop/Projects/2020_circleries/02_dependencies/skewi.py -i /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/GC_skew/${SRA}_startAligned.fasta  -o /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/GC_skew/${SRA}_startAligned.GC_skew
+
+done
+
+
+
+```
+
 
 
 ## final analysis
@@ -1307,100 +1405,6 @@ echo "---------------------"
 cat  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info*
 
 done
-##------------------------------------------
-#Reassmelby
-##------------------------------------------
-for SRA in $(awk -F "\t" '{OFS="\t"}{if($2=="N" && $4=="Y") print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis.final |sort|uniq |grep "DRR201556" -v |grep -v "SRR12506199" )
-do
-echo "================================="
-
-echo ${SRA}
-
-awk -v srazzz="$SRA" '{if($1==srazzz)print $0}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names.sra.info_03
-
-
-awk -v srazzz="$SRA" '{if($1==srazzz)print $0}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names.sra.info_03 > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_10
-
-Pacbio_yes=$(grep "Illumina" -i -v  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_10 |head -1|grep "pacbio" -i|wc -l |cut -d ' ' -f 1)
-
-ONT_yes=$(grep "Illumina" -i -v  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_10 |head -1|grep "Oxford" -i|wc -l |cut -d ' ' -f 1)
-
-Illumina_yes=$(grep "Illumina" -i  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_10 |head -1|wc -l |cut -d ' ' -f 1)
-
-#echo ${Pacbio_yes}
-#echo ${ONT_yes}
-
-rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_10
-
-##-----------------------------------------assemble with flye
-mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp_02/
-
-if [ $Pacbio_yes -gt 0 ]
-then
-echo "Pacbio data"
-
-python /home/vincent/apps/flye/Flye/bin/flye --threads 20  --iterations 1 --pacbio-raw \
-      /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq \
-      --out-dir /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp_02/${SRA}
-
-elif [ $ONT_yes -gt 0 ]
-then
-echo "ONT data"
-
-python /home/vincent/apps/flye/Flye/bin/flye --threads 20  --iterations 1 --nano-raw \
-      /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq \
-      --out-dir /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp_02/${SRA}
-
-fi
-
-
-done
-
-
-###---------------------------
-#bring together assembly graphs
-###---------------------------
-rm -r /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp_02/together
-mkdir -p  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp_02/together
-
-for SRA in $(awk -F "\t" '{OFS="\t"}{if($2=="N" && $4=="Y") print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis.final )
-do
-
-echo ${SRA}
-
-cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp_02/${SRA}/assembly_graph.gfa  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp_02/together/${SRA}_assembly_graph.gfa
-
-done
-
-###---------------------------
-#bring local
-###---------------------------
-
-mkdir -p /home/vincent/Desktop/Projects/2020_circleries/06_analysis/strangeCases/
-scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp_02/together/ /home/vincent/Desktop/Projects/2020_circleries/06_analysis/strangeCases/
-
-
-
-###-----------------------------
-#special case
-###-----------------------------
-
-
-SRA=SRR17072975
-
-
-cd /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp_07/${SRA}/tmp_SRR17072975/
-cat ../SRR17072975_analysis_circularity_extended.log
-
-cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp_02/${SRA}/*_info*
-
-header=contig_6
-
-grep "${header}" Start_end_readmapping/long_read/mapping/all_contigs_mapping.paf 
-
-
-awk -F "\t" -v contigName="$header" '{OFS="\t"}{if($6==contigName"_EndAndStart"&& $8<2900 && $9> 3100 )print $0}' Start_end_readmapping/long_read/mapping/all_contigs_mapping.paf >  Start_end_readmapping/long_read/mapping/${header}_contigs_mapping.paf
-
 ##==========================================================
 ##==========================================================
 #replace assemblies
@@ -1484,7 +1488,102 @@ echo -e ${SRA}"\t"${contig_count}"\t"${longest_contig}"\t"${circ_longest}"\t"${n
 
 done
 
+
+###---------------------------
+#bring together assembly graphs
+###---------------------------
+rm -r /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp_02/together
+mkdir -p  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp_02/together
+
+for SRA in $(awk -F "\t" '{OFS="\t"}{if($2=="N" && $4=="Y") print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis.final )
+do
+
+echo ${SRA}
+
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp_02/${SRA}/assembly_graph.gfa  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp_02/together/${SRA}_assembly_graph.gfa
+
+done
+
+###---------------------------
+#bring local
+###---------------------------
+
+mkdir -p /home/vincent/Desktop/Projects/2020_circleries/06_analysis/strangeCases/
+scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp_02/together/ /home/vincent/Desktop/Projects/2020_circleries/06_analysis/strangeCases/
+
+
+
+###-----------------------------
+#special case
+###-----------------------------
+
+
+SRA=SRR17072975
+
+
+cd /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp_07/${SRA}/tmp_SRR17072975/
+cat ../SRR17072975_analysis_circularity_extended.log
+
+cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp_02/${SRA}/*_info*
+
+header=contig_6
+
+grep "${header}" Start_end_readmapping/long_read/mapping/all_contigs_mapping.paf 
+
+
+awk -F "\t" -v contigName="$header" '{OFS="\t"}{if($6==contigName"_EndAndStart"&& $8<2900 && $9> 3100 )print $0}' Start_end_readmapping/long_read/mapping/all_contigs_mapping.paf >  Start_end_readmapping/long_read/mapping/${header}_contigs_mapping.paf
+
 ```
+
+# check start alignement
+
+Here, I check the start alignement. If a genome does not have a nice smiley it I checked the startalignment gene mapping. 
+If it was no high quality map, I added the appropriate gene to the database. 
+
+
+```{bash}
+#============================================
+#------------------
+#specias cases
+#------------------
+#============================================
+
+
+SRA=DRR161292
+
+cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log
+
+
+
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp_checkSTART${SRA}
+
+/data/Project/2021_circlator/20220106_2020_circleries_tool/Circleries/Circleries.sh \
+    -i /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}.fasta \
+    -l /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq \
+    -t 8 \
+    -o ${SRA} \
+    -d /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp_checkSTART${SRA}/ \
+    -F -x
+
+cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp_checkSTART${SRA}/${SRA}_analysis_circularity_extended.log
+
+cd /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/tmp_checkSTART${SRA}/tmp_${SRA}/
+
+
+header=contig_1
+
+grep "${header}" Start_end_readmapping/long_read/mapping/all_contigs_mapping.paf 
+
+grep "${header}" /start_alignment_mapping//${header}_unfiltered.minimap 
+
+grep "${header}" start_alignment_mapping//${header}.minimap
+
+
+grep "${SRA}" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names.sra.info_02
+
+```
+
+
 
 # create test cases
 

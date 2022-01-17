@@ -1,2 +1,3 @@
 paftools.js: https://github.com/lh3/minimap2/tree/master/misc/
 SeqKit: https://bioinf.shenwei.me/seqkit/
+SkewIT: https://github.com/jenniferlu717/SkewIT

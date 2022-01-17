@@ -191,6 +191,9 @@ echo -e "Dependencies:"
 
 
 seqkit_path=$(echo -e ${circleriesPATH}"/02_dependencies/seqkit")
+qcSkew_path=$(echo -e ${circleriesPATH}"/02_dependencies/gcskew.py")
+
+
 startalining_genes=$(echo -e ${circleriesPATH}"/05_startAlign_data/starting_genes_v3.fasta ")
 
 #${circleriesPATH}/05_startAlign_data/starting_genes.fasta
@@ -201,6 +204,8 @@ type minimap2 >/dev/null 2>&1 && echo -e "   Minimap2......OK" || { echo >&2 "  
 #type revseq >/dev/null 2>&1 && echo -e "   revseq......OK" || { echo >&2 "   revseq is not installed.  Aborting."; exit 1; }
 type bedtools >/dev/null 2>&1 && echo -e "   bedtools......OK" || { echo >&2 "   bedtools is not installed.  Aborting."; exit 1; }
 type $seqkit_path >/dev/null 2>&1 && echo -e "   seqkit......OK" || { echo >&2 "   seqkit is not installed.  Aborting."; exit 1; }
+type $qcSkew_path >/dev/null 2>&1 && echo -e "   qcSkew......OK" || { echo >&2 "   qcSkew is not installed.  Aborting."; exit 1; }
+
 #type $paftools_path >/dev/null 2>&1 && echo -e "   paftools.js......OK" || { echo >&2 "   paftools.js is not installed.  Aborting."; exit 1; }
 
 
@@ -239,7 +244,7 @@ fi
 ##--------------------------------------------check if long reads is a fastq or fasta (here give warning) ----------------------------------------
 #check_fastq=$(less ${longreads}|head -1 |grep "^@" -c)
 #check_fasta=$(less ${longreads}|head -1 |grep "^>" -c)
-${seqkit_path} head -n 1 ${longreads}|head -1
+#${seqkit_path} head -n 1 ${longreads}|head -1
 
 check_fastq=$(${seqkit_path} head -n 1 ${longreads}|head -1 |grep "^@" -c)
 check_fasta=$(${seqkit_path} head -n 1 ${longreads} |head -1|grep "^>" -c)
@@ -279,14 +284,15 @@ echo
 
 ##--------------------------------------------GC-skew ------------------------------------
 
-echo -e "       GC-skew..."
+#echo -e "       GC-skew..."
 
 
 for header in $(grep ">" ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.fasta)
 do
 header_short=$(echo ${header}|sed 's/>//g' )
 
-${seqkit_path} fx2tab  --name  --gc-skew ${outputFolderName}/tmp_${outName}/genome/${header_short}.fasta
+#${seqkit_path} fx2tab  --name  --gc-skew ${outputFolderName}/tmp_${outName}/genome/${header_short}.fasta
+#python ${qcSkew_path} -i ${outputFolderName}/tmp_${outName}/genome/${header_short}.fasta -o outputs
 
 done
 echo
