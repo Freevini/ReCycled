@@ -1,6 +1,12 @@
-# Circles
+<p align = "center">
+<img src = "07_figures/logo.png" width="400">
+</p>
+<p align = "center">
+Fig.1 - Peak-to-trough ratio (PTR) for a growing or non-growing bacteria. Taken from Korem et al. 2015 (DOI: 10.1126/science.aac4812)
+</p>
 
-Circles is a tool to check the circularity of bacterial genome assemblies and circularise them according to the location of origin of replication.
+
+Recycled is a tool to check the circularity of bacterial genome assemblies and circularise them according to the location of origin of replication.
 
 In brief, it detects the presence of the origin of replication (i.e. *dnaA*). Moreover it checks the ciruclarity of contigs by looking for overlap at the contig edges and mapping the raw data to identify overlaping reads. Based on this information it circularises and start aligns the bacterial contigs upstream of *dnaA* gene.
 

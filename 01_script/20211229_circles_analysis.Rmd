@@ -559,7 +559,7 @@ done
 
 cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt
 
-for genomeName in $(awk -F "\t" '{OFS="\t"}{if( $4 == 1 || $5 == 1) print $2}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_assembly_final_test |uniq |head -300 |tail -199 )
+for genomeName in $(awk -F "\t" '{OFS="\t"}{if( $4 == 1 || $5 == 1) print $2}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_assembly_final_test |uniq |head -600 |tail -299 )
 do
 
 #genomeName=GCF_016889345.1_ASM1688934v1
@@ -582,15 +582,20 @@ cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_03
 
 cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_03 >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names.sra.info_03
 
+#/data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names.sra.info_03
+
+
 SRA=$(cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_03|grep -v -i "Illumina" |head -1 |cut -f 1)
+
+mkdir -p /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA
 
 echo -e ${SRA}
 #SRA=SRR13181905
 #SRA=SRR13181905
-/home/vincent/apps/sratoolkit.2.11.2-ubuntu64/bin/fastq-dump --stdout ${SRA} > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq
+/home/vincent/apps/sratoolkit.2.11.2-ubuntu64/bin/fastq-dump --stdout ${SRA} > /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq
 
 #rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq.gz
- gzip -c /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq.gz &
+ gzip -c /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq > /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq.gz &
 
 
 
@@ -615,7 +620,7 @@ then
 echo "Pacbio data"
 
 python /home/vincent/apps/flye/Flye/bin/flye --threads 37  --iterations 1 --pacbio-raw \
-      /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq \
+      /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq \
       --out-dir /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp/${SRA}
 
 elif [ $ONT_yes -gt 0 ]
@@ -623,16 +628,16 @@ then
 echo "ONT data"
 
 python /home/vincent/apps/flye/Flye/bin/flye --threads 37  --iterations 1 --nano-raw \
-      /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq \
+      /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq \
       --out-dir /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp/${SRA}
 
 fi
 
-mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/
+mkdir -p /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/
 
-cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp/${SRA}/assembly_info.txt  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp/${SRA}/assembly_info.txt  /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt
 
-cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp/${SRA}/assembly.fasta  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}.fasta
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp/${SRA}/assembly.fasta  /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}.fasta
 
 rm -r /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp/${SRA}
 
@@ -656,6 +661,64 @@ echo -e ${SRA}"\t"${contig_count}"\t"${longest_contig}"\t"${circ_longest}"\t"${n
 done
 
 SRR10586120
+
+##-------------------------------------delete SRA IN FASTA DIRECTORY which are not interesting
+
+for findss in $(ls /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/ |grep ".fastq$" |sed 's/.fastq//g' |sort|uniq)
+do
+
+
+done
+
+awk -F "\t" '{OFS="\t"}{if( $4 == 1 || $5 == 1) print $2}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_assembly_final_test |uniq |head -600 |tail -299 
+rm /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt
+
+for SRA in $(ls /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/ |grep ".fastq$" |sed 's/.fastq//g' |sort|uniq |sed '$ d')
+do
+echo "-----------------"
+echo -e ${SRA}
+
+
+contig_count=$(grep "^#" -v /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt |wc -l)
+
+longest_contig=$(grep "^#" -v /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt |sort -k2 -n -r | cut -f 2|head -1)
+
+circ_longest=$(grep "^#" -v /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt |sort -k2 -n -r | cut -f 4|head -1)
+
+num_circ=$(grep "^#" -v /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt |sort -k2 -n -r | cut -f 4|grep "Y"|wc -l |cut -f 1)
+
+num_non_circ=$(grep "^#" -v /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt |sort -k2 -n -r | cut -f 4|grep -v "Y"|wc -l |cut -f 1)
+
+echo -e ${SRA}"\t"${contig_count}"\t"${longest_contig}"\t"${circ_longest}"\t"${num_circ}"\t"${num_non_circ} >>  /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt
+
+
+tail -1 /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |awk -F "\t" '{OFS="\t"}{if($2>15 && $3<500000) print $1}'
+
+
+echo -e ${SRA}"\t"${contig_count}"\t"${longest_contig}
+if [ $contig_count  -gt  15 ] ||  [ $longest_contig  -lt  500000 ]; then
+
+tail -1 /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt
+echo -e "filtering out"
+
+#rm  /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}*
+
+fi
+
+
+if [ $contig_count  == 0 ] ; then
+
+tail -1 /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt
+echo -e "filtering out"
+#rm  /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}*
+fi
+
+
+done
+
+cat /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt
+
+awk -F "\t" '{OFS="\t"}{if($2<15 && $3>500000) print $0}' /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |head -6 |cut -f 1
 
 ##-------------------------------------delete SRA which are not interesting
 
@@ -817,7 +880,6 @@ cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02
 ##==============================================================
 
 
-
 tmpdir=tmp_08
 
 for SRA in $(cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis_toDo.txt|sort|uniq |sed -n 33,42p )
@@ -850,6 +912,49 @@ cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${tmpdir}/$
 echo -e ${SRA}"\t"${runtime_circlator}"\tNA" >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02
 
 done
+
+
+
+##==============================================================
+#DO ONLY CIRCLATOR from fasta harddrive
+##==============================================================
+
+
+tmpdir=tmp_01
+
+for SRA in $(awk -F "\t" '{OFS="\t"}{if($2<15 && $3>500000) print $0}' /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |head -6 |cut -f 1
+)
+do
+echo ${SRA}
+##-----------------------------------------circlator
+
+
+#rm -r /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_03/
+mkdir -p /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_02/
+mkdir -p /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${tmpdir}
+
+rm -r  /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${tmpdir}/${SRA}/
+start=`date +%s`
+circlator all --threads 8 /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}.fasta /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${tmpdir}/${SRA}/
+
+end=`date +%s`
+runtime_circlator=$( echo "$end - $start" | bc -l )
+echo $runtime_circlator
+
+#echo -e ${SRA}"\t"${runtime_circlator}"\tcirclator" >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered/runtimes.circlator
+
+
+cp /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${tmpdir}/${SRA}/06.fixstart.detailed.log /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_02/${SRA}_fixstart.log
+
+cp /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${tmpdir}/${SRA}/04.merge.circularise.log /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_02/${SRA}_circularise.log
+
+##final summary
+
+echo -e ${SRA}"\t"${runtime_circlator}"\tNA" >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02
+
+done
+
+
 
 
 ##==============================================================
@@ -1102,6 +1207,9 @@ cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/Circ_contig_analysis
 sort /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/Circ_contig_analysis.final |uniq |cut -f 3,5 |sort|uniq -c
 
 
+sort /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/Circ_contig_analysis.final |uniq |cut -f 3,4,5 |sort|uniq -c
+
+
 ```
 
 
@@ -1156,7 +1264,33 @@ grep "${contigzz}_StartAligned" /data/Project/2021_circlator/NCBI_analysis/SRA_a
 done
 
 
+##-----------------------------------------
+#rolling average
+##-----------------------------------------
 
+#grep "${contigzz}_StartAligned" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SMILEY/coverage_smiley_${SRA}.depth |head -20000|cut -f 2,3  >  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SMILEY/coverage_smiley_${SRA}.depth.test
+
+NUM=1000
+
+#awk 'BEGIN {FS=OFS="\t"} {a[NR]=$2; sum+=$2} NR>=3000{b[++i]=$1} NR>5000 {sum-=a[NR-5000]} NR>=5000 {c[++k]=sum/5000} END {for (j=1;j<=k;j++) print b[j],c[j]}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SMILEY/coverage_smiley_${SRA}.depth.test  |awk -v NUM=$NUM 'NR % NUM == 0' 
+    
+#awk 'BEGIN {FS=OFS="\t"} {a[NR]=$2; sum+=$2} NR>=3000{b[++i]=$1} NR>5000 {sum-=a[NR-5000]} NR>=5000 {c[++k]=sum/5000} END {for (j=1;j<=k;j++) print b[j],c[j]}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SMILEY/coverage_smiley_${SRA}.depth  |awk -v NUM=$NUM 'NR % NUM == 0' 
+    
+    
+
+rm  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SMILEY/all.depth_rollingAverage
+for SRA in $(awk -F "\t" '{if ($2=="Y")print $1}'  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis.final |sort|uniq )
+do
+echo "==========================="
+echo ${SRA}
+contigzz=$(grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt | sort -k2 -n -r |head -1 |cut -f 1)
+
+
+grep "${contigzz}_StartAligned" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SMILEY/coverage_smiley_${SRA}.depth|cut -f 2,3 |awk 'BEGIN {FS=OFS="\t"} {a[NR]=$2; sum+=$2} NR>=3000{b[++i]=$1} NR>5000 {sum-=a[NR-5000]} NR>=5000 {c[++k]=sum/5000} END {for (j=1;j<=k;j++) print b[j],c[j]}'  |awk -v NUM=$NUM 'NR % NUM == 0' | awk -v SRAzzz="$SRA" '{print SRAzzz,$1,$2}' >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SMILEY/all.depth_rollingAverage
+
+done
+    
+    
 ##-----------------------------------------
 #merge files together
 ##-----------------------------------------
@@ -1164,7 +1298,7 @@ done
 
 
 mkdir -p /home/vincent/Desktop/Projects/2020_circleries/06_analysis/final_analysis/SMILEY/
-scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SMILEY/all.depth /home/vincent/Desktop/Projects/2020_circleries/06_analysis/final_analysis/SMILEY/
+scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SMILEY/all.depth_rollingAverage /home/vincent/Desktop/Projects/2020_circleries/06_analysis/final_analysis/SMILEY/
 
 ```
 
@@ -1172,16 +1306,19 @@ scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/SRA_anal
 ```{r}
 library(tidyverse)
 require(zoo)
+library(plotly)
 
 
-all <- read_table2("~/Desktop/Projects/2020_circleries/06_analysis/final_analysis/SMILEY/all.depth",  col_names = FALSE)
+all <- read_table2("~/Desktop/Projects/2020_circleries/06_analysis/final_analysis/SMILEY/all.depth_rollingAverage",  col_names = FALSE)
+
+table(all$X1)
 
 averaged_all <- data.frame()
 for (contigss in unique(all$X1)) {
   
 tmps_1 <- all %>% filter(X1==contigss)
   
-tmp_2 <- rollapply(tmps_1$X3, width = 100000, by = 5000, FUN = median, align = "left")
+tmp_2 <- rollapply(tmps_1$X3, width = 1000, by = 1, FUN = median, align = "left")
 
 
 tmp_3 <- data.frame(contig=contigss,bin=1:length(tmp_2),coverage=tmp_2)
@@ -1198,13 +1335,22 @@ table(averaged_all_norm$contig)
 
 averaged_all_normalised <- merge(averaged_all,averaged_all_norm,by="contig") %>% mutate(bin_norm=bin/bin_max,coverage_norm=coverage/coverage_max)# %>% filter(contig!="DRR161292")
 
+# write_csv(averaged_all_normalised,"~/Desktop/Projects/2020_circleries/06_analysis/final_analysis/SMILEY/all.depth.normalised",quote = "none")
+
 ##-----------------------------------------
 #plot
 ##-----------------------------------------
 
-ggplot(averaged_all_normalised,aes(x=bin_norm,y=coverage_norm,group=contig,color=contig,fill=contig))+geom_line()+theme_classic()+lims(y=c(0,1))
+plot_smiley <- ggplot(averaged_all_normalised,aes(x=bin_norm,y=coverage_norm,group=contig,color=contig,fill=contig))+geom_line()+theme_classic()+lims(y=c(0,1))
+plot_smiley
 
 
+plot_smiley_facet <- ggplot(averaged_all_normalised,aes(x=bin_norm,y=coverage_norm,group=contig,color=contig,fill=contig))+geom_line()+theme_classic()+lims(y=c(0,1))+facet_wrap(~contig)
+plot_smiley_facet
+
+
+ggp <- ggplotly(plot_smiley)
+ggp
 
 ```
 
@@ -1289,7 +1435,7 @@ plot_complete_genome
 #1. circular bacterial cells aligned
 ##---------------------
 
-startaligned_analysis <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/final_analysis/startaligned_analysis.final", delim = "\t", escape_double = FALSE,  trim_ws = TRUE,col_names = c("SRA","flye","circlator","circlers")) %>% filter(flye=="Y") %>% filter(!is.na(circlator))
+startaligned_analysis <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/final_analysis/startaligned_analysis.final", delim = "\t", escape_double = FALSE,  trim_ws = TRUE,col_names = c("SRA","flye","circlator","circlers")) %>% filter(flye=="Y") %>% replace(is.na(.), "N") %>% filter(!is.na(circlator))
 
 startaligned_analysis <- startaligned_analysis[!duplicated(startaligned_analysis),]
 
@@ -1315,7 +1461,7 @@ plot_start
 #2. are all circular contigs recognized?
 ##---------------------
 
-circ_analysis <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/final_analysis/Circ_contig_analysis.final", delim = "\t", escape_double = FALSE,  trim_ws = TRUE)
+circ_analysis <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/final_analysis/Circ_contig_analysis.final", delim = "\t", escape_double = FALSE,  trim_ws = TRUE)%>% replace(is.na(.), "N") 
 circ_analysis <- circ_analysis[!duplicated(circ_analysis),]
 
 circ_analysis_long <- gather(circ_analysis, circulariation, outcome, c("circlator","circlers"), factor_key=TRUE,na.rm = TRUE) %>% filter(!is.na(outcome))
@@ -1341,8 +1487,6 @@ plot_circular
 ##---------------------
 #4. are the contigs not wrongly circularised?
 ##---------------------
-
-
 
 
 ##---------------------
@@ -1579,7 +1723,17 @@ grep "${header}" /start_alignment_mapping//${header}_unfiltered.minimap
 grep "${header}" start_alignment_mapping//${header}.minimap
 
 
-grep "${SRA}" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names.sra.info_02
+biosample=$(grep "${SRA}" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names.sra.info_02 |cut -f 21 |sort|uniq|head -1)
+
+
+grep "${biosample}" /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.txt |head -1 |cut -f 20 | sed -r 's|(https://ftp.ncbi.nlm.nih.gov/genomes/all/.+/)(GCF_.+)|\1\2\/\2_genomic.gff.gz|' >    \
+    ncbi_download.txt
+ 
+wget  -i ncbi_download.txt
+
+gunzip *.gz
+
+
 
 ```
 
@@ -1709,6 +1863,154 @@ scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/test_cas
 
 
 ```
+
+
+## make synteny non-start aligned and start-aligned
+
+with Artemisia
+
+```{bash}
+    rm -r /data/Project/2021_circlator/NCBI_analysis/Synteny/FASTA
+    mkdir -p /data/Project/2021_circlator/NCBI_analysis/Synteny/FASTA
+    
+   ##lineage
+   #24742 8
+  #24740  6
+  #24738  6
+  #24736  1
+  #24726  7
+    
+      for sample in $(echo "24742 24740 24738 24736 24726")
+        do
+        
+  echo "=============="
+  echo ${sample}
+  #echo "=============="
+
+ #  python /home/vincent/Flye/bin/flye --threads 37  --iterations 5 --genome-size 2100000 --nano-raw \
+  #    /data/Project/2020_StarterCultureDiversity/01_Data/20200619_genomeSeqONT/01_rawdata/fastq/${sample}/${sample}_qualityFiltered_min7000_Q90.fastq.gz \
+   #   --out-dir /data/Project/2020_StarterCultureDiversity/09_flye/assembly/${sample}/
+      
+        
+      cat   /data/Project/2020_StarterCultureDiversity/09_flye/assembly/${sample}/*info*
+            cat   /data/Project/2020_StarterCultureDiversity/09_flye/assembly/${sample}/*.fasta > /data/Project/2021_circlator/NCBI_analysis/Synteny/FASTA/${sample}.fasta
+  
+        done
+    
+    
+  ##-----------------------
+###bring local
+##-----------------------  
+mkdir -p /home/vincent/Desktop/Projects/2020_circleries/06_analysis/Synteny/FASTA
+scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/Synteny/FASTA/* /home/vincent/Desktop/Projects/2020_circleries/06_analysis/Synteny/FASTA
+
+##-----------------------
+###create a blastall crunch file
+##-----------------------
+
+cd /home/vincent/Desktop/Projects/2020_circleries/06_analysis/Synteny/FASTA
+
+# run formatdb
+formatdb -p F -i 24742.fasta
+blastall -p blastn -m 8 -e 1e-5 -d 24742.fasta -i 24740.fasta -o first.crunch -a 12
+
+formatdb -p F -i 24740.fasta
+blastall -p blastn -m 8 -e 1e-5 -d 24740.fasta -i 24738.fasta -o second.crunch -a 12
+
+formatdb -p F -i 24738.fasta
+blastall -p blastn -m 8 -e 1e-5 -d 24738.fasta -i 24736.fasta -o third.crunch -a 12
+
+formatdb -p F -i 24736.fasta
+blastall -p blastn -m 8 -e 1e-5 -d 24736.fasta -i 24726.fasta -o fourth.crunch -a 12
+
+
+conda activate myenv
+
+##-----------------------
+###artemis and act analysis
+##-----------------------
+act &
+
+#select all genome and comparison files
+#select SCORE CUTOFF > 1000
+#select MINIMUM PERCENT CUTOFF >90
+
+##-----------------------
+###start-align genome
+##-----------------------
+
+
+
+
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/Synteny/FASTA_startAlign/
+
+      for sample in $(echo "24742 24740 24738 24736 24726")
+        do
+        
+  echo "=============="
+  echo ${sample}
+  #echo "=============="
+
+
+   \
+   #   --out-dir /data/Project/2020_StarterCultureDiversity/09_flye/assembly/${sample}/
+      
+      
+      
+/data/Project/2021_circlator/20220106_2020_circleries_tool/Circleries/Circleries.sh \
+    -i /data/Project/2021_circlator/NCBI_analysis/Synteny/FASTA/${sample}.fasta \
+    -l /data/Project/2020_StarterCultureDiversity/01_Data/20200619_genomeSeqONT/01_rawdata/fastq/${sample}/${sample}_qualityFiltered_min7000_Q90.fastq.gz \
+    -t 8 \
+    -o  ${sample} \
+    -d  /data/Project/2021_circlator/NCBI_analysis/Synteny/FASTA_startAlign/ \
+    -F -x
+
+        done
+  
+  rm -r  /data/Project/2021_circlator/NCBI_analysis/Synteny/FASTA_startAlign/tmp*
+
+
+  ##-----------------------
+###bring local
+##-----------------------  
+mkdir -p /home/vincent/Desktop/Projects/2020_circleries/06_analysis/Synteny/FASTA_startAlign
+scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/Synteny/FASTA_startAlign/* /home/vincent/Desktop/Projects/2020_circleries/06_analysis/Synteny/FASTA_startAlign
+
+
+##-----------------------
+###create a blastall crunch file
+##-----------------------
+
+cd /home/vincent/Desktop/Projects/2020_circleries/06_analysis/Synteny/FASTA_startAlign
+
+# run formatdb
+formatdb -p F -i 24742.fasta
+blastall -p blastn -m 8 -e 1e-5 -d 24742.fasta -i 24740.fasta -o first.crunch -a 12
+
+formatdb -p F -i 24740.fasta
+blastall -p blastn -m 8 -e 1e-5 -d 24740.fasta -i 24738.fasta -o second.crunch -a 12
+
+formatdb -p F -i 24738.fasta
+blastall -p blastn -m 8 -e 1e-5 -d 24738.fasta -i 24736.fasta -o third.crunch -a 12
+
+formatdb -p F -i 24736.fasta
+blastall -p blastn -m 8 -e 1e-5 -d 24736.fasta -i 24726.fasta -o fourth.crunch -a 12
+
+
+conda activate myenv
+
+##-----------------------
+###artemis and act analysis
+##-----------------------
+act &
+
+    
+```
+
+
+
+
+
 
 #backup
 
