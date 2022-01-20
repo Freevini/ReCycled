@@ -1,10 +1,6 @@
-<p align = "center">
+<p align = "left">
 <img src = "07_figures/logo.png" width="400">
 </p>
-<p align = "center">
-Fig.1 - Peak-to-trough ratio (PTR) for a growing or non-growing bacteria. Taken from Korem et al. 2015 (DOI: 10.1126/science.aac4812)
-</p>
-
 
 Recycled is a tool to check the circularity of bacterial genome assemblies and circularise them according to the location of origin of replication.
 
