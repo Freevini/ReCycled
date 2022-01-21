@@ -291,7 +291,6 @@ SAMN14390563
 
 
 
-
 scp -r /home/vincent/Desktop/Projects/2020_circleries vincent@130.223.51.66:/data/Project/2021_circlator/20220106_2020_circleries_tool/
 
 cd /data/Project/2021_circlator/20220106_2020_circleries_tool/
@@ -718,7 +717,9 @@ done
 
 cat /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt
 
-awk -F "\t" '{OFS="\t"}{if($2<15 && $3>500000) print $0}' /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |head -6 |cut -f 1
+awk -F "\t" '{OFS="\t"}{if($2<15 && $3>500000) print $0}' /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |sed -n 6,29p |cut -f 1
+
+
 
 ##-------------------------------------delete SRA which are not interesting
 
@@ -922,7 +923,7 @@ done
 
 tmpdir=tmp_01
 
-for SRA in $(awk -F "\t" '{OFS="\t"}{if($2<15 && $3>500000) print $0}' /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |head -6 |cut -f 1
+for SRA in $(awk -F "\t" '{OFS="\t"}{if($2<15 && $3>500000) print $0}' /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |sed -n 6,29p  |cut -f 1
 )
 do
 echo ${SRA}
@@ -948,6 +949,7 @@ cp /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${tmpdir}/$
 
 cp /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${tmpdir}/${SRA}/04.merge.circularise.log /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_02/${SRA}_circularise.log
 
+
 ##final summary
 
 echo -e ${SRA}"\t"${runtime_circlator}"\tNA" >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02
@@ -955,6 +957,12 @@ echo -e ${SRA}"\t"${runtime_circlator}"\tNA" >> /data/Project/2021_circlator/NCB
 done
 
 
+cp /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/*.fasta /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/
+
+cp /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/*info.txt /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/
+
+
+#cat /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt >> genome_analysis.txt
 
 
 ##==============================================================
@@ -1018,6 +1026,71 @@ awk '{if($2>10)print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysi
 ##----Current SRA of interest--> contain flye assembly, circlator and circles--------------
 
 awk '{if($2>10)print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02|sort|uniq
+
+##==============================================================
+#DO ONLY CIRCLERES from FASTA HARDDRIVE
+##==============================================================
+conda activate Circlers
+
+tmpdir=tmp_08
+#rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02_onlycirclers
+for SRA in $(awk -F "\t" '{OFS="\t"}{if($2<15 && $3>500000) print $0}' /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |sed -n 6,29p|cut -f 1
+)
+do
+
+
+##-----------------------------------------circleres
+
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}
+start=`date +%s`
+
+/data/Project/2021_circlator/20220106_2020_circleries_tool/Circleries/Circleries.sh \
+    -i /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}.fasta \
+    -l  /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq \
+    -t 8 \
+    -o ${SRA} \
+    -d /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}/ \
+    -F -x
+
+
+
+cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt
+    
+end=`date +%s`
+runtime_circleres=$( echo "$end - $start" | bc -l )
+echo $runtime_circleres
+
+
+mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}
+
+#echo -e ${SRA}"\t"${runtime_circleres}"\tcircleres" >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered/runtimes.circleres
+
+
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}/${SRA}_analysis_circularity_extended.log  \
+    /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log 
+    
+cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}/${SRA}.fasta \
+    /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}.fasta
+   
+#rm -r  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}/
+
+##final summary
+
+echo -e ${SRA}"\tNA\t"${runtime_circleres} >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_03_onlycirclers
+
+done
+
+#SRA=SRR12953603
+
+wc -l /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02
+cut -f 1 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02 |sort|uniq |wc -l
+awk '{if($2>10)print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02|sort|uniq|wc -l
+
+
+##----Current SRA of interest--> contain flye assembly, circlator and circles--------------
+
+awk '{if($2>10)print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02|sort|uniq
+
 
 ```
 
@@ -1183,7 +1256,11 @@ grep -v "#Contig" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circla
 echo -e "--------circles"
 
 
-grep -v "^#contigName" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log | sort -k1 -n   |cut -f 1,12 > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.circleries
+#grep -v "^#contigName" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log | sort -k1 -n   |cut -f 1,12 > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.circleries
+
+
+grep -v "^#contigName" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log | sort -k1 -n   |cut -f 1,8 > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.circleries
+
 
 echo -e "--------analysis total"
 
@@ -1402,6 +1479,8 @@ scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/SRA_anal
 scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02 /home/vincent/Desktop/Projects/2020_circleries/06_analysis/final_analysis/
 
 
+scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_03_onlycirclers /home/vincent/Desktop/Projects/2020_circleries/06_analysis/final_analysis/
+
 ```
 
 
@@ -1493,26 +1572,32 @@ plot_circular
 #4 speed
 ##---------------------
 
-speed_analysis <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/final_analysis/overall_analysis_02", delim = "\t", escape_double = FALSE,  trim_ws = TRUE,col_names = c("SRA","circlator","circlers"))
+speed_analysis_01 <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/final_analysis/overall_analysis_02", delim = "\t", escape_double = FALSE,  trim_ws = TRUE,col_names = c("SRA","circlator","circlers"))
+speed_analysis_02 <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/final_analysis/overall_analysis_03_onlycirclers", delim = "\t", escape_double = FALSE,  trim_ws = TRUE,col_names = c("SRA","circlator","circlers"))
+
+speed_analysis <- rbind(speed_analysis_01,speed_analysis_02)
 
 speed_analysis <- speed_analysis[!duplicated(speed_analysis),]
 
-speed_analysis_long <- gather(speed_analysis, circulariation, outcome, c("circlator","circlers"), factor_key=TRUE,na.rm = TRUE) %>% filter(!is.na(outcome)) %>% filter(outcome<50000)
+speed_analysis_long <- gather(speed_analysis, circulariation, outcome, c("circlator","circlers"), factor_key=TRUE,na.rm = TRUE) %>% filter(!is.na(outcome)) 
 
+speed_analysis_long_cleaned <- speed_analysis_long %>% group_by(SRA,circulariation) %>% summarise(outcome=median(outcome))%>% filter(outcome<50000)%>% filter(outcome>3)
 
+dim(speed_analysis_long)
+dim(speed_analysis_long_cleaned)
 
 countsGenomes <- speed_analysis_long$SRA %>% unique() %>% length()
 # 
 # startaligned_analysis_sum <- startaligned_analysis_long %>% group_by(circulariation,verdict) %>% summarise(grouping=n()) %>% left_join(.,totl_counts,by="circulariation") %>% mutate(percent=100*(grouping/total))
 library(ggquiver)
-plot_speed <- ggplot(speed_analysis_long,aes(x=circulariation,y=outcome,fill=circulariation ,color=circulariation ))+geom_violin(alpha=0.4)+ geom_jitter(shape=16, position=position_jitter(0.2))+theme_classic()+scale_y_continuous(trans = "log10",breaks=c(10,100,1000,10000))+  #+coord_trans(y="log10")+
+plot_speed <- ggplot(speed_analysis_long_cleaned,aes(x=circulariation,y=outcome,fill=circulariation ,color=circulariation ))+geom_violin(alpha=0.4)+ geom_jitter(shape=16, position=position_jitter(0.2))+theme_classic()+scale_y_continuous(trans = "log10",breaks=c(10,100,1000,10000))+  #+coord_trans(y="log10")+
   scale_fill_manual(values=colorss)+scale_color_manual(values=colorss)+
   labs(y="Runtime [seconds]",title = paste0("Runtime of the two tools\n(n=",countsGenomes,")"))+
   theme(legend.position = "none",axis.title.x = element_blank())
 plot_speed
 
 
-speed_analysis_long %>%  group_by(circulariation) %>% summarise(meanss=mean(outcome))
+speed_analysis_long_cleaned %>%  group_by(circulariation) %>% summarise(meanss=mean(outcome))
 
 ##---------------------
 #4 together
@@ -1521,7 +1606,6 @@ speed_analysis_long %>%  group_by(circulariation) %>% summarise(meanss=mean(outc
 library(patchwork)
 
 plot_complete_genome+plot_circular+plot_start+plot_speed+ plot_layout(nrow=1)
-
 
 # png("/home/vincent/Desktop/Projects/2020_circleries/07_figures/Plot_all.png", width = 4400, height = 3000,res=400)
 pdf("/home/vincent/Desktop/Projects/2020_circleries/07_figures/Plot_all.pdf",width=11,height=7)
