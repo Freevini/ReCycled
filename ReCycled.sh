@@ -16,8 +16,8 @@ Version="N"
 tmpss="N"
 # Set Infos
 AUTHOR="Vincent Somerville"
-EXE="Circleries"
-VERSION="V0.0.9"
+EXE="ReCycled"
+VERSION="V0.0.10"
 starttime=$(date)
 starts=`date +%s`
 outName="N"
@@ -40,10 +40,10 @@ unset check_fasta
 Help()
 {
    # Display Help
-   echo "Circleries: checks the circularity and bacterial origins of contigs and start aligns them at origin if possible"
+   echo "ReCycled: checks the circularity and bacterial origins of contigs and start aligns them at origin if possible"
    #echo -e "This is "$EXE $VERSION
    echo
-   echo "minimal syntax: Circleries -i <genome_input.fasta> -l <raw_long_read.fastq.gz>"
+   echo "minimal syntax: ReCycled -i <genome_input.fasta> -l <raw_long_read.fastq.gz>"
    echo "options:"
    echo
    echo "INPUT"
@@ -58,7 +58,7 @@ Help()
    echo "   -o     output file name " #threads #outName
    echo
    echo "RUNNING OPTIONS"
-   echo "   -p     circleries script directory (If not in PATH) [PATH]" #circleriesPATH
+   echo "   -p     ReCycled script directory (If not in PATH) [PATH]" #circleriesPATH
    echo "   -t     number of threads to use [4]" #threads
    echo "   -x     keep all tmp files created [N]" #threads
    echo "   -F     Force everything to run again [N]" #threads
@@ -154,7 +154,7 @@ fi
 ##--------------------------------------------prepare outName if necessary----------------------------------------
 if [ "$outName" == "N" ]
 then
-    outName=$(echo $genomeFASTAname|sed 's/.*\///g'| awk '{print "Start_aligned_"$0}')
+    outName=$(echo $genomeFASTAname|sed 's/.*\///g'| awk '{print "restarted_"$0}')
 fi
 
 
@@ -179,7 +179,7 @@ echo -e "   short read forward:   "${shortreads_1}
 echo -e "   short read reverse:   "${shortreads_2}
 echo -e "   Output directory:     "${outputFolderName}
 echo -e "   Output file name:     "${outName}
-echo -e "   Circleries path :     "${circleriesPATH}
+echo -e "   ReCycled path :       "${circleriesPATH}
 echo -e "   Threads :             "${threads}
 echo -e "   Force rerun :         "${force}
 
@@ -194,9 +194,9 @@ seqkit_path=$(echo -e ${circleriesPATH}"/02_dependencies/seqkit")
 qcSkew_path=$(echo -e ${circleriesPATH}"/02_dependencies/gcskew.py")
 
 
-startalining_genes=$(echo -e ${circleriesPATH}"/05_startAlign_data/starting_genes_v3.fasta ")
+restarting_genes=$(echo -e ${circleriesPATH}"/05_restart_data/starting_genes_v3.fasta ")
 
-#${circleriesPATH}/05_startAlign_data/starting_genes.fasta
+#${circleriesPATH}/05_restart_data/starting_genes.fasta
 
 #type baloooihok >/dev/null 2>&1 && echo -e "   baloooihok......OK" || { echo >&2 "   baloooihok is not installed.  Aborting."; exit 1; }
 
@@ -204,18 +204,18 @@ type minimap2 >/dev/null 2>&1 && echo -e "   Minimap2......OK" || { echo >&2 "  
 #type revseq >/dev/null 2>&1 && echo -e "   revseq......OK" || { echo >&2 "   revseq is not installed.  Aborting."; exit 1; }
 type bedtools >/dev/null 2>&1 && echo -e "   bedtools......OK" || { echo >&2 "   bedtools is not installed.  Aborting."; exit 1; }
 type $seqkit_path >/dev/null 2>&1 && echo -e "   seqkit......OK" || { echo >&2 "   seqkit is not installed.  Aborting."; exit 1; }
-type $qcSkew_path >/dev/null 2>&1 && echo -e "   qcSkew......OK" || { echo >&2 "   qcSkew is not installed.  Aborting."; exit 1; }
+#type $qcSkew_path >/dev/null 2>&1 && echo -e "   qcSkew......OK" || { echo >&2 "   qcSkew is not installed.  Aborting."; exit 1; }
 
 #type $paftools_path >/dev/null 2>&1 && echo -e "   paftools.js......OK" || { echo >&2 "   paftools.js is not installed.  Aborting."; exit 1; }
 
 
-#type $startalining_genes >/dev/null 2>&1 && echo -e "   startalining_genes......OK" || { echo >&2 "   startalining_genes is not installed.  Aborting."; exit 1; }
+#type $restarting_genes >/dev/null 2>&1 && echo -e "   restarting_genes......OK" || { echo >&2 "   restarting_genes is not installed.  Aborting."; exit 1; }
 
 
 echo
 
 echo -e "Checking database:"
-[ -f $startaligning_genes ] && echo "   startaligning_genes......OK" || { echo "   startaligning_genes is not installed.  Aborting."; exit 1; }
+[ -f $restarting_genes ] && echo "   restarting_genes......OK" || { echo "   restarting_genes is not installed.  Aborting."; exit 1; }
 echo
 
 ###########################################################
@@ -283,56 +283,44 @@ echo
 
 
 ##--------------------------------------------GC-skew ------------------------------------
-
+###------------------------not doing this at the moment
 #echo -e "       GC-skew..."
 
-
-for header in $(grep ">" ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.fasta)
-do
-header_short=$(echo ${header}|sed 's/>//g' )
-
-#${seqkit_path} fx2tab  --name  --gc-skew ${outputFolderName}/tmp_${outName}/genome/${header_short}.fasta
-#python ${qcSkew_path} -i ${outputFolderName}/tmp_${outName}/genome/${header_short}.fasta -o outputs
-
-done
-echo
-
-#infoseq test.fa  -only -desc -name -length -pgc
 
 ###########################################################
 #origin search
 ############################################################
 
-echo -e "Searching for OriC"
+echo -e "Searching for replication initiation protein"
 
 ##--------------------------------------------minimap2 origin to sequences------------------------------------
 
-#rm -r  ${outputFolderName}/tmp_${genomeFASTAname}//start_alignment_mapping/
-mkdir -p  ${outputFolderName}/tmp_${outName}//start_alignment_mapping/
+#rm -r  ${outputFolderName}/tmp_${genomeFASTAname}//restart_mapping/
+mkdir -p  ${outputFolderName}/tmp_${outName}//restart_mapping/
 echo -e "       On contig..."
 
-echo -e "#contigName\tContigOrigin\tNumberOforiginmappings\tOrientationOfMapping\tStartOfTargetMapping\tContigLength" >  ${outputFolderName}/tmp_${outName}//start_alignment_mapping//StartAlignment_contigs.minimap
+echo -e "#contigName\tContigOrigin\tNumberOforiginmappings\tOrientationOfMapping\tStartOfTargetMapping\tContigLength" >  ${outputFolderName}/tmp_${outName}//restart_mapping//restart_contigs.minimap
 
 
 for header in $(grep ">" ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.fasta |sed 's/>//g')
 do
 #  echo -e "           "$header
 ##map origin genes to the individual references and remove non-mapping or low quality mapping reads (mapq>50)
-minimap2 ${outputFolderName}/tmp_${outName}/genome/${header}.fasta $startalining_genes  > ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}_unfiltered.minimap 2> ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}.minimap.log
-#awk -F "\t" '{OFS="\t"}{if($12>50) print $0}' ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}_unfiltered.minimap > ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}.minimap
+minimap2 ${outputFolderName}/tmp_${outName}/genome/${header}.fasta $restarting_genes  > ${outputFolderName}/tmp_${outName}//restart_mapping//${header}_unfiltered.minimap 2> ${outputFolderName}/tmp_${outName}//restart_mapping//${header}.minimap.log
+#awk -F "\t" '{OFS="\t"}{if($12>50) print $0}' ${outputFolderName}/tmp_${outName}//restart_mapping//${header}_unfiltered.minimap > ${outputFolderName}/tmp_${outName}//restart_mapping//${header}.minimap
 #----map own dnaA database
 if [[ "$dna_database" != "Y" ]]; then
-  minimap2 ${outputFolderName}/tmp_${outName}/genome/${header}.fasta $dna_database  >> ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}_unfiltered.minimap 2>> ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}.minimap.log
+  minimap2 ${outputFolderName}/tmp_${outName}/genome/${header}.fasta $dna_database  >> ${outputFolderName}/tmp_${outName}//restart_mapping//${header}_unfiltered.minimap 2>> ${outputFolderName}/tmp_${outName}//restart_mapping//${header}.minimap.log
 fi
 
-awk -F "\t" '{OFS="\t"}{if($12>50 && $11>(0.8*$2)&& $10>(0.7*$2) && $2>300) print $0}' ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}_unfiltered.minimap > ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}.minimap
+awk -F "\t" '{OFS="\t"}{if($12>50 && $11>(0.8*$2)&& $10>(0.7*$2) && $2>300) print $0}' ${outputFolderName}/tmp_${outName}//restart_mapping//${header}_unfiltered.minimap > ${outputFolderName}/tmp_${outName}//restart_mapping//${header}.minimap
 
 ##--------------------------------------------minimap2 analysis------------------------------------
 
 
 #find out if there are mappings and in which orientation
-number_of_mappings=$(wc -l ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}.minimap|cut -d ' ' -f 1)
-orientation=$(sort -k10 -n -r ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}.minimap|head -1 |cut -f 5)
+number_of_mappings=$(wc -l ${outputFolderName}/tmp_${outName}//restart_mapping//${header}.minimap|cut -d ' ' -f 1)
+orientation=$(sort -k10 -n -r ${outputFolderName}/tmp_${outName}//restart_mapping//${header}.minimap|head -1 |cut -f 5)
 
 
 # create a info table containing information about the presence of origin and if present the orientation
@@ -342,29 +330,29 @@ then
   echo -e "           "$header"......no origin map found"
       contig_length=$(grep -v ">" ${outputFolderName}/tmp_${outName}/genome/${header}.fasta|wc -c )
 
-       echo -e ${header}"\tnon-origin-containing-contig\t"${number_of_mappings}"\tNA\tNA\t"${contig_length} >>  ${outputFolderName}/tmp_${outName}//start_alignment_mapping//StartAlignment_contigs.minimap
+       echo -e ${header}"\tnon-origin-containing-contig\t"${number_of_mappings}"\tNA\tNA\t"${contig_length} >>  ${outputFolderName}/tmp_${outName}//restart_mapping//restart_contigs.minimap
 
 elif [ $orientation == "+" ]
 then
   echo -e "           "$header"......origin map found (#${number_of_mappings})"
   #the most left alignment this shows the start of the gene
-  #sort -k8 -n ${outputFolderName}/start_alignment_mapping/${header}.minimap
+  #sort -k8 -n ${outputFolderName}/restart_mapping/${header}.minimap
 
-  start=$(sort -k8 -n ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}.minimap|head -1 |awk -F "\t" '{OFS="\t"}{print $8-$3-5}')
-        contig_length=$(sort -k8 -n ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}.minimap|head -1 |cut -f 7)
+  start=$(sort -k8 -n ${outputFolderName}/tmp_${outName}//restart_mapping//${header}.minimap|head -1 |awk -F "\t" '{OFS="\t"}{print $8-$3-5}')
+        contig_length=$(sort -k8 -n ${outputFolderName}/tmp_${outName}//restart_mapping//${header}.minimap|head -1 |cut -f 7)
 
-        echo -e ${header}"\torigin-containing-contig\t"${number_of_mappings}"\t"${orientation}"\t"${start}"\t"${contig_length} >>  ${outputFolderName}/tmp_${outName}//start_alignment_mapping//StartAlignment_contigs.minimap
+        echo -e ${header}"\torigin-containing-contig\t"${number_of_mappings}"\t"${orientation}"\t"${start}"\t"${contig_length} >>  ${outputFolderName}/tmp_${outName}//restart_mapping//restart_contigs.minimap
 
 else
       echo -e "           "$header"......origin map found (#${number_of_mappings})"
 
     #the most right alignment this shows the start of the gene
-    #sort -k9 -n ${outputFolderName}/start_alignment_mapping/${header}.minimap
+    #sort -k9 -n ${outputFolderName}/restart_mapping/${header}.minimap
 
-    start=$(sort -k9 -n -r ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}.minimap|head -1 |awk -F "\t" '{OFS="\t"}{print $9+$2-$4+5}')
-        contig_length=$(sort -k9 -n -r  ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}.minimap|head -1 |cut -f 7)
+    start=$(sort -k9 -n -r ${outputFolderName}/tmp_${outName}//restart_mapping//${header}.minimap|head -1 |awk -F "\t" '{OFS="\t"}{print $9+$2-$4+5}')
+        contig_length=$(sort -k9 -n -r  ${outputFolderName}/tmp_${outName}//restart_mapping//${header}.minimap|head -1 |cut -f 7)
 
-        echo -e ${header}"\torigin-containing-contig\t"${number_of_mappings}"\t"${orientation}"\t"${start}"\t"${contig_length} >>  ${outputFolderName}/tmp_${outName}//start_alignment_mapping//StartAlignment_contigs.minimap
+        echo -e ${header}"\torigin-containing-contig\t"${number_of_mappings}"\t"${orientation}"\t"${start}"\t"${contig_length} >>  ${outputFolderName}/tmp_${outName}//restart_mapping//restart_contigs.minimap
 
 fi
 
@@ -378,7 +366,7 @@ echo
 ############################################################
 
 echo -e "1. Checking circularity"
-echo -e "       Overlaping contig edges..."
+echo -e "       Overlapping contig edges..."
 
 
 #rm -r ${outputFolderName}/tmp_${genomeFASTAname}//Start_end_overlap/
@@ -389,7 +377,7 @@ echo -e "OverlapingContigEdges" > ${outputFolderName}/tmp_${outName}/Start_end_o
 for header in $(grep ">" ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.fasta |sed 's/>//g')
 do
 #echo -e ${header}
-#contig_length=$(sort -k9 -n -r  ${outputFolderName}/tmp_${outName}//start_alignment_mapping//${header}.minimap|head -1 |cut -f 7)
+#contig_length=$(sort -k9 -n -r  ${outputFolderName}/tmp_${outName}//restart_mapping//${header}.minimap|head -1 |cut -f 7)
 contig_length=$(grep -v ">" ${outputFolderName}/tmp_${outName}/genome/${header}.fasta|wc -c )
 
 ##--------------------------------------------extract start of contig----------------------------------
@@ -418,7 +406,7 @@ done
 
 ##--------------------------------------------Merge with previous analysis----------------------------------
 
-paste -d "\t" ${outputFolderName}/tmp_${outName}//start_alignment_mapping//StartAlignment_contigs.minimap ${outputFolderName}/tmp_${outName}/Start_end_overlap/tmp.analysis >  ${outputFolderName}/tmp_${outName}/Start_end_overlap/analysis_circularity_extended
+paste -d "\t" ${outputFolderName}/tmp_${outName}//restart_mapping//restart_contigs.minimap ${outputFolderName}/tmp_${outName}/Start_end_overlap/tmp.analysis >  ${outputFolderName}/tmp_${outName}/Start_end_overlap/analysis_circularity_extended
 #cat  ${outputFolderName}/tmp_${outName}/Start_end_overlap/analysis_circularity_extended
 echo
 
@@ -658,7 +646,7 @@ echo
 ############################################################
 echo -e "Circularising"
 
- mkdir -p ${outputFolderName}/tmp_${outName}/StartAlignedContigs/
+ mkdir -p ${outputFolderName}/tmp_${outName}/restartedContigs/
  mkdir -p ${outputFolderName}/tmp_${outName}/tmp/
 
 for contigName in $(grep "^#" -v  ${outputFolderName}/${outName}_analysis_circularity_extended.log |awk -F "\t" '{OFS="\t"}{if($12=="Y")print $1}')
@@ -675,7 +663,7 @@ do
 
 
         cat ${outputFolderName}/tmp_${outName}/genome/${contigName}.fasta  | $seqkit_path restart -i ${contigStart} > \
-        ${outputFolderName}/tmp_${outName}/StartAlignedContigs/${contigName}_startAligned.fasta
+        ${outputFolderName}/tmp_${outName}/restartedContigs/${contigName}_restarted.fasta
 
               echo -e "           forward oriented and start align at......"${contigStart}
 
@@ -685,20 +673,20 @@ do
 
 
       cat ${outputFolderName}/tmp_${outName}/genome/${contigName}.fasta  | $seqkit_path restart -i ${contigStart} > \
-                  ${outputFolderName}/tmp_${outName}/tmp/${contigName}_startAligned_wrongOrientation.fasta
+                  ${outputFolderName}/tmp_${outName}/tmp/${contigName}_restarted_wrongOrientation.fasta
 
-    #  revseq -sequence ${outputFolderName}/tmp_${outName}/tmp/${contigName}_startAligned_wrongOrientation.fasta -outseq \
-    #      ${outputFolderName}/tmp_${outName}/StartAlignedContigs/${contigName}_startAligned.fasta -notag 2> ${outputFolderName}/tmp_${outName}/tmp/${contigName}_startAligned_wrongOrientation.log
+    #  revseq -sequence ${outputFolderName}/tmp_${outName}/tmp/${contigName}_restarted_wrongOrientation.fasta -outseq \
+    #      ${outputFolderName}/tmp_${outName}/restartedContigs/${contigName}_restarted.fasta -notag 2> ${outputFolderName}/tmp_${outName}/tmp/${contigName}_restarted_wrongOrientation.log
 
-      $seqkit_path seq -t dna ${outputFolderName}/tmp_${outName}/tmp/${contigName}_startAligned_wrongOrientation.fasta -r -p > \
-      ${outputFolderName}/tmp_${outName}/StartAlignedContigs/${contigName}_startAligned.fasta 2> ${outputFolderName}/tmp_${outName}/tmp/${contigName}_startAligned_wrongOrientation.log
+      $seqkit_path seq -t dna ${outputFolderName}/tmp_${outName}/tmp/${contigName}_restarted_wrongOrientation.fasta -r -p > \
+      ${outputFolderName}/tmp_${outName}/restartedContigs/${contigName}_restarted.fasta 2> ${outputFolderName}/tmp_${outName}/tmp/${contigName}_restarted_wrongOrientation.log
 
 
           echo -e "           reverse oriented and start align at......"${contigStart}
 
   fi
-  #add startaligned tag
-  sed -i '/^>/ s/$/_StartAligned/' ${outputFolderName}/tmp_${outName}/StartAlignedContigs/${contigName}_startAligned.fasta
+  #add restarted tag
+  sed -i '/^>/ s/$/_restarted/' ${outputFolderName}/tmp_${outName}/restartedContigs/${contigName}_restarted.fasta
 
 
 done
@@ -712,22 +700,22 @@ echo -e "Quality Control"
 
 ###-------------------QC if DNA is really at first position
 
-echo -e "#contigName\tContigOrigin\tNumberOforiginmappings\tOrientationOfMapping\tStartOfTargetMapping\tContigLength" >   ${outputFolderName}/tmp_${outName}/start_alignment_mapping/After_StartAlignment_contigs.minimap
+echo -e "#contigName\tContigOrigin\tNumberOforiginmappings\tOrientationOfMapping\tStartOfTargetMapping\tContigLength" >   ${outputFolderName}/tmp_${outName}/restart_mapping/After_restart_contigs.minimap
 
 for contigName in $(grep "^#" -v  ${outputFolderName}/${outName}_analysis_circularity_extended.log |awk -F "\t" '{OFS="\t"}{if($12=="Y")print $1}')
 do
 
 
   ##map origin genes to the individual references and remove non-mapping or low quality mapping reads (mapq>50)
-  minimap2 ${outputFolderName}/tmp_${outName}/StartAlignedContigs/${contigName}_startAligned.fasta $startalining_genes  > ${outputFolderName}/tmp_${outName}/start_alignment_mapping/${contigName}_afterStartAlignment_unfiltered.minimap 2> ${outputFolderName}/tmp_${outName}/start_alignment_mapping/${contigName}_afterStartAlignment_unfiltered.log
-  awk -F "\t" '{OFS="\t"}{if($12>50) print $0}' ${outputFolderName}/tmp_${outName}/start_alignment_mapping/${contigName}_afterStartAlignment_unfiltered.minimap > ${outputFolderName}/tmp_${outName}/start_alignment_mapping/${contigName}_afterStartAlignment.minimap
+  minimap2 ${outputFolderName}/tmp_${outName}/restartedContigs/${contigName}_restarted.fasta $restarting_genes  > ${outputFolderName}/tmp_${outName}/restart_mapping/${contigName}_afterrestart_unfiltered.minimap 2> ${outputFolderName}/tmp_${outName}/restart_mapping/${contigName}_afterrestart_unfiltered.log
+  awk -F "\t" '{OFS="\t"}{if($12>50) print $0}' ${outputFolderName}/tmp_${outName}/restart_mapping/${contigName}_afterrestart_unfiltered.minimap > ${outputFolderName}/tmp_${outName}/restart_mapping/${contigName}_afterrestart.minimap
 
   ##--------------------------------------------minimap2 analysis------------------------------------
 
 
   #find out if there are mappings and in which orientation
-  number_of_mappings=$(wc -l  ${outputFolderName}/tmp_${outName}/start_alignment_mapping/${contigName}_afterStartAlignment.minimap|cut -d ' ' -f 1)
-  orientation=$(sort -k10 -n -r  ${outputFolderName}/tmp_${outName}/start_alignment_mapping/${contigName}_afterStartAlignment.minimap|head -1 |cut -f 5)
+  number_of_mappings=$(wc -l  ${outputFolderName}/tmp_${outName}/restart_mapping/${contigName}_afterrestart.minimap|cut -d ' ' -f 1)
+  orientation=$(sort -k10 -n -r  ${outputFolderName}/tmp_${outName}/restart_mapping/${contigName}_afterrestart.minimap|head -1 |cut -f 5)
 
 
   # create a info table containing information about the presence of origin and if present the orientation
@@ -737,7 +725,7 @@ do
     echo -e "           "$contigName"......no origin map found"
         contig_length=$(grep -v ">" ${outputFolderName}/tmp_${outName}/genome/${contigName}.fasta|wc -c )
 
-         echo -e ${contigName}"\tnon-origin-containing-contig\t"${number_of_mappings}"\tNA\tNA\t"${contig_length} >>  ${outputFolderName}/tmp_${outName}/start_alignment_mapping/After_StartAlignment_contigs.minimap
+         echo -e ${contigName}"\tnon-origin-containing-contig\t"${number_of_mappings}"\tNA\tNA\t"${contig_length} >>  ${outputFolderName}/tmp_${outName}/restart_mapping/After_restart_contigs.minimap
          echo "no origin map found"
          echo "SOMETHING IS WRONG BECAUSE origin cannot be found anymore...aborting"
          exit
@@ -745,10 +733,10 @@ do
   elif [ $orientation == "+" ]
   then
 
-          start=$(sort -k8 -n ${outputFolderName}/tmp_${outName}/start_alignment_mapping/${contigName}_afterStartAlignment.minimap|head -1 |awk -F "\t" '{OFS="\t"}{print $8-$3-5}')
-          contig_length=$(sort -k8 -n ${outputFolderName}/tmp_${outName}/start_alignment_mapping/${contigName}_afterStartAlignment.minimap|head -1 |cut -f 7)
+          start=$(sort -k8 -n ${outputFolderName}/tmp_${outName}/restart_mapping/${contigName}_afterrestart.minimap|head -1 |awk -F "\t" '{OFS="\t"}{print $8-$3-5}')
+          contig_length=$(sort -k8 -n ${outputFolderName}/tmp_${outName}/restart_mapping/${contigName}_afterrestart.minimap|head -1 |cut -f 7)
 
-          echo -e ${contigName}"\torigin-containing-contig\t"${number_of_mappings}"\t"${orientation}"\t"${start}"\t"${contig_length} >>  ${outputFolderName}/tmp_${outName}/start_alignment_mapping/After_StartAlignment_contigs.minimap
+          echo -e ${contigName}"\torigin-containing-contig\t"${number_of_mappings}"\t"${orientation}"\t"${start}"\t"${contig_length} >>  ${outputFolderName}/tmp_${outName}/restart_mapping/After_restart_contigs.minimap
           #echo "Looks good!"
           echo -e "           "$contigName"......origin map found on "${orientation}" strand at position "${start}
 
@@ -756,10 +744,10 @@ do
         echo -e "           "$contigName"......origin map found"
 
 
-      start=$(sort -k9 -n -r ${outputFolderName}/tmp_${outName}/start_alignment_mapping/${contigName}_afterStartAlignment.minimap|head -1 |awk -F "\t" '{OFS="\t"}{print $9+$2-$4+5}')
-          contig_length=$(sort -k9 -n -r  ${outputFolderName}/tmp_${outName}/start_alignment_mapping/${contigName}_afterStartAlignment.minimap|head -1 |cut -f 7)
+      start=$(sort -k9 -n -r ${outputFolderName}/tmp_${outName}/restart_mapping/${contigName}_afterrestart.minimap|head -1 |awk -F "\t" '{OFS="\t"}{print $9+$2-$4+5}')
+          contig_length=$(sort -k9 -n -r  ${outputFolderName}/tmp_${outName}/restart_mapping/${contigName}_afterrestart.minimap|head -1 |cut -f 7)
 
-          echo -e ${contigName}"\torigin-containing-contig\t"${number_of_mappings}"\t"${orientation}"\t"${start}"\t"${contig_length} >> ${outputFolderName}/tmp_${outName}/start_alignment_mapping/After_StartAlignment_contigs.minimap
+          echo -e ${contigName}"\torigin-containing-contig\t"${number_of_mappings}"\t"${orientation}"\t"${start}"\t"${contig_length} >> ${outputFolderName}/tmp_${outName}/restart_mapping/After_restart_contigs.minimap
           echo "SOMETHING IS WRONG BECAUSE origin IS STILL ON THE REVERSE STRAND...aborting"
           exit
   fi
@@ -790,7 +778,7 @@ for header in $(grep ">" ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.
    if [ $circular == "Y" ];
       then
        echo -e "              Circularized contig name......" ${header}
-       cat ${outputFolderName}/tmp_${outName}/StartAlignedContigs/${header}_startAligned.fasta  >> ${outputFolderName}/${outName}.fasta
+       cat ${outputFolderName}/tmp_${outName}/restartedContigs/${header}_restarted.fasta  >> ${outputFolderName}/${outName}.fasta
 
     else
       echo -e "              Non-Circularized contig name......" ${header}
@@ -819,25 +807,25 @@ for header in $(grep ">" ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.
 
   echo -e "            Total number of contigs......"${numberContigs}
   echo
-  echo -e "            Number of startaligned contigs ......"${BacContigs}
-  #grep "^#" -v  ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap |awk -F "\t" '{OFS="\t"}{if($2=="bacterial_contig")print $0}'
-  echo -e "            Number of non-startaligned contigs......"${NonBacContigs}
+  echo -e "            Number of restarted contigs ......"${BacContigs}
+  #grep "^#" -v  ${outputFolderName}/restart_mapping/restart_contigs.minimap |awk -F "\t" '{OFS="\t"}{if($2=="bacterial_contig")print $0}'
+  echo -e "            Number of non-restarted contigs......"${NonBacContigs}
   echo
   echo -e "            Number of circular contigs ......"${cicContigs}
-  #grep "^#" -v  ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap |awk -F "\t" '{OFS="\t"}{if($2=="bacterial_contig")print $0}'
+  #grep "^#" -v  ${outputFolderName}/restart_mapping/restart_contigs.minimap |awk -F "\t" '{OFS="\t"}{if($2=="bacterial_contig")print $0}'
   echo -e "            Number of non-circular contigs......"${NoncicContigs}
 
-  #grep "^#" -v  ${outputFolderName}/start_alignment_mapping/StartAlignment_contigs.minimap |awk -F "\t" '{OFS="\t"}{if($2!="bacterial_contig")print $0}'
+  #grep "^#" -v  ${outputFolderName}/restart_mapping/restart_contigs.minimap |awk -F "\t" '{OFS="\t"}{if($2!="bacterial_contig")print $0}'
 echo
 
   echo -e "The location of origin on the "${BacContigs}" Bacterial and Plasmid contigs..."
-  #grep "^#"  ${outputFolderName}/start_alignment_mapping/After_StartAlignment_contigs.minimap
-  #grep "^#" -v  ${outputFolderName}/start_alignment_mapping/After_StartAlignment_contigs.minimap|awk -F "\t" '{OFS="\t"}{if($2=="bacterial_contig")print $0}'
-  cat ${outputFolderName}/tmp_${outName}/start_alignment_mapping/After_StartAlignment_contigs.minimap
+  #grep "^#"  ${outputFolderName}/restart_mapping/After_restart_contigs.minimap
+  #grep "^#" -v  ${outputFolderName}/restart_mapping/After_restart_contigs.minimap|awk -F "\t" '{OFS="\t"}{if($2=="bacterial_contig")print $0}'
+  cat ${outputFolderName}/tmp_${outName}/restart_mapping/After_restart_contigs.minimap
 echo
   echo -e "Output"
 
-  echo -e "      Location of Startaligned contigs......"${outputFolderName}/${outName}".fasta"
+  echo -e "      Location of restarted contigs......"${outputFolderName}/${outName}".fasta"
   echo -e "      Location of log file......"${outputFolderName}"/${outName}_analysis_circularity_extended.log"
 
   end=`date +%s`

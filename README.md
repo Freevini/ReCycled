@@ -34,8 +34,8 @@ ReCycled currently does not support macOS and Windows.
 #  Installation
 
 ```bash
-git clone https://github.com/Freevini/Circleries.git
-cd Circleries
+git clone https://github.com/Freevini/ReCycled.git
+cd ReCycled
 
 ./ReCycled.sh -h
 ```
@@ -46,19 +46,19 @@ In addition you have to install Minimap2 and bedtools. Make sure that bash will 
 # Usage examples
 
 __Minimally parameterized run of Circleries:__<br>
-`Circleries.sh -i input_assembly.fasta -l input_long_reads `
+`ReCycled.sh -i input_assembly.fasta -l input_long_reads `
 
 __If you want to run it in multithread mode use flag `-t`:__<br>
-`Circleries.sh -i input_assembly.fasta -l input_long_reads -t 8 `
+`ReCycled.sh -i input_assembly.fasta -l input_long_reads -t 8 `
 
 __If you want to overwrite the previous run use flag `-F`:__<br>
-`Circleries.sh -i input_assembly.fasta -l input_long_reads -F `
+`ReCycled.sh -i input_assembly.fasta -l input_long_reads -F `
 
 __If you want to keep all tmp files use flag `-x`:__<br>
-`Circleries.sh -i input_assembly.fasta -l input_long_reads -x `
+`ReCycled.sh -i input_assembly.fasta -l input_long_reads -x `
 
 __If you want to define a specific output file name use `-o` or output file directory use `-d` :__<br>
-`Circleries.sh -i input_assembly.fasta -l input_long_reads -o results -d results/out/directory/ `
+`ReCycled.sh -i input_assembly.fasta -l input_long_reads -o results -d results/out/directory/ `
 
 # Output of a ReCycled run
 
