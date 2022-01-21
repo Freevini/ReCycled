@@ -8,6 +8,10 @@ In brief, it detects the presence of the origin of replication (i.e. *dnaA*). Mo
 
 ReCycled was designed and implemented by Vincent Somerville, Michael Schmid and Philipp Engel as a freely available software under the GPLv3 license.
 
+<p align = "left">
+<img src = "07_figures/logo_03.png" width="400">
+</p>
+
 # Table of contents
 
 * [Requirements](#requirements)
