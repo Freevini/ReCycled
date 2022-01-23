@@ -78,8 +78,7 @@ usage: ReCycled.sh [-h] -i INPUT_GENOME -l LONG_READ_FILE [-f SHORT_READ_FORWARD
                      [-r SHORT_READ_REVERSE] [-d  OUTPUT_DIRECTORY] [-O OUTPUT_FILE]
                      [-p ReCycled_SCRIPT_DIRECTORY] [-t THREADS] [-x] [-F] [-v] [-V]
 
-ReCycled: checks the circularity and bacterial origins of contigs and
-restarts them at dnaA if possible
+ReCycled: ReCycled: checks the circularity of contigs and restarts them at replication initiation protein
 
 minimal syntax: ReCycled.sh -i <genome_input.fasta> -l <raw_long_read.fastq.gz>
                  options:
@@ -115,11 +114,11 @@ Test ReCycled with the two provided test data sets:
 
 1. two circular contigs
 
-`ReCycled.sh -i 03_test_Data/twoCircularContigs_SRR3880379.fasta -l 03_test_Data/twoCircularContigs_SRR3880379.fastq.gz `
+`ReCycled.sh -i 03_TestData/oneCircularContigs_SRR3880379.fasta -l 03_TestData/oneCircularContigs_SRR3880379.fq.gz `
 
 2. one circular and eight non-circular contigs
 
-`ReCycled.sh -i 03_test_Data/oneCircular_eigthNonCircular_SRR15376163.fasta -l 03_test_Data/oneCircular_eigthNonCircular_SRR15376163.fastq.gz `
+`ReCycled.sh -i 03_TestData/oneCircular_eigthNonCircular_SRR15376163.fasta -l 03_TestData/oneCircular_eigthNonCircular_SRR15376163.fq.gz `
 
 
 # Known limitations

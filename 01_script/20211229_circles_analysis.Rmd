@@ -1283,7 +1283,6 @@ cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/Circ_contig_analysis
 
 sort /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/Circ_contig_analysis.final |uniq |cut -f 3,5 |sort|uniq -c
 
-
 sort /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/Circ_contig_analysis.final |uniq |cut -f 3,4,5 |sort|uniq -c
 
 
@@ -1762,6 +1761,32 @@ grep "${header}" Start_end_readmapping/long_read/mapping/all_contigs_mapping.paf
 awk -F "\t" -v contigName="$header" '{OFS="\t"}{if($6==contigName"_EndAndStart"&& $8<2900 && $9> 3100 )print $0}' Start_end_readmapping/long_read/mapping/all_contigs_mapping.paf >  Start_end_readmapping/long_read/mapping/${header}_contigs_mapping.paf
 
 ```
+
+##PROKKA
+
+```{bash}
+
+ 
+ rm -r /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/check_Restart/PROKKA/
+ mkdir -p  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/check_Restart/PROKKA/
+ 
+for SRA in $(awk -F "\t" '{OFS="\t"}{if($4=="Y")print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis.final )
+do
+
+echo -e ${SRA}
+
+head -1 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}.fasta
+
+conda activate PROKKA
+
+prokka --outdir /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/check_Restart/PROKKA/${SRA} --force --proteins proteins.faa --evalue 0.001 --addgenes   /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}.fasta --cpus 5
+  
+done
+
+
+
+```
+
 
 # check start alignement
 

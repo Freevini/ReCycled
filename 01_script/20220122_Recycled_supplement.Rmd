@@ -1,7 +1,7 @@
 ---
 title: "Supplement: ReCycled: A tool to restart circular bacterial chromosomes"
 author: "Vincent Somerville"
-date: "30/12/2021"
+date: "23/1/2022"
 output: html_document
 editor_options: 
   chunk_output_type: console
@@ -15,80 +15,106 @@ This is the supplemental analysis of the application note:
 
 *ReCycled: A tool to restart circular bacterial chromosomes*
 
+# Data deposit
 
+All data necessary to reproudce the analysis  is deposited on (Zonedo)[]. 
+In order to rerun the analysis the files need to stored locally and the directories should be adjusted here. 
+the analysis_location should be the directory which contains the downloaded files. Further the analysis will produce new files and directories therein. 
 
-## check start alignment
+```{bash}
+analysis_location="/change/the/location/here"
+```
 
-Here, we check how many completely assembled genomes are start aligned on NCBI. 
+also change the R working directory similiarly.
+```{r eval=TRUE}
+#knitr::opts_knit$set(root.dir = '/change/the/location/here')
+#setwd("/change/the/location/here")
+
+# e.g. for my computer
+knitr::opts_knit$set(root.dir = '/home/vincent/Desktop/Projects/2020_circleries/08_Zenodo_files/')
+setwd("/home/vincent/Desktop/Projects/2020_circleries/08_Zenodo_files/")
+```
+
+# check start alignment
+
+Here, we checked how many completely assembled genomes are start aligned on NCBI. 
 We therefore scanned all NCBI RegSeq genomes that are flagged as *complete assembly* if dnaA is located within the first 5000bp and if it is on the positive strand. 
+
+```{bash echo=FALSE}
+mkdir -p /home/vincent/Desktop/Projects/2020_circleries/08_Zenodo_files/
+scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.txt /home/vincent/Desktop/Projects/2020_circleries/08_Zenodo_files/
+scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.Complete_Genome_non_circular /home/vincent/Desktop/Projects/2020_circleries/08_Zenodo_files/
+scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_assembly_final_test /home/vincent/Desktop/Projects/2020_circleries/08_Zenodo_files/NCBI_RefSeq_sequencingData_availableOnSRA
+scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt /home/vincent/Desktop/Projects/2020_circleries/08_Zenodo_files/genome_analysis.txt
+scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis.final /home/vincent/Desktop/Projects/2020_circleries/08_Zenodo_files/restart_analysis.final
+scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02 /home/vincent/Desktop/Projects/2020_circleries/08_Zenodo_files/RunTime_Circlator.txt
+scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_03_onlycirclers /home/vincent/Desktop/Projects/2020_circleries/08_Zenodo_files/RunTime_ReCycled.txt
+
+scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/SRA_analysis/Circ_contig_analysis.final /home/vincent/Desktop/Projects/2020_circleries/08_Zenodo_files/Circularity_of_bacterial_contig.analysis
+
+cp /home/vincent/Desktop/Projects/2020_circleries/06_analysis/scripts/random_line.txt /home/vincent/Desktop/Projects/2020_circleries/08_Zenodo_files/
+cp /home/vincent/Desktop/Projects/2020_circleries/06_analysis/dnaA_genes.stats.Complete_Genome  /home/vincent/Desktop/Projects/2020_circleries/08_Zenodo_files/
+```
 
 
 ```{bash}
-
-
 ##------------------------------------------------
 #downloaded the NCBI refseq assembly_summary 
+#---------------------THIS FILE IS STORED ON ZONEDO------------------------------------
 ##------------------------------------------------
 
-mkdir -p /data/Project/2021_circlator/NCBI_analysis/log/
-curl 'ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/assembly_summary.txt' > /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.txt
-
-
-cut -f 12 /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.txt|sort|uniq -c
-
+mkdir -p ${analysis_location}
+curl 'ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/assembly_summary.txt' > ${analysis_location}/20211229_ncbi.txt
+cut -f 12 ${analysis_location}/20211229_ncbi.txt|sort|uniq -c
 
 ##------------------------------------------------
 #only complete genome
 ##------------------------------------------------
 
-awk -F "\t" 'BEGIN{OFS="\t"} {if ($12=="Complete Genome" ) print $0}' /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.txt |cut -f 20 | sed -r 's|(https://ftp.ncbi.nlm.nih.gov/genomes/all/.+/)(GCF_.+)|\1\2\/\2_genomic.gff.gz|' >    \
-    /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.download_Complete_Genome
-    
-  
-cd /data/Project/2021_circlator/NCBI_analysis/download/gff/
+awk -F "\t" 'BEGIN{OFS="\t"} {if ($12=="Complete Genome" ) print $0}' ${analysis_location}/20211229_ncbi.txt |cut -f 20 | sed -r 's|(https://ftp.ncbi.nlm.nih.gov/genomes/all/.+/)(GCF_.+)|\1\2\/\2_genomic.gff.gz|' >    \
+    ${analysis_location}//20211229_ncbi.download_Complete_Genome
 
+mkdir -p ${analysis_location}/download/gff/
+cd ${analysis_location}/download/gff/
 
-
-for downloadsss in $(cat /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.download_Complete_Genome)
+for downloadsss in $(cat ${analysis_location}//20211229_ncbi.download_Complete_Genome)
 do
 
 echo $downloadsss
-
 namess=$(echo $downloadsss |sed 's/.*\///g'|sed 's/_genomic.gff.gz//g')
 
 wget  ${downloadsss}
 
-zgrep "=dnaA;" -i ${namess}* | awk '{if($2=="RefSeq")print $0}' >> /data/Project/2021_circlator/NCBI_analysis/analysis/genes.identified.Complete_Genome
+zgrep "=dnaA;" -i ${namess}* | awk '{if($2=="RefSeq")print $0}' >> ${analysis_location}/genes.identified.Complete_Genome
 startss=$(zgrep "=dnaA;" -i ${namess}* | awk '{if($2=="RefSeq")print $4}')
 orientation=$(zgrep "=dnaA;" -i ${namess}* | awk '{if($2=="RefSeq")print $7}')
 
 startAligned=$(echo $startss | awk -v orientations="$orientation" '{if(($1 < 5000) && (orientations == "+")) print "Yes"; else print "NO" }')
 
-echo -e ${namess}"\t"${startss}"\t"${orientation}"\t"${startAligned} >> /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.Complete_Genome
+echo -e ${namess}"\t"${startss}"\t"${orientation}"\t"${startAligned} >> ${analysis_location}/dnaA_genes.stats.Complete_Genome
 done
 
-cat /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.Complete_Genome
+cat  ${analysis_location}/dnaA_genes.stats.Complete_Genome
 
-cut -f 4 /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.Complete_Genome |sort|uniq -c
-cut -f 3 /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.Complete_Genome |sort|uniq -c
+cut -f 4  ${analysis_location}/dnaA_genes.stats.Complete_Genome |sort|uniq -c
+cut -f 3  ${analysis_location}/dnaA_genes.stats.Complete_Genome |sort|uniq -c
 
-wc -l /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.Complete_Genome
-wc -l /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.download_Complete_Genome
+wc -l  ${analysis_location}/dnaA_genes.stats.Complete_Genome
+wc -l  ${analysis_location}/20211229_ncbi.download_Complete_Genome
 
+#---------------------THIS FILE IS STORED ON ZONEDO------------------------------------
+
+awk '{if($4=="NO")print $0}' ${analysis_location}/dnaA_genes.stats.Complete_Genome >  ${analysis_location}/dnaA_genes.stats.Complete_Genome_non_circular
 ```
-
 
 Here we analyse the data in R. 
 
 ```{r eval=TRUE}
 library(tidyverse)
-
 #-----------------------------------------------------------------------
 #complete genomes
 #-----------------------------------------------------------------------
-
-dnaA_genes_stats_complete <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/dnaA_genes.stats.Complete_Genome", delim = "\t", escape_double = FALSE, col_names = c("genome","startpostion","orientation","startAligned"), trim_ws = TRUE)
-
+dnaA_genes_stats_complete <- read_delim("dnaA_genes.stats.Complete_Genome", delim = "\t", escape_double = FALSE, col_names = c("genome","startpostion","orientation","startAligned"), trim_ws = TRUE)
 
 table(dnaA_genes_stats_complete$startAligned)
 
@@ -101,35 +127,30 @@ plot_complete_genome
 # plot_complete_genome
 # 
 # dev.off()
-
 ```
 
 # Download ReCycled
 
+This is the download of (Recycled)[https://github.com/Freevini/ReCycled].
+
 ```{bash}
-cd /data/Project/2021_circlator/20220106_2020_circleries_tool/
-
-sudo rm -r Circleries/
-
 git clone https://github.com/Freevini/ReCycled.git
-
-#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
-
 ```
 
 #  Download Circlator
 
+This is the download of (Circlator)[https://github.com/sanger-pathogens/circlator] (Hunt et al. 2015). 
+
 ```{bash}
 pip3 install circlator
-
 ```
-
 
 ## Randomize SRA for download
 
 Here, I first randomize the order of the identified SRAs that include long read data but have do not have restarted genomes.
 I do this in order to then download SRA and restart them with the different tools. 
 
+I first sample random numbers in R.  
 
 ```{r}
 library(tidyverse)
@@ -137,456 +158,337 @@ random_line <- sample(1:12321, 12321, replace=FALSE)
 
 unique(random_line) %>% length
 
-write_csv(random_line,"/home/vincent/Desktop/Projects/2020_circleries/01_script/random_line.txt")
+write_csv(random_line,"random_line.txt")
 ```
 
+Afterwards I assign the random numbers to the SRAs. 
 
 ```{bash}
+wc -l ${analysis_location}/random_line.txt
+head ${analysis_location}/random_line.txt
 
-wc -l /data/Project/2021_circlator/NCBI_analysis/random_line.txt
-head /data/Project/2021_circlator/NCBI_analysis/random_line.txt
-
-for liness in $(cut -f 1 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_assembly)
+for liness in $(cut -f 1  ${analysis_location}/overall_analysis_assembly)
 do
 
-grep -v "^${liness}$(printf '\n')" /data/Project/2021_circlator/NCBI_analysis/random_line.txt > /data/Project/2021_circlator/NCBI_analysis/random_line_tmp.txt
-cat  /data/Project/2021_circlator/NCBI_analysis/random_line_tmp.txt > /data/Project/2021_circlator/NCBI_analysis/random_line.txt
+grep -v "^${liness}$(printf '\n')" ${analysis_location}/random_line.txt > ${analysis_location}/random_line_tmp.txt
+cat ${analysis_location}/random_line_tmp.txt > ${analysis_location}/random_line.txt
 done
-head /data/Project/2021_circlator/NCBI_analysis/random_line.txt
-wc -l /data/Project/2021_circlator/NCBI_analysis/random_line.txt
+head ${analysis_location}/random_line.txt
+wc -l ${analysis_location}/random_line.txt
 
+#---------------------random_line.txt IS STORED ON ZONEDO------------------------------------
 ```
-
 
 # check SRAs
 
-As not all NCBI RefSeq have a linked SRA and if they do not all SRA contain long read data. 
-Therefore I first check all non-restarted Refseq genomes if they have SRAs containing long read data (Oxford Nanopore or Pacbio).
-If they fulfill these requirements they SRAs can be used for the benchmarking. 
-
+Not all NCBI RefSeq entries have a linked SRA and if they do not all SRA contain long read data. 
+Therefore I first checked all non-restarted RefSeq genomes if they have SRAs containing long read data (Oxford Nanopore or Pacbio).
+If they fulfill these requirements, the genomes and the corresponds SRAs can be used for the benchmarking. 
 
 ```{bash}
-
-mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/{logs,SRA,flye}
-#for count in {1..300}
-for lineNUM in $(tail -12320 /data/Project/2021_circlator/NCBI_analysis/random_line.txt)
+mkdir -p ${analysis_location}//SRA_analysis/{logs,SRA,flye}
+for lineNUM in $(cat ${analysis_location}/random_line.txt)
 do
 
 echo $lineNUM
-genomeName=$(sed -n "${lineNUM}p" /data/Project/2021_circlator/NCBI_analysis/analysis/dnaA_genes.stats.Complete_Genome_non_circular |cut -f 1)
+genomeName=$(sed -n "${lineNUM}p" ${analysis_location}/dnaA_genes.stats.Complete_Genome_non_circular |cut -f 1)
 echo ${genomeName}
 
-grep "${genomeName}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.txt |cut -f 3 > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names_tmp
+grep "${genomeName}$(printf '\t')" ${analysis_location}/20211229_ncbi.txt |cut -f 3 > ${analysis_location}/SRA_biosample.names_tmp
 
 SRA=NA
 
-epost -db biosample -input /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names_tmp -format acc | \
+epost -db biosample -input ${analysis_location}/SRA_biosample.names_tmp -format acc | \
 elink -target sra| \
 efetch -db sra -format runinfo -mode xml | \
 xtract -pattern Row -def "NA" -element Run spots bases spots_with_mates avgLength \
 size_MB download_path Experiment LibraryStrategy LibrarySelection LibrarySource \
 LibraryLayout InsertSize InsertDev Platform Model SRAStudy BioProject ProjectID \
 Sample BioSample SampleType TaxID ScientificName SampleName CenterName \
-Submission Consent > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_03
+Submission Consent >  ${analysis_location}/SRA_analysis/logs/tmp_03
 
-cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_03
+cat ${analysis_location}/SRA_analysis/logs/tmp_03
+cat ${analysis_location}/SRA_analysis/logs/tmp_03 >> ${analysis_location}/SRA_analysis/logs/SRA_biosample.names.sra.info_02
 
-cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_02 >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names.sra.info_02
+SRA=$(cat ${analysis_location}/SRA_analysis/logs/tmp_032 |head -1 |cut -f 1)
+Pacbio_yes=$(grep "Illumina" -i -v ${analysis_location}/SRA_analysis/logs/tmp_03 |grep "pacbio" -i|wc -l |cut -d ' ' -f 1)
+ONT_yes=$(grep "Illumina" -i -v  ${analysis_location}/SRA_analysis/logs/tmp_03 |grep "Oxford" -i|wc -l |cut -d ' ' -f 1)
 
-SRA=$(cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_02 |head -1 |cut -f 1)
-
-Pacbio_yes=$(grep "Illumina" -i -v  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_02|grep "pacbio" -i|wc -l |cut -d ' ' -f 1)
-
-ONT_yes=$(grep "Illumina" -i -v  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_02 |grep "Oxford" -i|wc -l |cut -d ' ' -f 1)
-
-Illumina_yes=$(grep "Illumina" -i  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_02 |wc -l |cut -d ' ' -f 1)
-
-echo -e ${lineNUM}"\t"${genomeName}"\t"${SRA}"\t"${Pacbio_yes}"\t"${ONT_yes}"\t"${Illumina_yes} >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_assembly_final_test
+Illumina_yes=$(grep "Illumina" -i ${analysis_location}/SRA_analysis/logs/tmp_03 |wc -l |cut -d ' ' -f 1)
+echo -e ${lineNUM}"\t"${genomeName}"\t"${SRA}"\t"${Pacbio_yes}"\t"${ONT_yes}"\t"${Illumina_yes} >> ${analysis_location}/NCBI_RefSeq_sequencingData_availableOnSRA
 
 done
 
+cat ${analysis_location}/NCBI_RefSeq_sequencingData_availableOnSRA
 
-cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names.sra.info_02
-cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_assembly_final_test
+wc -l ${analysis_location}/NCBI_RefSeq_sequencingData_availableOnSRA
+awk -F "\t" '{OFS="\t"}{if( $4>0 || $5 > 0) print $0}' ${analysis_location}/NCBI_RefSeq_sequencingData_availableOnSRA |wc -l
+awk -F "\t" '{OFS="\t"}{if( $4 == 1 || $5 == 1) print $0}' ${analysis_location}/NCBI_RefSeq_sequencingData_availableOnSRA |wc -l
 
-wc -l /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_assembly_final_test
-awk -F "\t" '{OFS="\t"}{if( $4>0 || $5 > 0) print $0}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_assembly_final_test |wc -l
-
-awk -F "\t" '{OFS="\t"}{if( $4 == 1 || $5 == 1) print $0}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_assembly_final_test |wc -l
-
+#---------------------NCBI_RefSeq_sequencingData_availableOnSRA IS STORED ON ZONEDO------------------------------------
 ```
 
-From all 12321 non-restarted Refseq only 2813 fulfill the requirement of containing long read SRAs. 
+From all 12321 non-restarted NCBI RefSeq genomes only 2813 fulfill the requirement of containing long read SRAs. 
 I will now proceed with a random subsample of these. 
 
-
 # Download and assemble
+
+Here I download the SRA by using the NCBI toolbox (E-utils)[https://www.ncbi.nlm.nih.gov/books/NBK25499/]. 
+Aftwards I assemble the raw read data with (flye)[https://github.com/fenderglass/Flye] (Kolmogorov et al. 2019)
+
 
 ```{bash}
 ###------------------------------------------------------
 #subsample certain genomes and download/assemble accordingly
 ###------------------------------------------------------
 
+mkdir -p ${analysis_location}/SRA_analysis/logs/
 
-for genomeName in $(awk -F "\t" '{OFS="\t"}{if( $4 == 1 || $5 == 1) print $2}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_assembly_final_test |uniq |head -600 |tail -299 )
+for genomeName in $(awk -F "\t" '{OFS="\t"}{if( $4 == 1 || $5 == 1) print $2}' ${analysis_location}/NCBI_RefSeq_sequencingData_availableOnSRA |uniq |head -600 |tail -299 )
 do
 
-grep "${genomeName}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/log/20211229_ncbi.txt |cut -f 3 > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names_tmp
+grep "${genomeName}$(printf '\t')" ${analysis_location}/20211229_ncbi.txt |cut -f 3 > ${analysis_location}/SRA_analysis/logs/SRA_biosample.names_tmp
 
-epost -db biosample -input /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names_tmp -format acc | \
+epost -db biosample -input ${analysis_location}/SRA_analysis/logs/SRA_biosample.names_tmp -format acc | \
 elink -target sra| \
 efetch -db sra -format runinfo -mode xml | \
 xtract -pattern Row -def "NA" -element Run spots bases spots_with_mates avgLength \
 size_MB download_path Experiment LibraryStrategy LibrarySelection LibrarySource \
 LibraryLayout InsertSize InsertDev Platform Model SRAStudy BioProject ProjectID \
 Sample BioSample SampleType TaxID ScientificName SampleName CenterName \
-Submission Consent > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_03
+Submission Consent > ${analysis_location}/SRA_analysis/logs/tmp_03
 
-cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_03 >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names.sra.info_03
-
-SRA=$(cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp_03|grep -v -i "Illumina" |head -1 |cut -f 1)
-
-mkdir -p /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA
+cat ${analysis_location}/SRA_analysis/logs/tmp_03 >>  ${analysis_location}/SRA_analysis/logs/SRA_biosample.names.sra.info_03
+SRA=$(cat ${analysis_location}/SRA_analysis/logs/tmp_03|grep -v -i "Illumina" |head -1 |cut -f 1)
+mkdir -p ${analysis_location}/SRA_analysis/SRA
 
 echo -e ${SRA}
 
-/home/vincent/apps/sratoolkit.2.11.2-ubuntu64/bin/fastq-dump --stdout ${SRA} > /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq
+##-----------------------------------------downlad fastq
 
- gzip -c /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq > /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq.gz &
+fastq-dump --stdout ${SRA} > ${analysis_location}/SRA_analysis/SRA/${SRA}.fastq
+gzip -c ${analysis_location}/SRA_analysis/SRA/${SRA}.fastq > ${analysis_location}/SRA_analysis/SRA/${SRA}.fastq.gz &
 
-
-
-awk -v srazzz="$SRA" '{if($1==srazzz)print $0}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/SRA_biosample.names.sra.info_03 > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp
-
-Pacbio_yes=$(grep "Illumina" -i -v  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp |head -1|grep "pacbio" -i|wc -l |cut -d ' ' -f 1)
-
-ONT_yes=$(grep "Illumina" -i -v  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp |head -1|grep "Oxford" -i|wc -l |cut -d ' ' -f 1)
-
-Illumina_yes=$(grep "Illumina" -i  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp |head -1|wc -l |cut -d ' ' -f 1)
-
-rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/logs/tmp
+awk -v srazzz="$SRA" '{if($1==srazzz)print $0}' ${analysis_location}/SRA_analysis/logs/SRA_biosample.names.sra.info_03 > ${analysis_location}/SRA_analysis/logs/tmp
+Pacbio_yes=$(grep "Illumina" -i -v  ${analysis_location}/SRA_analysis/logs/tmp |head -1|grep "pacbio" -i|wc -l |cut -d ' ' -f 1)
+ONT_yes=$(grep "Illumina" -i -v  ${analysis_location}/SRA_analysis/logs/tmp|head -1|grep "Oxford" -i|wc -l |cut -d ' ' -f 1)
+Illumina_yes=$(grep "Illumina" -i ${analysis_location}/SRA_analysis/logs/tmp |head -1|wc -l |cut -d ' ' -f 1)
 
 ##-----------------------------------------assemble with flye
-mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp/
+mkdir -p ${analysis_location}/SRA_analysis/flye/tmp/
 
 if [ $Pacbio_yes -gt 0 ]
 then
 echo "Pacbio data"
 
-python /home/vincent/apps/flye/Flye/bin/flye --threads 37  --iterations 1 --pacbio-raw \
-      /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq \
-      --out-dir /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp/${SRA}
+flye --threads 37  --iterations 1 --pacbio-raw \
+      ${analysis_location}/SRA_analysis/SRA/${SRA}.fastq \
+      --out-dir ${analysis_location}/SRA_analysis/flye/tmp/${SRA}
 
 elif [ $ONT_yes -gt 0 ]
 then
 echo "ONT data"
 
-python /home/vincent/apps/flye/Flye/bin/flye --threads 37  --iterations 1 --nano-raw \
-      /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq \
-      --out-dir /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp/${SRA}
+flye --threads 37  --iterations 1 --nano-raw \
+      ${analysis_location}/SRA_analysis/SRA/${SRA}.fastq \
+      --out-dir ${analysis_location}/SRA_analysis/flye/tmp/${SRA}
 
 fi
 
-mkdir -p /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/
+mkdir -p ${analysis_location}/SRA_analysis/flye/all_gathered
 
-cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp/${SRA}/assembly_info.txt  /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt
+cp ${analysis_location}/SRA_analysis/flye/tmp/${SRA}/assembly_info.txt  ${analysis_location}/SRA_analysis/flye/all_gathered/${SRA}_info.txt
+cp ${analysis_location}/SRA_analysis/flye/tmp/${SRA}/assembly.fasta  ${analysis_location}/SRA_analysis/flye/all_gathered/${SRA}.fasta
 
-cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp/${SRA}/assembly.fasta  /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}.fasta
-
-rm -r /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/tmp/${SRA}
+rm -r  ${analysis_location}/SRA_analysis/flye/tmp/${SRA}
 
 ##----------------------final summary
 
-contig_count=$(grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt |wc -l)
-
-longest_contig=$(grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt |sort -k2 -n -r | cut -f 2|head -1)
-
-circ_longest=$(grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt |sort -k2 -n -r | cut -f 4|head -1)
-
-num_circ=$(grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt |sort -k2 -n -r | cut -f 4|grep "Y"|wc -l |cut -f 1)
-
-num_non_circ=$(grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt |sort -k2 -n -r | cut -f 4|grep -v "Y"|wc -l |cut -f 1)
-
-echo -e ${SRA}"\t"${contig_count}"\t"${longest_contig}"\t"${circ_longest}"\t"${num_circ}"\t"${num_non_circ} >>  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt
-
+contig_count=$(grep "^#" -v ${analysis_location}/SRA_analysis/flye/all_gathered/${SRA}_info.txt |wc -l)
+longest_contig=$(grep "^#" -v ${analysis_location}/SRA_analysis/flye/all_gathered/${SRA}_info.txt |sort -k2 -n -r | cut -f 2|head -1)
+circ_longest=$(grep "^#" -v ${analysis_location}/SRA_analysis/flye/all_gathered/${SRA}_info.txt |sort -k2 -n -r | cut -f 4|head -1)
+num_circ=$(grep "^#" -v ${analysis_location}/SRA_analysis/flye/all_gathered/${SRA}_info.txt |sort -k2 -n -r | cut -f 4|grep "Y"|wc -l |cut -f 1)
+num_non_circ=$(grep "^#" -v ${analysis_location}/SRA_analysis/flye/all_gathered/${SRA}_info.txt |sort -k2 -n -r | cut -f 4|grep -v "Y"|wc -l |cut -f 1)
+echo -e ${SRA}"\t"${contig_count}"\t"${longest_contig}"\t"${circ_longest}"\t"${num_circ}"\t"${num_non_circ} >>   ${analysis_location}/genome_analysis.txt
 
 done
-```
 
+#---------------------genome_analysis.txt IS STORED ON ZONEDO------------------------------------
+```
 
 # Qualtiy control of downlaod and assembly
 
-After the download and assembly, I check the quality of the assembly. 
+After the download and assembly, I checked the quality of the assembly. 
 Some assemblies are very fragmented. I therefore filter out all assemblies that have either more then 15 contigs or the largest contig is smaller then 500 kb. 
 The reason why some assemblies are very fragmented is that not all data has been deposited or downloaded. 
 
 
 ```{bash}
-
 ##-------------------------------------------------------------------------
 ##-------------------------------------delete SRA which are not interesting
+#to save space
 ##-------------------------------------------------------------------------
-cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt
+cat ${analysis_location}/genome_analysis.txt
 
-#awk -F "\t" '{OFS="\t"}{if($2<20 && $3>800000 && $4=="Y" &&)}'
+awk -F "\t" '{OFS="\t"}{if($2>15 && $3<500000) print $0}' ${analysis_location}/genome_analysis.txt
 
-awk -F "\t" '{OFS="\t"}{if($2>15 && $3<500000) print $0}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt
-
-
-for SRA in $(awk -F "\t" '{OFS="\t"}{if($2>15 && $3<500000) print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt)
+for SRA in $(awk -F "\t" '{OFS="\t"}{if($2>15 && $3<500000) print $1}' ${analysis_location}/genome_analysis.txt)
 do
 
 echo ${SRA}
 
-rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.*
+rm ${analysis_location}/SRA_analysis/SRA/${SRA}*
 
 done 
-
 
 ##-------------------------------------------------------------------------
 ##-------------------------------------make a list of SRA to analyse with circlator and Recycled
 ##-------------------------------------------------------------------------
 
-cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt
+awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $0}' ${analysis_location}/genome_analysis.txt
+awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $4}' ${analysis_location}/genome_analysis.txt |sort|uniq -c
 
+##----------------------SRA to analyse----------------------
 
-awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $0}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt
-
-awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $4}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |sort|uniq -c
-
-
-##----------------------to does----------------------
-
-awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1,$4}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |sort|uniq |cut -f 2|sort|uniq -c
-
-awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |sort|uniq > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis_prepSofar.txt 
-
-
-awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |sort|uniq  > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis_toDo.txt 
-
-wc -l /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis_toDo.txt 
-
-##----------check flye assembly
-
-for SRA in $(cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis_toDo.txt )
-do
-echo "==============================="
-echo -e ${SRA}
-
-grep ">" -c /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}.fasta
-
-#wc -l /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_02/${SRA}_fixstart.log|cut -d ' '  -f 1
-[ -e /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_02/${SRA}_fixstart.log ] && sed -i -e "s/^${SRA}$//g" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis_toDo.txt 
-
-
-#wc -l /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log |cut -d ' '  -f 1
-
-head -1 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq
-done
-
-sed -i '/^$/d' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis_toDo.txt 
-
-wc -l /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis_toDo.txt 
-
+awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1,$4}' ${analysis_location}/genome_analysis.txt |sort|uniq |cut -f 2|sort|uniq -c
+awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1}' ${analysis_location}/genome_analysis.txt |sort|uniq  > ${analysis_location}/genome_analysis_toDo.txt 
+wc -l ${analysis_location}/genome_analysis_toDo.txt 
 
 ```
 
 ## Circularisation analysis
 
+Now I use the two circlatriation and restart tools to compare on the selected data. 
+
 ### Circlator 
+
+I use Circlator with default parameters and 8 threads. 
 
 ```{bash}
 ##==============================================================
-#DO ONLY CIRCLATOR
-##==============================================================
-
-
+# ONLY CIRCLATOR
+##=============================================================
 tmpdir=tmp_08
 
-for SRA in $(cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis_toDo.txt|sort|uniq |sed -n 33,42p )
+for SRA in $(cat ${analysis_location}/genome_analysis_toDo.txt |sort|uniq |sed -n 33,42p )
 do
 echo ${SRA}
 ##-----------------------------------------circlator
 
+mkdir -p ${analysis_location}/SRA_analysis/circlator/all_gathered_02/
+mkdir -p ${analysis_location}/SRA_analysis/circlator/${tmpdir}
 
-#rm -r /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_03/
-mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_02/
-mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${tmpdir}
-
-rm -r  /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${tmpdir}/${SRA}/
+rm -r  /${tmpdir}/${tmpdir}/${SRA}/
 start=`date +%s`
-circlator all --threads 8 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}.fasta /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${tmpdir}/${SRA}/
+circlator all --threads 8 / ${analysis_location}/SRA_analysis/flye/all_gathered/${SRA}.fasta  ${analysis_location}/SRA_analysis/SRA/${SRA}.fastq  ${analysis_location}/SRA_analysis/circlator/${tmpdir}/${SRA}/
 
 end=`date +%s`
 runtime_circlator=$( echo "$end - $start" | bc -l )
 echo $runtime_circlator
 
-#echo -e ${SRA}"\t"${runtime_circlator}"\tcirclator" >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered/runtimes.circlator
+cp  ${analysis_location}/SRA_analysis/circlator/${tmpdir}/${SRA}/06.fixstart.detailed.log  ${analysis_location}/SRA_analysis/circlator/all_gathered_02/${SRA}_fixstart.log
+cp  ${analysis_location}/SRA_analysis/circlator/${tmpdir}/${SRA}/04.merge.circularise.log  ${analysis_location}/SRA_analysis/circlator/all_gathered_02/${SRA}_circularise.log
 
+##-------------------------------final summary
 
-cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${tmpdir}/${SRA}/06.fixstart.detailed.log /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_02/${SRA}_fixstart.log
-
-cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${tmpdir}/${SRA}/04.merge.circularise.log /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_02/${SRA}_circularise.log
-
-##final summary
-
-echo -e ${SRA}"\t"${runtime_circlator}"\tNA" >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02
+echo -e ${SRA}"\t"${runtime_circlator}"\tNA" >>  ${analysis_location}/RunTime_Circlator.txt
 
 done
 
-
-
-##==============================================================
-#DO ONLY CIRCLATOR from fasta harddrive
-##==============================================================
-
-
-tmpdir=tmp_01
-
-for SRA in $(awk -F "\t" '{OFS="\t"}{if($2<15 && $3>500000) print $0}' /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |sed -n 6,29p  |cut -f 1
-)
-do
-echo ${SRA}
-##-----------------------------------------circlator
-
-
-#rm -r /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_03/
-mkdir -p /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_02/
-mkdir -p /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${tmpdir}
-
-rm -r  /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${tmpdir}/${SRA}/
-start=`date +%s`
-circlator all --threads 8 /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}.fasta /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${tmpdir}/${SRA}/
-
-end=`date +%s`
-runtime_circlator=$( echo "$end - $start" | bc -l )
-echo $runtime_circlator
-
-#echo -e ${SRA}"\t"${runtime_circlator}"\tcirclator" >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered/runtimes.circlator
-
-
-cp /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${tmpdir}/${SRA}/06.fixstart.detailed.log /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_02/${SRA}_fixstart.log
-
-cp /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${tmpdir}/${SRA}/04.merge.circularise.log /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_02/${SRA}_circularise.log
-
-
-##final summary
-
-echo -e ${SRA}"\t"${runtime_circlator}"\tNA" >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02
-
-done
-
-
-cp /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/*.fasta /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/
-
-cp /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/*info.txt /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/
-
-
-#cat /Fast/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt >> genome_analysis.txt
+#---------------------RunTime_Circlator.txt IS STORED ON ZONEDO------------------------------------
 ```
 
 ### ReCycled
 
+Second I use ReCyled with default paramters and 8 threads. 
 
 ```{bash}
 ##==============================================================
-#DO ONLY ReCycled
+#ONLY ReCycled
 ##==============================================================
 conda activate ReCycled
 
 tmpdir=tmp_08
-rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02_onlycirclers
-for SRA in $(cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis_toDo.txt|sort|uniq |sed -n 33,42p )
+rm ${analysis_location}/RunTime_ReCycled.txt
+for SRA in $(cat ${analysis_location}/SRA_analysis/flye/all_gathered/genome_analysis_toDo.txt|sort|uniq |sed -n 33,42p )
 do
 
-##-----------------------------------------circleres
+##-------------------------------ReCycled
 
-mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}
+mkdir -p ${analysis_location}/SRA_analysis/ReCycled/${tmpdir}/${SRA}
 start=`date +%s`
 
-/data/Project/2021_circlator/20220106_2020_circleries_tool/Circleries/Circleries.sh \
-    -i /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}.fasta \
-    -l /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/SRA/${SRA}.fastq \
+ReCycled.sh \
+    -i ${analysis_location}/SRA_analysis/flye/all_gathered/${SRA}.fasta \
+    -l ${analysis_location}/SRA_analysis/SRA/${SRA}.fastq \
     -t 8 \
     -o ${SRA} \
-    -d /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}/ \
+    -d ${analysis_location}/SRA_analysis/ReCycled/${tmpdir}/${SRA}/ \
     -F -x
 
-cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt
-    
 end=`date +%s`
 runtime_circleres=$( echo "$end - $start" | bc -l )
 echo $runtime_circleres
 
+mkdir -p ${analysis_location}/SRA_analysis/ReCycled/all_gathered_02/${SRA}
 
-mkdir -p /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}
 
-
-cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}/${SRA}_analysis_circularity_extended.log  \
-    /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log 
+cp ${analysis_location}/SRA_analysis/ReCycled/${tmpdir}/${SRA}/${SRA}_analysis_circularity_extended.log  \
+    ${analysis_location}/SRA_analysis/ReCycled/all_gathered_02/${SRA}_analysis_circularity_extended.log 
     
-cp /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/${tmpdir}/${SRA}/${SRA}.fasta \
-    /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}.fasta
-   
-echo -e ${SRA}"\tNA\t"${runtime_circleres} >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_03_onlycirclers
+cp ${analysis_location}/SRA_analysis/ReCycled/${tmpdir}/${SRA}/${SRA}.fasta \
+    ${analysis_location}/SRA_analysis/ReCycled/all_gathered_02/${SRA}.fasta
+ 
+##-------------------------------final summary
+  
+echo -e ${SRA}"\tNA\t"${runtime_circleres} >> ${analysis_location}/overall_analysis_03_onlyReCycled
 
 done
 
-wc -l /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02
-cut -f 1 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02 |sort|uniq |wc -l
-awk '{if($2>10)print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02|sort|uniq|wc -l
+wc -l ${analysis_location}/RunTime_ReCycled.txt
+cut -f 1 ${analysis_location}/RunTime_ReCycled.txt |sort|uniq |wc -l
+awk '{if($2>10)print $1}' ${analysis_location}/overall_analysis_03_onlyReCycled|sort|uniq|wc -l
 
+#---------------------RunTime_ReCycled.txt IS STORED ON ZONEDO------------------------------------
 ```
-
-
 
 # Analysis of outcome
 
+Finally, after I have analysed all genomes with the two methods, I want to answer the following three questions:
+
 1. Are circular contigs recognized?
 2. Are the bacterial contigs correctly restarted?
-3. How fast is it?
+3. How fast are the two tools?
 
 ## 1. Are circular contigs recognized?
 
-```{bash}
+Here, I check three things. 
 
+1. What is the contig ground truth. Has flye assembled a circular contig?
+2. What has Circlator found? Is the contig circular? Is the contig restarted?
+3. What has ReCycled found? Is the contig circular? Is the contig restarted?
+
+```{bash}
 ##----------------------------------------------
 #run analysis
 ##----------------------------------------------
 
-rm /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis.final
+rm ${analysis_location}/restart_analysis.final
 
-for SRA in $(awk '{if($2>10)print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02|sort|uniq)
+for SRA in $(awk '{if($2>10)print $1}' ${analysis_location}/RunTime_Circlator.txt|sort|uniq)
 do
 echo "==========================="
 echo ${SRA}
 
-##------flye
+##------check flye assembly graph (ground truth)
 
-#grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt | sort -k2 -n -r |head -1 |cut -f 1,4 > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.flye
+contigzz=$(grep "^#" -v ${analysis_location}//SRA_analysis/flye/all_gathered/${SRA}_info.txt | sort -k2 -n -r |head -1 |cut -f 1)
+contigzz_verdict=$(grep "^#" -v ${analysis_location}//SRA_analysis/flye/all_gathered/${SRA}_info.txt | sort -k2 -n -r |head -1 |cut -f 4)
 
-contigzz=$(grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt | sort -k2 -n -r |head -1 |cut -f 1)
+echo -e "--------circlator outcome"
 
-
-contigzz_verdict=$(grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt | sort -k2 -n -r |head -1 |cut -f 4)
-
-echo -e "--------circlator"
-
-
-circlator_circ=$(grep "${contigzz}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_02/${SRA}_circularise.log |cut -f 6)
-
-circlator_start=$(grep "${contigzz}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_02/${SRA}_fixstart.log |cut -f 7)
-
-
-# /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/${tmpdir}/${SRA}/04.merge.circularise.log
-
-#if [ $circlator_circ  ==  1 ] &&  [ $circlator_start  =  "-" ]; then
-#circlator_final=$(echo "Y")
-#echo "startaligned with Circlator"
-#else
-#circlator_final=$(echo "N")
-#echo "non-startaligned with Circlator"
-#fi
+circlator_circ=$(grep "${contigzz}$(printf '\t')" ${analysis_location}//SRA_analysis/circlator/all_gathered_02/${SRA}_circularise.log |cut -f 6)
+circlator_start=$(grep "${contigzz}$(printf '\t')" ${analysis_location}//SRA_analysis/circlator/all_gathered_02/${SRA}_fixstart.log |cut -f 7)
 
 if [ $circlator_circ  ==  1 ] &&  [ $circlator_start  =  "-" ]; then
 circlator_final=$(echo "Y")
@@ -599,151 +501,102 @@ circlator_final=$(echo "NA")
 echo "non-startaligned with Circlator"
 fi
 
+echo -e "--------circles outcome"
 
-echo -e "--------circles"
-
-circleres_circ=$(grep "^${contigzz}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log |cut -f 12)
-#circleres_circ=$(grep "^${contigzz}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log |sed 's/\\t/,/g' |sed 's/ /_/g')
-
-
-
+circleres_circ=$(grep "^${contigzz}$(printf '\t')" ${analysis_location}//SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log |cut -f 12)
 
 echo -e "--------analysis total"
 
-echo -e ${SRA}"\t"${contigzz_verdict}"\t"${circlator_final}"\t"${circleres_circ} >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis.final
+echo -e ${SRA}"\t"${contigzz_verdict}"\t"${circlator_final}"\t"${circleres_circ} >> ${analysis_location}//restart_analysis.final
 
 done
 
-cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis.final
-sort /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis.final |uniq | cut -f 2,3,4 |sort |uniq -c
-grep -v "NA" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/startaligned_analysis.final |sort|uniq
+cat ${analysis_location}//restart_analysis.final
+sort ${analysis_location}//restart_analysis.final |uniq | cut -f 2,3,4 |sort |uniq -c
+grep -v "NA" ${analysis_location}/restart_analysis.final |sort|uniq
 
+#---------------------restart_analysis.final IS STORED ON ZONEDO------------------------------------
 ```
-
 
 ## 2. Are the bacterial contigs correctly restarted?
 
+Here, I check the circularity bacterial chromosomes and if they have been restarted. 
+
+1. Which contig is the bacterial chromosome identified with Flye?
+2. What has Circlator found? Is the bacterial chromosome circular? Is the bacterial chromosome restarted?
+3. What has ReCycled found? Is the bacterial chromosome circular? Is the bacterial chromosome restarted?
 
 ```{bash}
+echo -e "SRA\tcontig\tflye\tcirclator\tReCycled" > ${analysis_location}/Circularity_of_bacterial_contig.analysis
+#for SRA in $(awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1}' ${analysis_location}/SRA_analysis/flye/all_gathered/genome_analysis.txt |head -68)
 
-echo -e "SRA\tcontig\tflye\tcirclator\tcirclers" > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/Circ_contig_analysis.final
-#for SRA in $(awk -F "\t" '{OFS="\t"}{if($2!=0 && ($2<15 || $3>500000)) print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/genome_analysis.txt |head -68)
-
-for SRA in $(awk '{if($2>10)print $1}' /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02|sort|uniq)
+for SRA in $(awk '{if($2>10)print $1}' ${analysis_location}/RunTime_Circlator.txt|sort|uniq)
 do
 echo "==========================="
 echo ${SRA}
 ##------flye
 
-grep "^#" -v /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/flye/all_gathered/${SRA}_info.txt | sort -k1 -n   |cut -f 1,4 > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.flye
-
-
+grep "^#" -v ${analysis_location}//SRA_analysis/flye/all_gathered/${SRA}_info.txt | sort -k1 -n   |cut -f 1,4 > ${analysis_location}//SRA_analysis/tmp.flye
 
 echo -e "--------circlator"
 
+grep -v "#Contig" ${analysis_location}//SRA_analysis/circlator/all_gathered_02/${SRA}_circularise.log | sort -k2 -n |cut -f 2,6 > ${analysis_location}//SRA_analysis/tmp.circlator
 
-grep -v "#Contig" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circlator/all_gathered_02/${SRA}_circularise.log | sort -k2 -n |cut -f 2,6 > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.circlator
+echo -e "--------ReCylced"
 
-
-
-echo -e "--------circles"
-
-
-#grep -v "^#contigName" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log | sort -k1 -n   |cut -f 1,12 > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.circleries
-
-
-grep -v "^#contigName" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log | sort -k1 -n   |cut -f 1,8 > /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.circleries
-
+grep -v "^#contigName" ${analysis_location}//SRA_analysis/circleres/all_gathered_02/${SRA}_analysis_circularity_extended.log | sort -k1 -n   |cut -f 1,8 > ${analysis_location}//SRA_analysis/tmp.circleries
 
 echo -e "--------analysis total"
 
-for contigss in $(cut -f 1 /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.flye)
-do
+  for contigss in $(cut -f 1 ${analysis_location}//SRA_analysis/tmp.flye)
+  do
 
-flye_circ=$(grep "^${contigss}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.flye |cut -f 2)
-circlator_circ=$(grep "^${contigss}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.circlator |cut -f 2 |sed 's/0/N/g'|sed 's/1/Y/g')
-circleres_circ=$(grep "^${contigss}$(printf '\t')" /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/tmp.circleries |cut -f 2)
+flye_circ=$(grep "^${contigss}$(printf '\t')" ${analysis_location}//SRA_analysis/tmp.flye |cut -f 2)
+circlator_circ=$(grep "^${contigss}$(printf '\t')" ${analysis_location}/SRA_analysis/tmp.circlator |cut -f 2 |sed 's/0/N/g'|sed 's/1/Y/g')
+circleres_circ=$(grep "^${contigss}$(printf '\t')" ${analysis_location}/SRA_analysis/tmp.circleries |cut -f 2)
 
-echo -e ${SRA}"\t"${contigss}"\t"${flye_circ}"\t"${circlator_circ}"\t"${circleres_circ} >> /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/Circ_contig_analysis.final
+echo -e ${SRA}"\t"${contigss}"\t"${flye_circ}"\t"${circlator_circ}"\t"${circleres_circ} >> ${analysis_location}/Circularity_of_bacterial_contig.analysis
 
-
+  done
 done
 
+cat ${analysis_location}/Circularity_of_bacterial_contig.analysis
+sort ${analysis_location}/Circularity_of_bacterial_contig.analysis |uniq |cut -f 3,5 |sort|uniq -c
+sort ${analysis_location}/Circularity_of_bacterial_contig.analysis |uniq |cut -f 3,4,5 |sort|uniq -c
 
-done
-
-cat /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/Circ_contig_analysis.final
-
-sort /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/Circ_contig_analysis.final |uniq |cut -f 3,5 |sort|uniq -c
-
-
-sort /data/Project/2021_circlator/NCBI_analysis/SRA_analysis/Circ_contig_analysis.final |uniq |cut -f 3,4,5 |sort|uniq -c
-
-
+#---------------------Circularity_of_bacterial_contig.analysis IS STORED ON ZONEDO------------------------------------
 ```
-
 
 ## final analysis
 
+Finally, I bring all the outputs together and look at the data in R. 
 
-```{bash}
-##---------------------------------------------
-#move local 
-##---------------------------------------------
-
-mkdir -p  /home/vincent/Desktop/Projects/2020_circleries/06_analysis/final_analysis/
-scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/SRA_analysis/*.final /home/vincent/Desktop/Projects/2020_circleries/06_analysis/final_analysis/
-
-scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_02 /home/vincent/Desktop/Projects/2020_circleries/06_analysis/final_analysis/
-
-
-scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/SRA_analysis/overall_analysis_03_onlycirclers /home/vincent/Desktop/Projects/2020_circleries/06_analysis/final_analysis/
-
-```
-
-
-
-```{r}
-
+```{r eval=TRUE}
 library(tidyverse)
 
 ##---------------------
 #0. genome assemblies on NCBI
 ##---------------------
 
-dnaA_genes_stats <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/dnaA_genes.stats.Complete_Genome", delim = "\t", escape_double = FALSE, col_names = c("genome","startpostion","orientation","startAligned"), trim_ws = TRUE)
+dnaA_genes_stats <- read_delim("dnaA_genes.stats.Complete_Genome", delim = "\t", escape_double = FALSE, col_names = c("genome","startpostion","orientation","startAligned"), trim_ws = TRUE)
 
 dnaA_genes_stats$startAligned = factor(dnaA_genes_stats$startAligned, levels=c("Yes","NO"))
-nrow(dnaA_genes_stats)
-colorss <- rev(c("#F25F5C","#50514F"))
-colorss <- rev(c("#6B717E","#EFAAC4"))
-colorss <- rev(c("#ECCBD9","#E1EFF6"))
-colorss <- rev(c("#D0FEF5","#FAB2EA"))
-colorss <- rev(c("#B80C09","#6B2B06"))
-colorss <- (c("#F4F1BB","#ED6A5A"))
+
 colorss <- (c("#BBBE64","#8E5572"))
-# colorss <- (c("#982649","#7C8483"))
 
-plot_complete_genome <- ggplot(dnaA_genes_stats,aes(x=startAligned,fill=startAligned,color=startAligned))+geom_bar()+theme_classic()+labs(x="Genome start aligned\n at OriC",y="Genomes",title = "Chromosome-level\nassemblies on RefSeq")+theme(legend.position = "none")+scale_fill_manual(values=colorss)+scale_color_manual(values=colorss)+scale_y_continuous(breaks=c(0,5000,11496,13015)) 
-plot_complete_genome
-
+plot_complete_genome <- ggplot(dnaA_genes_stats,aes(x=startAligned,fill=startAligned,color=startAligned))+geom_bar()+theme_classic()+labs(x="Genome start aligned\n at OriC",y="Genomes",title = "Complete assemblies\non NCBI RefSeq")+theme(legend.position = "none")+scale_fill_manual(values=colorss)+scale_color_manual(values=colorss)+scale_y_continuous(breaks=c(0,5000,11496,13015)) 
+# plot_complete_genome
 
 ##---------------------
 #1. circular bacterial cells aligned
 ##---------------------
 
-startaligned_analysis <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/final_analysis/startaligned_analysis.final", delim = "\t", escape_double = FALSE,  trim_ws = TRUE,col_names = c("SRA","flye","circlator","circlers")) %>% filter(flye=="Y") %>% replace(is.na(.), "N") %>% filter(!is.na(circlator))
-
+startaligned_analysis <- read_delim("restart_analysis.final", delim = "\t", escape_double = FALSE,  trim_ws = TRUE,col_names = c("SRA","flye","Circlator","ReCycled")) %>% filter(flye=="Y") %>% replace(is.na(.), "N") %>% filter(!is.na(Circlator))
 startaligned_analysis <- startaligned_analysis[!duplicated(startaligned_analysis),]
 
-
-
-startaligned_analysis_long <- gather(startaligned_analysis, circulariation, outcome, c("circlator","circlers"), factor_key=TRUE,na.rm = TRUE) %>% filter(!is.na(outcome))
-
+startaligned_analysis_long <- gather(startaligned_analysis, circulariation, outcome, c("Circlator","ReCycled"), factor_key=TRUE,na.rm = TRUE) %>% filter(!is.na(outcome))
 startaligned_analysis_long$verdict <- ifelse(startaligned_analysis_long$flye==startaligned_analysis_long$outcome,"startaligned","not aligned")
-
 totl_counts <- startaligned_analysis_long %>% group_by(circulariation) %>% summarise(total=n())
-
 startaligned_analysis_sum <- startaligned_analysis_long %>% group_by(circulariation,verdict) %>% summarise(grouping=n()) %>% left_join(.,totl_counts,by="circulariation") %>% mutate(percent=100*(grouping/total))
 
 colorss <- rev(c("#BBBE64","#8E5572"))
@@ -752,68 +605,51 @@ countsGenomes <- startaligned_analysis_long$SRA %>% unique() %>% length()
 plot_start <- ggplot(startaligned_analysis_sum,aes(x=circulariation,y=percent,fill=verdict,color=verdict))+geom_bar(stat = "identity")+theme_classic()+scale_fill_manual(values=colorss)+scale_color_manual(values=colorss)+
   labs(y="Genomes [%]",title = paste0("Startalignment of bacterial\nchromosomes (n=",countsGenomes,")"))+
   theme(legend.title = element_blank(),axis.title.x = element_blank(),legend.position = "bottom")
-plot_start
+# plot_start
 
 ##---------------------
 #2. are all circular contigs recognized?
 ##---------------------
 
-circ_analysis <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/final_analysis/Circ_contig_analysis.final", delim = "\t", escape_double = FALSE,  trim_ws = TRUE)%>% replace(is.na(.), "N") 
+circ_analysis <- read_delim("Circularity_of_bacterial_contig.analysis", delim = "\t", escape_double = FALSE,  trim_ws = TRUE,skip = 1,col_names = c("SRA","contig","flye","Circlator","ReCycled"))%>% replace(is.na(.), "N") 
 circ_analysis <- circ_analysis[!duplicated(circ_analysis),]
 
-circ_analysis_long <- gather(circ_analysis, circulariation, outcome, c("circlator","circlers"), factor_key=TRUE,na.rm = TRUE) %>% filter(!is.na(outcome))
+circ_analysis_long <- gather(circ_analysis, circulariation, outcome, c("Circlator","ReCycled"), factor_key=TRUE,na.rm = TRUE) %>% filter(!is.na(outcome))
 circ_analysis_long$verdict <- ifelse(circ_analysis_long$flye==circ_analysis_long$outcome,"correct","incorrect")
 totl_counts <- circ_analysis_long %>% group_by(circulariation) %>% summarise(total=n())
 
 circ_analysis_sum <- circ_analysis_long %>% group_by(circulariation,verdict) %>% summarise(grouping=n()) %>% left_join(.,totl_counts,by="circulariation") %>% mutate(percent=100*(grouping/total))
 
-colorss <- rev(c("#BBBE64","#8E5572"))
-
 circ_analysis_sum$verdict = factor(circ_analysis_sum$verdict, levels=c("incorrect","correct"))
-countsGenomes <- circ_analysis_long %>% select(SRA,contig) %>% unique() %>% nrow()
+# countsGenomes <- circ_analysis_long %>% select(SRA,contig) %>% unique() %>% nrow()
 
 colorss <- rev(c("#BBBE64","#8E5572"))
-
 
 plot_circular <- ggplot(circ_analysis_sum,aes(x=circulariation,y=percent,fill=verdict,color=verdict))+geom_bar(stat = "identity")+theme_classic()+scale_fill_manual(values=colorss)+scale_color_manual(values=colorss)+
   labs(y="Genomes [%]",title = paste0("Correctly identified\ncircular contigs (n=",countsGenomes,")"))+
   theme(legend.title = element_blank(),axis.title.x = element_blank(),legend.position = "bottom")
 
-plot_circular
-
+# plot_circular
 ##---------------------
-#4. are the contigs not wrongly circularised?
-##---------------------
-
-
-##---------------------
-#4 speed
+#3 speed
 ##---------------------
 
-speed_analysis_01 <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/final_analysis/overall_analysis_02", delim = "\t", escape_double = FALSE,  trim_ws = TRUE,col_names = c("SRA","circlator","circlers"))
-speed_analysis_02 <- read_delim("~/Desktop/Projects/2020_circleries/06_analysis/final_analysis/overall_analysis_03_onlycirclers", delim = "\t", escape_double = FALSE,  trim_ws = TRUE,col_names = c("SRA","circlator","circlers"))
+speed_analysis_01 <- read_delim("RunTime_Circlator.txt", delim = "\t", escape_double = FALSE,  trim_ws = TRUE,col_names = c("SRA","Circlator","ReCycled"))
+speed_analysis_02 <- read_delim("RunTime_ReCycled.txt", delim = "\t", escape_double = FALSE,  trim_ws = TRUE,col_names = c("SRA","Circlator","ReCycled"))
 
 speed_analysis <- rbind(speed_analysis_01,speed_analysis_02)
-
 speed_analysis <- speed_analysis[!duplicated(speed_analysis),]
-
-speed_analysis_long <- gather(speed_analysis, circulariation, outcome, c("circlator","circlers"), factor_key=TRUE,na.rm = TRUE) %>% filter(!is.na(outcome)) 
-
+speed_analysis_long <- gather(speed_analysis, circulariation, outcome, c("Circlator","ReCycled"), factor_key=TRUE,na.rm = TRUE) %>% filter(!is.na(outcome)) 
 speed_analysis_long_cleaned <- speed_analysis_long %>% group_by(SRA,circulariation) %>% summarise(outcome=median(outcome))%>% filter(outcome<50000)%>% filter(outcome>3)
 
-dim(speed_analysis_long)
-dim(speed_analysis_long_cleaned)
-
-countsGenomes <- speed_analysis_long$SRA %>% unique() %>% length()
-# 
-# startaligned_analysis_sum <- startaligned_analysis_long %>% group_by(circulariation,verdict) %>% summarise(grouping=n()) %>% left_join(.,totl_counts,by="circulariation") %>% mutate(percent=100*(grouping/total))
+# countsGenomes <- speed_analysis_long$SRA %>% unique() %>% length()
+ 
 library(ggquiver)
 plot_speed <- ggplot(speed_analysis_long_cleaned,aes(x=circulariation,y=outcome,fill=circulariation ,color=circulariation ))+geom_violin(alpha=0.4)+ geom_jitter(shape=16, position=position_jitter(0.2))+theme_classic()+scale_y_continuous(trans = "log10",breaks=c(10,100,1000,10000))+  #+coord_trans(y="log10")+
   scale_fill_manual(values=colorss)+scale_color_manual(values=colorss)+
   labs(y="Runtime [seconds]",title = paste0("Runtime of the two tools\n(n=",countsGenomes,")"))+
   theme(legend.position = "none",axis.title.x = element_blank())
-plot_speed
-
+# plot_speed
 
 speed_analysis_long_cleaned %>%  group_by(circulariation) %>% summarise(meanss=mean(outcome))
 
@@ -825,39 +661,36 @@ library(patchwork)
 
 plot_complete_genome+plot_circular+plot_start+plot_speed+ plot_layout(nrow=1)
 
-# png("/home/vincent/Desktop/Projects/2020_circleries/07_figures/Plot_all.png", width = 4400, height = 3000,res=400)
-pdf("/home/vincent/Desktop/Projects/2020_circleries/07_figures/Plot_all.pdf",width=11,height=7)
+# png("Plot_all.png", width = 4400, height = 3000,res=400)
+pdf("Plot_all.pdf",width=11,height=7)
 
 plot_complete_genome+plot_circular+plot_start+plot_speed+ plot_layout(nrow=1)
 dev.off()
-
-
 ```
 
 # check start alignement
 
 
-Here, I reannotate the restarted contigs with PROKKA to check for proper restarting at dnaA. 
+Here, I reannotate the restarted contigs with (PROKKA)[https://github.com/tseemann/prokka] (Seemann, 2014) to check for proper restarting at dnaA. 
 
 ```{bash}
+
+
 
 
 ```
 
-
-
-
 # make synteny non-start aligned and start-aligned
 
-
-Here, I create the genome synteny plot with Artemisia from genomes that are not restarted and the same genomes that are restarted with ReCycled 
-
+Here, I create the genome synteny plot with (Artemis)[https://www.sanger.ac.uk/tool/artemis-comparison-tool-act/] (Carver et al. 2005) and blast from genomes that are not restarted and the same genomes that are restarted with ReCycled. 
 
 ```{bash}
-    rm -r /data/Project/2021_circlator/NCBI_analysis/Synteny/FASTA
-    mkdir -p /data/Project/2021_circlator/NCBI_analysis/Synteny/FASTA
-    
-    
+##--------------------------------------------------
+#this analysis is done on the cluster
+##--------------------------------------------------
+    rm -r ${analysis_location}/Synteny/FASTA
+    mkdir -p ${analysis_location}/Synteny/FASTA
+
       for sample in $(echo "24742 24740 24738 24736 24726")
         do
         
@@ -866,16 +699,15 @@ Here, I create the genome synteny plot with Artemisia from genomes that are not 
   #echo "=============="
 
       cat   /data/Project/2020_StarterCultureDiversity/09_flye/assembly/${sample}/*info*
-            cat   /data/Project/2020_StarterCultureDiversity/09_flye/assembly/${sample}/*.fasta > /data/Project/2021_circlator/NCBI_analysis/Synteny/FASTA/${sample}.fasta
+            cat   /data/Project/2020_StarterCultureDiversity/09_flye/assembly/${sample}/*.fasta > ${analysis_location}/Synteny/FASTA/${sample}.fasta
   
         done
     
-    
-  ##-----------------------
+##-----------------------
 ###bring local
 ##-----------------------  
 mkdir -p /home/vincent/Desktop/Projects/2020_circleries/06_analysis/Synteny/FASTA
-scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/Synteny/FASTA/* /home/vincent/Desktop/Projects/2020_circleries/06_analysis/Synteny/FASTA
+scp -r vincent@130.223.51.66:${analysis_location}/Synteny/FASTA/* /home/vincent/Desktop/Projects/2020_circleries/06_analysis/Synteny/FASTA
 
 ##-----------------------
 ###create a blastall crunch file
@@ -896,7 +728,6 @@ blastall -p blastn -m 8 -e 1e-5 -d 24738.fasta -i 24736.fasta -o third.crunch -a
 formatdb -p F -i 24736.fasta
 blastall -p blastn -m 8 -e 1e-5 -d 24736.fasta -i 24726.fasta -o fourth.crunch -a 12
 
-
 conda activate myenv
 
 ##-----------------------
@@ -913,7 +744,7 @@ act &
 ##-----------------------
 
 
-mkdir -p /data/Project/2021_circlator/NCBI_analysis/Synteny/FASTA_startAlign/
+mkdir -p ${analysis_location}/Synteny/FASTA_startAlign/
 
       for sample in $(echo "24742 24740 24738 24736 24726")
         do
@@ -925,28 +756,18 @@ mkdir -p /data/Project/2021_circlator/NCBI_analysis/Synteny/FASTA_startAlign/
 
    \
    #   --out-dir /data/Project/2020_StarterCultureDiversity/09_flye/assembly/${sample}/
-      
-      
-      
+     
 /data/Project/2021_circlator/20220106_2020_circleries_tool/Circleries/Circleries.sh \
-    -i /data/Project/2021_circlator/NCBI_analysis/Synteny/FASTA/${sample}.fasta \
+    -i ${analysis_location}/Synteny/FASTA/${sample}.fasta \
     -l /data/Project/2020_StarterCultureDiversity/01_Data/20200619_genomeSeqONT/01_rawdata/fastq/${sample}/${sample}_qualityFiltered_min7000_Q90.fastq.gz \
     -t 8 \
     -o  ${sample} \
-    -d  /data/Project/2021_circlator/NCBI_analysis/Synteny/FASTA_startAlign/ \
+    -d  ${analysis_location}/Synteny/FASTA_startAlign/ \
     -F -x
 
         done
   
-  rm -r  /data/Project/2021_circlator/NCBI_analysis/Synteny/FASTA_startAlign/tmp*
-
-
-  ##-----------------------
-###bring local
-##-----------------------  
-mkdir -p /home/vincent/Desktop/Projects/2020_circleries/06_analysis/Synteny/FASTA_startAlign
-scp -r vincent@130.223.51.66:/data/Project/2021_circlator/NCBI_analysis/Synteny/FASTA_startAlign/* /home/vincent/Desktop/Projects/2020_circleries/06_analysis/Synteny/FASTA_startAlign
-
+  rm -r  ${analysis_location}/Synteny/FASTA_startAlign/tmp*
 
 ##-----------------------
 ###create a blastall crunch file
@@ -967,16 +788,24 @@ blastall -p blastn -m 8 -e 1e-5 -d 24738.fasta -i 24736.fasta -o third.crunch -a
 formatdb -p F -i 24736.fasta
 blastall -p blastn -m 8 -e 1e-5 -d 24736.fasta -i 24726.fasta -o fourth.crunch -a 12
 
-
 conda activate myenv
 
 ##-----------------------
 ###artemis and act analysis
 ##-----------------------
 act &
-
-    
 ```
 
+# References
 
+- Eric Sayers, The E-utilities In-Depth: Parameters, Syntax and More. (2009)
 
+- Hunt, M., Silva, N.D., Otto, T.D. et al. Circlator: automated circularization of genome assemblies using long sequencing reads. Genome Biol 16, 294 (2015). https://doi.org/10.1186/s13059-015-0849-0
+
+- Kolmogorov, M., Yuan, J., Lin, Y. et al. Assembly of long, error-prone reads using repeat graphs. Nat Biotechnol 37, 540–546 (2019). https://doi.org/10.1038/s41587-019-0072-8
+
+- Carver TJ, Rutherford KM, Berriman M, Rajandream MA, Barrell BG, Parkhill J. ACT: the Artemis Comparison Tool. Bioinformatics. 2005 Aug 15;21(16):3422-3. doi: 10.1093/bioinformatics/bti553. 
+
+- Torsten Seemann, Prokka: rapid prokaryotic genome annotation, Bioinformatics, Volume 30, Issue 14, 15 July 2014, Pages 2068–2069, https://doi.org/10.1093/bioinformatics/btu153
+
+- Somerville, V., Berthoud, H., Schmidt, R.S. et al. Functional strain redundancy and persistent phage infection in Swiss hard cheese starter cultures. ISME J 16, 388–399 (2022). https://doi.org/10.1038/s41396-021-01071-0
