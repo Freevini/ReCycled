@@ -194,21 +194,19 @@ seqkit_path=$(echo -e ${circleriesPATH}"/02_dependencies/seqkit")
 qcSkew_path=$(echo -e ${circleriesPATH}"/02_dependencies/gcskew.py")
 
 
-restarting_genes=$(echo -e ${circleriesPATH}"/05_restart_data/starting_genes_v3.fasta ")
+restarting_genes=$(echo -e ${circleriesPATH}"/05_restart_data/starting_genes_v3.fasta")
 
 #${circleriesPATH}/05_restart_data/starting_genes.fasta
 
 #type baloooihok >/dev/null 2>&1 && echo -e "   baloooihok......OK" || { echo >&2 "   baloooihok is not installed.  Aborting."; exit 1; }
 
 type minimap2 >/dev/null 2>&1 && echo -e "   Minimap2......OK" || { echo >&2 "   Minimap2 is not installed.  Aborting."; exit 1; }
-#type revseq >/dev/null 2>&1 && echo -e "   revseq......OK" || { echo >&2 "   revseq is not installed.  Aborting."; exit 1; }
 type bedtools >/dev/null 2>&1 && echo -e "   bedtools......OK" || { echo >&2 "   bedtools is not installed.  Aborting."; exit 1; }
-type $seqkit_path >/dev/null 2>&1 && echo -e "   seqkit......OK" || { echo >&2 "   seqkit is not installed.  Aborting."; exit 1; }
+type $seqkit_path >/dev/null 2>&1 && echo -e "   SeqKit......OK" || { echo >&2 "   SeqKit is not installed.  Aborting."; exit 1; }
+
+#type revseq >/dev/null 2>&1 && echo -e "   revseq......OK" || { echo >&2 "   revseq is not installed.  Aborting."; exit 1; }
 #type $qcSkew_path >/dev/null 2>&1 && echo -e "   qcSkew......OK" || { echo >&2 "   qcSkew is not installed.  Aborting."; exit 1; }
-
 #type $paftools_path >/dev/null 2>&1 && echo -e "   paftools.js......OK" || { echo >&2 "   paftools.js is not installed.  Aborting."; exit 1; }
-
-
 #type $restarting_genes >/dev/null 2>&1 && echo -e "   restarting_genes......OK" || { echo >&2 "   restarting_genes is not installed.  Aborting."; exit 1; }
 
 
