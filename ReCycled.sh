@@ -8,7 +8,7 @@
 ############################################################
 
 # Set defaults
-circleriesPATH=$(dirname $(realpath -s $0))
+ReCycledPATH=$(dirname $(realpath -s $0))
 outputFolderName=./
 threads=4
 verbose="N"
@@ -40,7 +40,7 @@ unset check_fasta
 Help()
 {
    # Display Help
-   echo "ReCycled: checks the circularity and bacterial origins of contigs and start aligns them at origin if possible"
+   echo "ReCycled: checks the circularity of contigs and restarts them at replication initiation protein"
    #echo -e "This is "$EXE $VERSION
    echo
    echo "minimal syntax: ReCycled -i <genome_input.fasta> -l <raw_long_read.fastq.gz>"
@@ -58,7 +58,7 @@ Help()
    echo "   -o     output file name " #threads #outName
    echo
    echo "RUNNING OPTIONS"
-   echo "   -p     ReCycled script directory (If not in PATH) [PATH]" #circleriesPATH
+   echo "   -p     ReCycled script directory (If not in PATH) [PATH]" #ReCycledPATH
    echo "   -t     number of threads to use [4]" #threads
    echo "   -x     keep all tmp files created [N]" #threads
    echo "   -F     Force everything to run again [N]" #threads
@@ -89,8 +89,8 @@ while getopts ":h :p: :i: :d: :o: :t: :l: :r: :f: :v :V :x :F" option; do
       h) # display Help
          Help
          exit;;
-      p) #circleries scirpt path
-         circleriesPATH=$OPTARG;;
+      p) #ReCycled scirpt path
+         ReCycledPATH=$OPTARG;;
       i) #input genome name (in fasta format)
          genomeFASTAname=$OPTARG;;
       d) #output direcotry [.]
@@ -179,7 +179,7 @@ echo -e "   short read forward:   "${shortreads_1}
 echo -e "   short read reverse:   "${shortreads_2}
 echo -e "   Output directory:     "${outputFolderName}
 echo -e "   Output file name:     "${outName}
-echo -e "   ReCycled path :       "${circleriesPATH}
+echo -e "   ReCycled path :       "${ReCycledPATH}
 echo -e "   Threads :             "${threads}
 echo -e "   Force rerun :         "${force}
 
@@ -190,13 +190,12 @@ echo
 echo -e "Dependencies:"
 
 
-seqkit_path=$(echo -e ${circleriesPATH}"/02_dependencies/seqkit")
-qcSkew_path=$(echo -e ${circleriesPATH}"/02_dependencies/gcskew.py")
+seqkit_path=$(echo -e ${ReCycledPATH}"/02_dependencies/seqkit")
+qcSkew_path=$(echo -e ${ReCycledPATH}"/02_dependencies/gcskew.py")
 
+restarting_genes=$(echo -e ${ReCycledPATH}"/05_restart_data/starting_genes_v3.fasta")
 
-restarting_genes=$(echo -e ${circleriesPATH}"/05_restart_data/starting_genes_v3.fasta")
-
-#${circleriesPATH}/05_restart_data/starting_genes.fasta
+#${ReCycledPATH}/05_restart_data/starting_genes.fasta
 
 #type baloooihok >/dev/null 2>&1 && echo -e "   baloooihok......OK" || { echo >&2 "   baloooihok is not installed.  Aborting."; exit 1; }
 
@@ -208,7 +207,6 @@ type $seqkit_path >/dev/null 2>&1 && echo -e "   SeqKit......OK" || { echo >&2 "
 #type $qcSkew_path >/dev/null 2>&1 && echo -e "   qcSkew......OK" || { echo >&2 "   qcSkew is not installed.  Aborting."; exit 1; }
 #type $paftools_path >/dev/null 2>&1 && echo -e "   paftools.js......OK" || { echo >&2 "   paftools.js is not installed.  Aborting."; exit 1; }
 #type $restarting_genes >/dev/null 2>&1 && echo -e "   restarting_genes......OK" || { echo >&2 "   restarting_genes is not installed.  Aborting."; exit 1; }
-
 
 echo
 
@@ -325,14 +323,14 @@ orientation=$(sort -k10 -n -r ${outputFolderName}/tmp_${outName}//restart_mappin
 
 if [ $number_of_mappings == "0" ]
 then
-  echo -e "           "$header"......no origin map found"
+  echo -e "           "$header"......no replication initiation protein map found"
       contig_length=$(grep -v ">" ${outputFolderName}/tmp_${outName}/genome/${header}.fasta|wc -c )
 
        echo -e ${header}"\tnon-origin-containing-contig\t"${number_of_mappings}"\tNA\tNA\t"${contig_length} >>  ${outputFolderName}/tmp_${outName}//restart_mapping//restart_contigs.minimap
 
 elif [ $orientation == "+" ]
 then
-  echo -e "           "$header"......origin map found (#${number_of_mappings})"
+  echo -e "           "$header"......replication initiation protein found (#${number_of_mappings})"
   #the most left alignment this shows the start of the gene
   #sort -k8 -n ${outputFolderName}/restart_mapping/${header}.minimap
 
@@ -342,7 +340,7 @@ then
         echo -e ${header}"\torigin-containing-contig\t"${number_of_mappings}"\t"${orientation}"\t"${start}"\t"${contig_length} >>  ${outputFolderName}/tmp_${outName}//restart_mapping//restart_contigs.minimap
 
 else
-      echo -e "           "$header"......origin map found (#${number_of_mappings})"
+      echo -e "           "$header"......replication initiation protein(#${number_of_mappings})"
 
     #the most right alignment this shows the start of the gene
     #sort -k9 -n ${outputFolderName}/restart_mapping/${header}.minimap
@@ -673,9 +671,6 @@ do
       cat ${outputFolderName}/tmp_${outName}/genome/${contigName}.fasta  | $seqkit_path restart -i ${contigStart} > \
                   ${outputFolderName}/tmp_${outName}/tmp/${contigName}_restarted_wrongOrientation.fasta
 
-    #  revseq -sequence ${outputFolderName}/tmp_${outName}/tmp/${contigName}_restarted_wrongOrientation.fasta -outseq \
-    #      ${outputFolderName}/tmp_${outName}/restartedContigs/${contigName}_restarted.fasta -notag 2> ${outputFolderName}/tmp_${outName}/tmp/${contigName}_restarted_wrongOrientation.log
-
       $seqkit_path seq -t dna ${outputFolderName}/tmp_${outName}/tmp/${contigName}_restarted_wrongOrientation.fasta -r -p > \
       ${outputFolderName}/tmp_${outName}/restartedContigs/${contigName}_restarted.fasta 2> ${outputFolderName}/tmp_${outName}/tmp/${contigName}_restarted_wrongOrientation.log
 
@@ -720,12 +715,12 @@ do
 
   if [ $number_of_mappings == "0" ]
   then
-    echo -e "           "$contigName"......no origin map found"
+    echo -e "           "$contigName"......no replication initiation protein found"
         contig_length=$(grep -v ">" ${outputFolderName}/tmp_${outName}/genome/${contigName}.fasta|wc -c )
 
          echo -e ${contigName}"\tnon-origin-containing-contig\t"${number_of_mappings}"\tNA\tNA\t"${contig_length} >>  ${outputFolderName}/tmp_${outName}/restart_mapping/After_restart_contigs.minimap
-         echo "no origin map found"
-         echo "SOMETHING IS WRONG BECAUSE origin cannot be found anymore...aborting"
+         echo "no replication initiation protein found"
+         echo "SOMETHING IS WRONG BECAUSE replication initiation protein cannot be found anymore...aborting"
          exit
 
   elif [ $orientation == "+" ]
@@ -746,7 +741,7 @@ do
           contig_length=$(sort -k9 -n -r  ${outputFolderName}/tmp_${outName}/restart_mapping/${contigName}_afterrestart.minimap|head -1 |cut -f 7)
 
           echo -e ${contigName}"\torigin-containing-contig\t"${number_of_mappings}"\t"${orientation}"\t"${start}"\t"${contig_length} >> ${outputFolderName}/tmp_${outName}/restart_mapping/After_restart_contigs.minimap
-          echo "SOMETHING IS WRONG BECAUSE origin IS STILL ON THE REVERSE STRAND...aborting"
+          echo "SOMETHING IS WRONG BECAUSE replication initiation protein IS STILL ON THE REVERSE STRAND...aborting"
           exit
   fi
 
@@ -816,7 +811,7 @@ for header in $(grep ">" ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.
   #grep "^#" -v  ${outputFolderName}/restart_mapping/restart_contigs.minimap |awk -F "\t" '{OFS="\t"}{if($2!="bacterial_contig")print $0}'
 echo
 
-  echo -e "The location of origin on the "${BacContigs}" Bacterial and Plasmid contigs..."
+  echo -e "The location of the replication initiation protein on the "${BacContigs}" bacterial and plasmid contigs..."
   #grep "^#"  ${outputFolderName}/restart_mapping/After_restart_contigs.minimap
   #grep "^#" -v  ${outputFolderName}/restart_mapping/After_restart_contigs.minimap|awk -F "\t" '{OFS="\t"}{if($2=="bacterial_contig")print $0}'
   cat ${outputFolderName}/tmp_${outName}/restart_mapping/After_restart_contigs.minimap
@@ -846,5 +841,5 @@ fi
 ##--------------------------------------------say goodbye----------------------------------------
 
 echo
-echo -e "Thanks for using Circleries. See you soon!"
+echo -e "Thanks for using ReCycled. See you soon!"
 echo
