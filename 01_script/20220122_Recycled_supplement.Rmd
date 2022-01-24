@@ -584,7 +584,7 @@ dnaA_genes_stats$startAligned = factor(dnaA_genes_stats$startAligned, levels=c("
 
 colorss <- (c("#BBBE64","#8E5572"))
 
-plot_complete_genome <- ggplot(dnaA_genes_stats,aes(x=startAligned,fill=startAligned,color=startAligned))+geom_bar()+theme_classic()+labs(x="Genome start aligned\n at OriC",y="Genomes",title = "Complete assemblies\non NCBI RefSeq")+theme(legend.position = "none")+scale_fill_manual(values=colorss)+scale_color_manual(values=colorss)+scale_y_continuous(breaks=c(0,5000,11496,13015)) 
+plot_complete_genome <- ggplot(dnaA_genes_stats,aes(x=startAligned,fill=startAligned,color=startAligned))+geom_bar()+theme_classic()+labs(x="Genome restarted\n at dnaA",y="Genomes",title = "Complete assemblies\non NCBI RefSeq")+theme(legend.position = "none")+scale_fill_manual(values=colorss)+scale_color_manual(values=colorss)+scale_y_continuous(breaks=c(0,5000,11496,13015)) 
 # plot_complete_genome
 
 ##---------------------
@@ -595,7 +595,7 @@ startaligned_analysis <- read_delim("restart_analysis.final", delim = "\t", esca
 startaligned_analysis <- startaligned_analysis[!duplicated(startaligned_analysis),]
 
 startaligned_analysis_long <- gather(startaligned_analysis, circulariation, outcome, c("Circlator","ReCycled"), factor_key=TRUE,na.rm = TRUE) %>% filter(!is.na(outcome))
-startaligned_analysis_long$verdict <- ifelse(startaligned_analysis_long$flye==startaligned_analysis_long$outcome,"startaligned","not aligned")
+startaligned_analysis_long$verdict <- ifelse(startaligned_analysis_long$flye==startaligned_analysis_long$outcome,"restarted","not restarted")
 totl_counts <- startaligned_analysis_long %>% group_by(circulariation) %>% summarise(total=n())
 startaligned_analysis_sum <- startaligned_analysis_long %>% group_by(circulariation,verdict) %>% summarise(grouping=n()) %>% left_join(.,totl_counts,by="circulariation") %>% mutate(percent=100*(grouping/total))
 
@@ -603,7 +603,7 @@ colorss <- rev(c("#BBBE64","#8E5572"))
 
 countsGenomes <- startaligned_analysis_long$SRA %>% unique() %>% length()
 plot_start <- ggplot(startaligned_analysis_sum,aes(x=circulariation,y=percent,fill=verdict,color=verdict))+geom_bar(stat = "identity")+theme_classic()+scale_fill_manual(values=colorss)+scale_color_manual(values=colorss)+
-  labs(y="Genomes [%]",title = paste0("Startalignment of bacterial\nchromosomes (n=",countsGenomes,")"))+
+  labs(y="Genomes [%]",title = paste0("Restart of bacterial\nchromosomes (n=",countsGenomes,")"))+
   theme(legend.title = element_blank(),axis.title.x = element_blank(),legend.position = "bottom")
 # plot_start
 
@@ -621,7 +621,7 @@ totl_counts <- circ_analysis_long %>% group_by(circulariation) %>% summarise(tot
 circ_analysis_sum <- circ_analysis_long %>% group_by(circulariation,verdict) %>% summarise(grouping=n()) %>% left_join(.,totl_counts,by="circulariation") %>% mutate(percent=100*(grouping/total))
 
 circ_analysis_sum$verdict = factor(circ_analysis_sum$verdict, levels=c("incorrect","correct"))
-# countsGenomes <- circ_analysis_long %>% select(SRA,contig) %>% unique() %>% nrow()
+countsGenomes <- circ_analysis_long %>% select(SRA,contig) %>% unique() %>% nrow()
 
 colorss <- rev(c("#BBBE64","#8E5572"))
 
@@ -642,7 +642,7 @@ speed_analysis <- speed_analysis[!duplicated(speed_analysis),]
 speed_analysis_long <- gather(speed_analysis, circulariation, outcome, c("Circlator","ReCycled"), factor_key=TRUE,na.rm = TRUE) %>% filter(!is.na(outcome)) 
 speed_analysis_long_cleaned <- speed_analysis_long %>% group_by(SRA,circulariation) %>% summarise(outcome=median(outcome))%>% filter(outcome<50000)%>% filter(outcome>3)
 
-# countsGenomes <- speed_analysis_long$SRA %>% unique() %>% length()
+countsGenomes <- speed_analysis_long$SRA %>% unique() %>% length()
  
 library(ggquiver)
 plot_speed <- ggplot(speed_analysis_long_cleaned,aes(x=circulariation,y=outcome,fill=circulariation ,color=circulariation ))+geom_violin(alpha=0.4)+ geom_jitter(shape=16, position=position_jitter(0.2))+theme_classic()+scale_y_continuous(trans = "log10",breaks=c(10,100,1000,10000))+  #+coord_trans(y="log10")+

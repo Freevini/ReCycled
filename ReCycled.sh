@@ -196,7 +196,7 @@ echo -e "Dependencies:"
 seqkit_path=$(echo -e ${ReCycledPATH}"/02_dependencies/seqkit")
 qcSkew_path=$(echo -e ${ReCycledPATH}"/02_dependencies/gcskew.py")
 
-restarting_genes=$(echo -e ${ReCycledPATH}"/05_restart_data/starting_genes_v3.fasta")
+restarting_genes=$(echo -e ${ReCycledPATH}"/05_restart_data/starting_genes_v2.fasta")
 
 #${ReCycledPATH}/05_restart_data/starting_genes.fasta
 
