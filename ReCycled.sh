@@ -182,9 +182,10 @@ echo -e "   short read forward:   "${shortreads_1}
 echo -e "   short read reverse:   "${shortreads_2}
 echo -e "   Output directory:     "${outputFolderName}
 echo -e "   Output file name:     "${outName}
-echo -e "   ReCycled path :       "${ReCycledPATH}
-echo -e "   Threads :             "${threads}
-echo -e "   Force rerun :         "${force}
+echo -e "   ReCycled path:        "${ReCycledPATH}
+echo -e "   Threads:              "${threads}
+echo -e "   Force rerun:          "${force}
+echo -e "   Keep temporary files: "${force}
 
 
 # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
@@ -194,22 +195,12 @@ echo -e "Dependencies:"
 
 
 seqkit_path=$(echo -e ${ReCycledPATH}"/02_dependencies/seqkit")
-qcSkew_path=$(echo -e ${ReCycledPATH}"/02_dependencies/gcskew.py")
 
 restarting_genes=$(echo -e ${ReCycledPATH}"/05_restart_data/starting_genes_v2.fasta")
-
-#${ReCycledPATH}/05_restart_data/starting_genes.fasta
-
-#type baloooihok >/dev/null 2>&1 && echo -e "   baloooihok......OK" || { echo >&2 "   baloooihok is not installed.  Aborting."; exit 1; }
 
 type minimap2 >/dev/null 2>&1 && echo -e "   Minimap2......OK" || { echo >&2 "   Minimap2 is not installed.  Aborting."; exit 1; }
 type bedtools >/dev/null 2>&1 && echo -e "   bedtools......OK" || { echo >&2 "   bedtools is not installed.  Aborting."; exit 1; }
 type $seqkit_path >/dev/null 2>&1 && echo -e "   SeqKit......OK" || { echo >&2 "   SeqKit is not installed.  Aborting."; exit 1; }
-
-#type revseq >/dev/null 2>&1 && echo -e "   revseq......OK" || { echo >&2 "   revseq is not installed.  Aborting."; exit 1; }
-#type $qcSkew_path >/dev/null 2>&1 && echo -e "   qcSkew......OK" || { echo >&2 "   qcSkew is not installed.  Aborting."; exit 1; }
-#type $paftools_path >/dev/null 2>&1 && echo -e "   paftools.js......OK" || { echo >&2 "   paftools.js is not installed.  Aborting."; exit 1; }
-#type $restarting_genes >/dev/null 2>&1 && echo -e "   restarting_genes......OK" || { echo >&2 "   restarting_genes is not installed.  Aborting."; exit 1; }
 
 echo
 
@@ -241,10 +232,6 @@ if [[ "$check_fasta" !=  "1" ]]; then
 fi
 
 ##--------------------------------------------check if long reads is a fastq or fasta (here give warning) ----------------------------------------
-#check_fastq=$(less ${longreads}|head -1 |grep "^@" -c)
-#check_fasta=$(less ${longreads}|head -1 |grep "^>" -c)
-#${seqkit_path} head -n 1 ${longreads}|head -1
-
 check_fastq=$(${seqkit_path} head -n 1 ${longreads}|head -1 |grep "^@" -c)
 check_fasta=$(${seqkit_path} head -n 1 ${longreads} |head -1|grep "^>" -c)
 
@@ -279,13 +266,6 @@ echo -e "           "$header_short" (contigsize = "${genomeSize}" bp)"
 done
 echo
 
-
-
-##--------------------------------------------GC-skew ------------------------------------
-###------------------------not doing this at the moment
-#echo -e "       GC-skew..."
-
-
 ###########################################################
 #origin search
 ############################################################
@@ -293,8 +273,6 @@ echo
 echo -e "Searching for replication initiation protein"
 
 ##--------------------------------------------minimap2 origin to sequences------------------------------------
-
-#rm -r  ${outputFolderName}/tmp_${genomeFASTAname}//restart_mapping/
 mkdir -p  ${outputFolderName}/tmp_${outName}//restart_mapping/
 echo -e "       On contig..."
 
@@ -434,10 +412,7 @@ elif [[ "$longreads" == "NA" ]]; then
 
     else
 
-#rm -r ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/
 mkdir -p ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/{fastas,mapping}/
-#echo -e "OverlapingLongReads" > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/tmp.analysis
-#echo -e "OverlapingLongReads\tContigCov\tOverlapCov" > ${outputFolderName}/tmp_${outName}/tmp_longReads.analysis
 echo -e "OverlapingLongReads\tContigCov\tOverlapCov" > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/tmp.analysis
 
 
@@ -446,7 +421,6 @@ echo -e "OverlapingLongReads\tContigCov\tOverlapCov" > ${outputFolderName}/tmp_$
 
 for header in $(grep ">" ${outputFolderName}/tmp_${outName}/genome/tmp_wide_all.fasta |sed 's/>//g')
 do
-#echo -e ${header}
 
 ##--------------------------------------------merge start and end divided by NNNNs----------------------------------
 
@@ -472,7 +446,6 @@ sed -i '/^$/d' ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_rea
 
 ##map origin genes to the individual references and remove non-mapping or low quality mapping reads (mapq>50)
 minimap2 -x map-ont --secondary=no -F 6000 -t ${threads} ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/all_contigs_EndAndStart.fasta ${longreads} > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_unfiltered.paf 2>> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping.log
-#minimap2 -x map-pb -t ${threads} ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/all_contigs_EndAndStart.fasta ${longreads} > ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_unfiltered.paf 2> ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping.log
 
 ##--------------------------------------------to extract mapping reads----------------------------------
 #minimap2 -ax map-ont --secondary=no -F 6000 -t ${threads} ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/fastas/all_contigs_EndAndStart.fasta ${longreads} | samtools sort -@${threads} -O BAM -o  ${outputFolderName}/tmp_${outName}/Start_end_readmapping/long_read/mapping/all_contigs_mapping_unfiltered.bam -

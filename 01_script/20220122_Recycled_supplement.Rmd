@@ -1,5 +1,5 @@
 ---
-title: "Supplement: ReCycled: A tool to restart circular bacterial chromosomes"
+title: "Supplement: ReCycled: A Tool to Restart Circular Bacterial Chromosomes"
 author: "Vincent Somerville"
 date: "23/1/2022"
 output: html_document
@@ -13,13 +13,13 @@ knitr::opts_chunk$set(message=FALSE, echo=TRUE, eval=FALSE)
 
 This is the supplemental analysis of the application note:
 
-*ReCycled: A tool to restart circular bacterial chromosomes*
+*ReCycled: A Tool to Restart Circular Bacterial Chromosomes*
 
 # Data deposit
 
-All data necessary to reproudce the analysis  is deposited on (Zonedo)[]. 
-In order to rerun the analysis the files need to stored locally and the directories should be adjusted here. 
-the analysis_location should be the directory which contains the downloaded files. Further the analysis will produce new files and directories therein. 
+All data necessary to reproduce the analysis  is deposited on (Zonedo)[]. 
+In order to rerun the analysis the files need to be stored locally and the directories should be adjusted here. 
+The analysis_location should be the directory which contains the downloaded files. Further, the analysis will produce new files and directories therein. 
 
 ```{bash}
 analysis_location="/change/the/location/here"
@@ -35,7 +35,7 @@ knitr::opts_knit$set(root.dir = '/home/vincent/Desktop/Projects/2020_circleries/
 setwd("/home/vincent/Desktop/Projects/2020_circleries/08_Zenodo_files/")
 ```
 
-# check start alignment
+# Check start alignment
 
 Here, we checked how many completely assembled genomes are start aligned on NCBI. 
 We therefore scanned all NCBI RegSeq genomes that are flagged as *complete assembly* if dnaA is located within the first 5000bp and if it is on the positive strand. 
@@ -179,7 +179,7 @@ wc -l ${analysis_location}/random_line.txt
 #---------------------random_line.txt IS STORED ON ZONEDO------------------------------------
 ```
 
-# check SRAs
+# Check SRAs
 
 Not all NCBI RefSeq entries have a linked SRA and if they do not all SRA contain long read data. 
 Therefore I first checked all non-restarted RefSeq genomes if they have SRAs containing long read data (Oxford Nanopore or Pacbio).
@@ -234,7 +234,7 @@ I will now proceed with a random subsample of these.
 # Download and assemble
 
 Here I download the SRA by using the NCBI toolbox (E-utils)[https://www.ncbi.nlm.nih.gov/books/NBK25499/]. 
-Aftwards I assemble the raw read data with (flye)[https://github.com/fenderglass/Flye] (Kolmogorov et al. 2019)
+Aftwards I assemble the raw read data with (Flye)[https://github.com/fenderglass/Flye] (Kolmogorov et al. 2019)
 
 
 ```{bash}
@@ -274,7 +274,7 @@ Pacbio_yes=$(grep "Illumina" -i -v  ${analysis_location}/SRA_analysis/logs/tmp |
 ONT_yes=$(grep "Illumina" -i -v  ${analysis_location}/SRA_analysis/logs/tmp|head -1|grep "Oxford" -i|wc -l |cut -d ' ' -f 1)
 Illumina_yes=$(grep "Illumina" -i ${analysis_location}/SRA_analysis/logs/tmp |head -1|wc -l |cut -d ' ' -f 1)
 
-##-----------------------------------------assemble with flye
+##-----------------------------------------assemble with Flye
 mkdir -p ${analysis_location}/SRA_analysis/flye/tmp/
 
 if [ $Pacbio_yes -gt 0 ]
@@ -319,7 +319,7 @@ done
 # Qualtiy control of downlaod and assembly
 
 After the download and assembly, I checked the quality of the assembly. 
-Some assemblies are very fragmented. I therefore filter out all assemblies that have either more then 15 contigs or the largest contig is smaller then 500 kb. 
+Some assemblies are very fragmented. I therefore filter out all assemblies that have either more than 15 contigs or the largest contig is smaller then 500 kb. 
 The reason why some assemblies are very fragmented is that not all data has been deposited or downloaded. 
 
 
@@ -356,9 +356,9 @@ wc -l ${analysis_location}/genome_analysis_toDo.txt
 
 ```
 
-## Circularisation analysis
+## Circularization analysis
 
-Now I use the two circlatriation and restart tools to compare on the selected data. 
+Now I use the two circularization and restart tools to compare on the selected data. 
 
 ### Circlator 
 
@@ -567,7 +567,7 @@ sort ${analysis_location}/Circularity_of_bacterial_contig.analysis |uniq |cut -f
 #---------------------Circularity_of_bacterial_contig.analysis IS STORED ON ZONEDO------------------------------------
 ```
 
-## final analysis
+## Final analysis
 
 Finally, I bring all the outputs together and look at the data in R. 
 
@@ -668,7 +668,7 @@ plot_complete_genome+plot_circular+plot_start+plot_speed+ plot_layout(nrow=1)
 dev.off()
 ```
 
-# check start alignement
+# Check start alignement
 
 
 Here, I reannotate the restarted contigs with (PROKKA)[https://github.com/tseemann/prokka] (Seemann, 2014) to check for proper restarting at dnaA. 
@@ -680,7 +680,7 @@ Here, I reannotate the restarted contigs with (PROKKA)[https://github.com/tseema
 
 ```
 
-# make synteny non-start aligned and start-aligned
+# Make synteny non-start aligned and start-aligned
 
 Here, I create the genome synteny plot with (Artemis)[https://www.sanger.ac.uk/tool/artemis-comparison-tool-act/] (Carver et al. 2005) and blast from genomes that are not restarted and the same genomes that are restarted with ReCycled. 
 
