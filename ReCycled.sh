@@ -182,9 +182,10 @@ echo -e "   short read forward:   "${shortreads_1}
 echo -e "   short read reverse:   "${shortreads_2}
 echo -e "   Output directory:     "${outputFolderName}
 echo -e "   Output file name:     "${outName}
-echo -e "   ReCycled path :       "${ReCycledPATH}
-echo -e "   Threads :             "${threads}
-echo -e "   Force rerun :         "${force}
+echo -e "   ReCycled path:        "${ReCycledPATH}
+echo -e "   Threads:              "${threads}
+echo -e "   Force rerun:          "${force}
+echo -e "   Keep temporary files: "${force}
 
 
 # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
