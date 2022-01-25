@@ -84,7 +84,7 @@ Help()
 # Process the input options. Add options as needed.        #
 ############################################################
 # Get the options
-while getopts ":h :p: :i: :d: :o: :t: :l: :r: :f: :v :V :x :F" option; do
+while getopts ":h :p: :i: :d: :o: :t: :l: :r: :f: :v :V :x :F :a:" option; do
    case $option in
       h) # display Help
          Help
