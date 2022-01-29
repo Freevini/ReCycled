@@ -88,6 +88,7 @@ minimal syntax: ReCycled.sh -i <genome_input.fasta> -l <raw_long_read.fastq.gz>
                     -l     long read file (fq or fq.gz) (MANDATORY)
                     -f     short read forward read (read 1) (fq or fq.gz)
                     -r     short read reverse read (read 2) (fq or fq.gz)
+                    -a     custom initiation protein database (in nucleotide fasta)
 
                  OUTPUT
                     -d     output directory [.]
