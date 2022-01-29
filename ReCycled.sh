@@ -59,11 +59,11 @@ Help()
    echo "RUNNING OPTIONS"
    echo "   -p     ReCycled script directory (If not in PATH) [PATH]" #ReCycledPATH
    echo "   -t     number of threads to use [4]" #threads
-   echo "   -x     keep all tmp files created [N]" #threads
-   echo "   -F     Force everything to run again [N]" #threads
+   echo "   -x     keep all tmp files created [N]" #tmpss
+   echo "   -F     Force everything to run again [N]" #force
    echo
    echo "INFOS"
-   echo "   -h     help option" #shortreads_2
+   echo "   -h     help option"
    echo "   -v     verbose [N]" #verbose
    echo "   -V     print Version [N]" #Version
 
