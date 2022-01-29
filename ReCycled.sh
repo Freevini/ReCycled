@@ -23,7 +23,7 @@ starts=`date +%s`
 outName="N"
 force="N"
 limitOverlaps_set=5 #not incorporated into parameters
-dna_database="N"
+dnaA_database="N"
 
 shortreads_1=""
 shortreads_2=""
@@ -31,8 +31,7 @@ shortreads_2=""
 unset genomeFASTAname
 unset longreads
 unset check_fasta
-#unset shortreads_1
-#unset shortreads_2
+
 
 ############################################################
 # Help                                                     #
@@ -51,7 +50,7 @@ Help()
    echo "   -l     long read file (fq or fq.gz) (MANDATORY)" #longreads
    echo "   -f     short read forward read (read 1) (fq or fq.gz)" #shortreads_1
    echo "   -r     short read reverse read (read 2) (fq or fq.gz)" #shortreads_2
-   echo "   -a     add an own initiation protein database (in nucleotide fasta)" #shortreads_2
+   echo "   -a     custom initiation protein database (in nucleotide fasta)" #dnaA_database
    echo
    echo "OUTPUT"
    echo "   -d     output directory [.]" #outputFolderName
@@ -114,7 +113,7 @@ while getopts ":h :p: :i: :d: :o: :t: :l: :r: :f: :v :V :x :F :a:" option; do
       F) #print version
          force="Y";;
       a) #add dnaA database
-         dna_database=$OPTARG;;
+         dnaA_database=$OPTARG;;
      \?) # Invalid option
          echo "Error: Invalid option"
          Help
@@ -122,7 +121,7 @@ while getopts ":h :p: :i: :d: :o: :t: :l: :r: :f: :v :V :x :F :a:" option; do
    esac
 done
 shift $((OPTIND -1)) #removing previously inputed options
-#echo $tmpss
+
 
 ############################################################
 # If version wanted print version    #
@@ -138,19 +137,21 @@ fi
 # ###########################################################
 #check for mandatory parameters and inputs and names
 ############################################################
-
-[ -z "$longreads" ] && Help
-[ -z "$genomeFASTAname" ] && Help
+if [ -z "$longreads" ] || [ -z "$genomeFASTAname" ]; then
+    Help
+fi
 
 : ${longreads:?Missing: "-l" which is the long read file. This information is mandatory}
 : ${genomeFASTAname:?Missing: "-i" which is the input genome name (\in fasta format). This information is mandatory}
 
 if [ ! -f "$longreads" ]; then
-    echo "Can not find file \"$longreads\". Exiting."; Help; exit 22
+   Help
+   echo "Can not find long read file \"$longreads\". Exiting."; exit 22
 fi
 
 if [ ! -f "$genomeFASTAname" ]; then
-    echo "Can not find file \"$genomeFASTAname\". Exiting."; Help: exit 22
+   Help 
+   echo "Can not find input genome file \"$genomeFASTAname\". Exiting."; exit 22
 fi
 
 
@@ -286,8 +287,8 @@ do
 minimap2 ${outputFolderName}/tmp_${outName}/genome/${header}.fasta $restarting_genes  > ${outputFolderName}/tmp_${outName}//restart_mapping//${header}_unfiltered.minimap 2> ${outputFolderName}/tmp_${outName}//restart_mapping//${header}.minimap.log
 #awk -F "\t" '{OFS="\t"}{if($12>50) print $0}' ${outputFolderName}/tmp_${outName}//restart_mapping//${header}_unfiltered.minimap > ${outputFolderName}/tmp_${outName}//restart_mapping//${header}.minimap
 #----map own dnaA database
-if [[ "$dna_database" != "Y" ]]; then
-  minimap2 ${outputFolderName}/tmp_${outName}/genome/${header}.fasta $dna_database  >> ${outputFolderName}/tmp_${outName}//restart_mapping//${header}_unfiltered.minimap 2>> ${outputFolderName}/tmp_${outName}//restart_mapping//${header}.minimap.log
+if [[ "$dnaA_database" != "Y" ]]; then
+  minimap2 ${outputFolderName}/tmp_${outName}/genome/${header}.fasta $dnaA_database  >> ${outputFolderName}/tmp_${outName}//restart_mapping//${header}_unfiltered.minimap 2>> ${outputFolderName}/tmp_${outName}//restart_mapping//${header}.minimap.log
 fi
 
 awk -F "\t" '{OFS="\t"}{if($12>50 && $11>(0.8*$2)&& $10>(0.7*$2) && $2>300) print $0}' ${outputFolderName}/tmp_${outName}//restart_mapping//${header}_unfiltered.minimap > ${outputFolderName}/tmp_${outName}//restart_mapping//${header}.minimap
