@@ -177,17 +177,17 @@ echo -e "Local time is" $starttime
 echo -e "Operating system is "$OSTYPE
 echo
 echo -e "Options:"
-echo -e "   Input Genome:         "${genomeFASTAname}
-echo -e "   Long read file:       "${longreads}
-echo -e "   Short read forward:   "${shortreads_1}
-echo -e "   Short read reverse:   "${shortreads_2}
-echo -e "   Output directory:     "${outputFolderName}
-echo -e "   Output file name:     "${outName}
-echo -e "   ReCycled path:        "${ReCycledPATH}
-echo -e "   Threads:              "${threads}
-echo -e "   Force rerun:          "${force}
-echo -e "   Keep temporary files: "${tmpss}
-echo -e "   Custom initiation protein DB:"${dnaA_database}
+echo -e "   Input Genome:                 "${genomeFASTAname}
+echo -e "   Long read file:               "${longreads}
+echo -e "   Short read forward:           "${shortreads_1}
+echo -e "   Short read reverse:           "${shortreads_2}
+echo -e "   Output directory:             "${outputFolderName}
+echo -e "   Output file name:             "${outName}
+echo -e "   ReCycled path:                "${ReCycledPATH}
+echo -e "   Threads:                      "${threads}
+echo -e "   Force rerun:                  "${force}
+echo -e "   Keep temporary files:         "${tmpss}
+echo -e "   Custom initiation protein DB: "${dnaA_database}
 
 
 # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
