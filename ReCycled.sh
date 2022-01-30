@@ -46,26 +46,26 @@ Help()
    echo "options:"
    echo
    echo "INPUT"
-   echo "   -i     input genome name (in fasta format) (MANDATORY)" #genomeFASTAname
-   echo "   -l     long read file (fq or fq.gz) (MANDATORY)" #longreads
-   echo "   -f     short read forward read (read 1) (fq or fq.gz)" #shortreads_1
-   echo "   -r     short read reverse read (read 2) (fq or fq.gz)" #shortreads_2
-   echo "   -a     custom initiation protein database (in nucleotide fasta)" #dnaA_database
+   echo "   -i     Input genome name (in fasta format) (MANDATORY)" #genomeFASTAname
+   echo "   -l     Long read file (fq or fq.gz) (MANDATORY)" #longreads
+   echo "   -f     Short read forward read (read 1) (fq or fq.gz)" #shortreads_1
+   echo "   -r     Short read reverse read (read 2) (fq or fq.gz)" #shortreads_2
+   echo "   -a     Additional custom initiation protein database (in nucleotide fasta)" #dnaA_database
    echo
    echo "OUTPUT"
-   echo "   -d     output directory [.]" #outputFolderName
-   echo "   -o     output file name " #threads #outName
+   echo "   -d     Output directory [.]" #outputFolderName
+   echo "   -o     Output file name " #threads #outName
    echo
    echo "RUNNING OPTIONS"
    echo "   -p     ReCycled script directory (If not in PATH) [PATH]" #ReCycledPATH
-   echo "   -t     number of threads to use [4]" #threads
-   echo "   -x     keep all tmp files created [N]" #tmpss
+   echo "   -t     Number of threads to use [4]" #threads
+   echo "   -x     Keep all tmp files created [N]" #tmpss
    echo "   -F     Force everything to run again [N]" #force
    echo
    echo "INFOS"
-   echo "   -h     help option"
-   echo "   -v     verbose [N]" #verbose
-   echo "   -V     print Version [N]" #Version
+   echo "   -h     Help option"
+   echo "   -v     Verbose [N]" #verbose
+   echo "   -V     Print Version [N]" #Version
 
    echo
 }
@@ -288,7 +288,7 @@ do
 minimap2 ${outputFolderName}/tmp_${outName}/genome/${header}.fasta $restarting_genes  > ${outputFolderName}/tmp_${outName}//restart_mapping//${header}_unfiltered.minimap 2> ${outputFolderName}/tmp_${outName}//restart_mapping//${header}.minimap.log
 #awk -F "\t" '{OFS="\t"}{if($12>50) print $0}' ${outputFolderName}/tmp_${outName}//restart_mapping//${header}_unfiltered.minimap > ${outputFolderName}/tmp_${outName}//restart_mapping//${header}.minimap
 #----map own dnaA database
-if [[ "$dnaA_database" != "Y" ]]; then
+if [[ "$dnaA_database" != "N" ]]; then
   minimap2 ${outputFolderName}/tmp_${outName}/genome/${header}.fasta $dnaA_database  >> ${outputFolderName}/tmp_${outName}//restart_mapping//${header}_unfiltered.minimap 2>> ${outputFolderName}/tmp_${outName}//restart_mapping//${header}.minimap.log
 fi
 
