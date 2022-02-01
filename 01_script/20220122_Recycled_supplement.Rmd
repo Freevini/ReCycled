@@ -1,7 +1,7 @@
 ---
 title: "Supplement: ReCycled: A Tool to Restart Circular Bacterial Chromosomes"
 author: "Vincent Somerville"
-date: "23/1/2022"
+date: "2/2/2022"
 output: html_document
 editor_options: 
   chunk_output_type: console
@@ -17,7 +17,7 @@ This is the supplemental analysis of the application note:
 
 # Data deposit
 
-All data necessary to reproduce the analysis  is deposited on (Zonedo)[]. 
+All data necessary to reproduce the analysis  is deposited on [Zenodo](https://sandbox.zenodo.org/deposit/1001243#). 
 In order to rerun the analysis the files need to be stored locally and the directories should be adjusted here. 
 The analysis_location should be the directory which contains the downloaded files. Further, the analysis will produce new files and directories therein. 
 
@@ -131,7 +131,7 @@ plot_complete_genome
 
 # Download ReCycled
 
-This is the download of (Recycled)[https://github.com/Freevini/ReCycled].
+This is the download of [Recycled](https://github.com/Freevini/ReCycled).
 
 ```{bash}
 git clone https://github.com/Freevini/ReCycled.git
@@ -139,7 +139,7 @@ git clone https://github.com/Freevini/ReCycled.git
 
 #  Download Circlator
 
-This is the download of (Circlator)[https://github.com/sanger-pathogens/circlator] (Hunt et al. 2015). 
+This is the download of [Circlator](https://github.com/sanger-pathogens/circlator) (Hunt et al. 2015). 
 
 ```{bash}
 pip3 install circlator
@@ -233,8 +233,8 @@ I will now proceed with a random subsample of these.
 
 # Download and assemble
 
-Here I download the SRA by using the NCBI toolbox (E-utils)[https://www.ncbi.nlm.nih.gov/books/NBK25499/]. 
-Aftwards I assemble the raw read data with (Flye)[https://github.com/fenderglass/Flye] (Kolmogorov et al. 2019)
+Here I download the SRA by using the NCBI toolbox [E-utils](https://www.ncbi.nlm.nih.gov/books/NBK25499/). 
+Aftwards I assemble the raw read data with [Flye](https://github.com/fenderglass/Flye) (Kolmogorov et al. 2019)
 
 
 ```{bash}
@@ -668,21 +668,10 @@ plot_complete_genome+plot_circular+plot_start+plot_speed+ plot_layout(nrow=1)
 dev.off()
 ```
 
-# Check start alignement
-
-
-Here, I reannotate the restarted contigs with (PROKKA)[https://github.com/tseemann/prokka] (Seemann, 2014) to check for proper restarting at dnaA. 
-
-```{bash}
-
-
-
-
-```
 
 # Make synteny non-start aligned and start-aligned
 
-Here, I create the genome synteny plot with (Artemis)[https://www.sanger.ac.uk/tool/artemis-comparison-tool-act/] (Carver et al. 2005) and blast from genomes that are not restarted and the same genomes that are restarted with ReCycled. 
+Here, I create the genome synteny plot with [Artemis](https://www.sanger.ac.uk/tool/artemis-comparison-tool-act/) (Carver et al. 2005) and blast from genomes that are not restarted and the same genomes that are restarted with ReCycled. 
 
 ```{bash}
 ##--------------------------------------------------
