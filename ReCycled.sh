@@ -17,7 +17,7 @@ tmpss="N"
 # Set Infos
 AUTHOR="Vincent Somerville"
 EXE="ReCycled"
-VERSION="V0.0.10"
+VERSION="V0.0.11"
 starttime=$(date)
 starts=`date +%s`
 outName="N"
@@ -50,14 +50,14 @@ Help()
    echo "   -l     Long read file (fq or fq.gz) (MANDATORY)" #longreads
    echo "   -f     Short read forward read (read 1) (fq or fq.gz)" #shortreads_1
    echo "   -r     Short read reverse read (read 2) (fq or fq.gz)" #shortreads_2
-   echo "   -a     Additional custom initiation protein database (in nucleotide fasta)" #dnaA_database
+   echo "   -a     Additional custom initiation protein database (add a nucleotide fasta file)" #dnaA_database
    echo
    echo "OUTPUT"
    echo "   -d     Output directory [.]" #outputFolderName
    echo "   -o     Output file name " #threads #outName
    echo
    echo "RUNNING OPTIONS"
-   echo "   -p     ReCycled script directory (If not in PATH) [PATH]" #ReCycledPATH
+  # echo "   -p     ReCycled script directory (If not in PATH) [PATH]" #ReCycledPATH
    echo "   -t     Number of threads to use [4]" #threads
    echo "   -x     Keep all tmp files created [N]" #tmpss
    echo "   -F     Force everything to run again [N]" #force
@@ -150,7 +150,7 @@ if [ ! -f "$longreads" ]; then
 fi
 
 if [ ! -f "$genomeFASTAname" ]; then
-   Help 
+   Help
    echo "Can not find input genome file \"$genomeFASTAname\". Exiting."; exit 22
 fi
 
@@ -158,7 +158,7 @@ fi
 ##--------------------------------------------prepare outName if necessary----------------------------------------
 if [ "$outName" == "N" ]
 then
-    outName=$(echo $genomeFASTAname|sed 's/.*\///g'| awk '{print "restarted_"$0}')
+    outName=$(echo $genomeFASTAname|sed 's/.*\///g'|sed 's/.fasta//g'|sed 's/.fa//g'|sed 's/.fna//g'| awk '{print "restarted_"$0}')
 fi
 
 
@@ -196,9 +196,9 @@ echo
 echo -e "Dependencies:"
 
 
-seqkit_path=$(echo -e ${ReCycledPATH}"/02_dependencies/seqkit")
+seqkit_path=$(echo -e ${ReCycledPATH}"/dependencies/seqkit")
 
-restarting_genes=$(echo -e ${ReCycledPATH}"/05_restart_data/starting_genes_v2.fasta")
+restarting_genes=$(echo -e ${ReCycledPATH}"/restartData/starting_genes_v2.fasta")
 
 type minimap2 >/dev/null 2>&1 && echo -e "   Minimap2......OK" || { echo >&2 "   Minimap2 is not installed.  Aborting."; exit 1; }
 type bedtools >/dev/null 2>&1 && echo -e "   bedtools......OK" || { echo >&2 "   bedtools is not installed.  Aborting."; exit 1; }

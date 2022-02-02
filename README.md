@@ -1,5 +1,5 @@
 <p align = "left">
-<img src = "07_figures/logo_02.png" width="400">
+<img src = "figures/logo_02.png" width="400">
 </p>
 
 **ReCycled** is a tool to check the circularity of bacterial genome assemblies and circularise them according to the location of the replication initiation protein *dnaA*.
@@ -9,7 +9,7 @@ In brief, it detects the presence of the origin of replication (i.e. *dnaA*). Mo
 ReCycled was designed and implemented by Vincent Somerville, Michael Schmid and Philipp Engel as a freely available software under the GPLv3 license.
 
 <p align = "left">
-<img src = "07_figures/logo_04.png" width="400">
+<img src = "figures/logo_04.png" width="400">
 </p>
 
 # Table of contents
@@ -88,14 +88,13 @@ minimal syntax: ReCycled.sh -i <genome_input.fasta> -l <raw_long_read.fastq.gz>
                     -l     long read file (fq or fq.gz) (MANDATORY)
                     -f     short read forward read (read 1) (fq or fq.gz)
                     -r     short read reverse read (read 2) (fq or fq.gz)
-                    -a     custom initiation protein database (in nucleotide fasta)
+                    -a     Additional custom initiation protein database (add a nucleotide fasta file)
 
                  OUTPUT
                     -d     output directory [.]
                     -o     output file name
 
                  RUNNING OPTIONS
-                    -p     ReCycled script directory (with all dependencies) [PATH]
                     -t     number of threads to use [4]
                     -x     keep all tmp files created [N]
                     -F     Force everything to run again [N]
@@ -115,11 +114,11 @@ Test ReCycled with the two provided test data sets:
 
 1. two circular contigs
 
-`ReCycled.sh -i 03_TestData/oneCircularContigs_SRR3880379.fasta -l 03_TestData/oneCircularContigs_SRR3880379.fq.gz `
+`ReCycled.sh -i testData/oneCircularContigs_SRR3880379.fasta -l testData/oneCircularContigs_SRR3880379.fq.gz `
 
 2. one circular and eight non-circular contigs
 
-`ReCycled.sh -i 03_TestData/oneCircular_eigthNonCircular_SRR15376163.fasta -l 03_TestData/oneCircular_eigthNonCircular_SRR15376163.fq.gz `
+`ReCycled.sh -i testData/oneCircular_eigthNonCircular_SRR15376163.fasta -l testData/oneCircular_eigthNonCircular_SRR15376163.fq.gz `
 
 
 # Known limitations

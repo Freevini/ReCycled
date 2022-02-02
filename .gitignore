@@ -1,8 +1,8 @@
-01_script/01_script.Rproj
+script/01_script.Rproj
 08_Zenodo_files/
-02_dependencies/paftools.js
-02_dependencies/plot_gcskew.py
-02_dependencies/gcskew.py
+dependencies/paftools.js
+dependencies/plot_gcskew.py
+dependencies/gcskew.py
 03_test_Data/test_streptococcus_polished_dnaA-pos-1526474_nonOVERLAPING.fasta
 04_OUTPUTTest/
 06_analysis/
