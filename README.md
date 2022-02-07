@@ -1,5 +1,5 @@
 <p align = "left">
-<img src = "figures/logo_02.png" width="400">
+<img src = "figures/logo_05.png" width="400">
 </p>
 
 **ReCycled** is a tool to check the circularity of bacterial genome assemblies and circularise them according to the location of the replication initiation protein *dnaA*.
@@ -7,10 +7,6 @@
 In brief, it detects the presence of the origin of replication (i.e. *dnaA*). Moreover it checks the circularity of contigs by looking for overlap at the contig edges and mapping the raw data to identify overlapping reads. Based on this information it circularises and restarts the bacterial chromsomes and plasmid contigs upstream of *dnaA* gene.
 
 ReCycled was designed and implemented by Vincent Somerville, Michael Schmid and Philipp Engel as a freely available software under the GPLv3 license.
-
-<p align = "left">
-<img src = "figures/logo_04.png" width="400">
-</p>
 
 # Table of contents
 
@@ -97,11 +93,10 @@ minimal syntax: ReCycled.sh -i <genome_input.fasta> -l <raw_long_read.fastq.gz>
                  RUNNING OPTIONS
                     -t     number of threads to use [4]
                     -x     keep all tmp files created [N]
-                    -F     Force everything to run again [N]
+                    -F     Force intermediate file to run again [N]
 
                  INFOS
                     -h     help option
-                    -v     verbose [N]
                     -V     print Version [N]
 
 ```

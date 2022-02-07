@@ -60,11 +60,11 @@ Help()
   # echo "   -p     ReCycled script directory (If not in PATH) [PATH]" #ReCycledPATH
    echo "   -t     Number of threads to use [4]" #threads
    echo "   -x     Keep all tmp files created [N]" #tmpss
-   echo "   -F     Force everything to run again [N]" #force
+   echo "   -F     Force intermediate file to run again [N]" #force
    echo
    echo "INFOS"
    echo "   -h     Help option"
-   echo "   -v     Verbose [N]" #verbose
+#   echo "   -v     Verbose [N]" #verbose
    echo "   -V     Print Version [N]" #Version
 
    echo
