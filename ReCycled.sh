@@ -17,7 +17,7 @@ tmpss="N"
 # Set Infos
 AUTHOR="Vincent Somerville"
 EXE="ReCycled"
-VERSION="V0.0.11"
+VERSION="V0.1.0"
 starttime=$(date)
 starts=`date +%s`
 outName="N"

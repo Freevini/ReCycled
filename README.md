@@ -4,7 +4,7 @@
 
 **ReCycled** is a tool to check the circularity of bacterial genome assemblies and circularise them according to the location of the replication initiation protein *dnaA*.
 
-In brief, it detects the presence of the origin of replication (i.e. *dnaA*). Moreover it checks the circularity of contigs by looking for overlap at the contig edges and mapping the raw data to identify overlapping reads. Based on this information it circularises and restarts the bacterial chromsomes and plasmid contigs upstream of *dnaA* gene.
+In brief, it detects the presence of the origin of replication (i.e. *dnaA*). Moreover it checks the circularity of contigs by looking for overlap at the contig edges and mapping the raw data to identify overlapping reads. Based on this information it circularises and restarts the bacterial chromosomes upstream of *dnaA* gene.
 
 ReCycled was designed and implemented by Vincent Somerville, Michael Schmid and Philipp Engel as a freely available software under the GPLv3 license.
 
