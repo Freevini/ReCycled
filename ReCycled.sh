@@ -679,6 +679,11 @@ do
 
   ##map origin genes to the individual references and remove non-mapping or low quality mapping reads (mapq>50)
   minimap2 ${outputFolderName}/tmp_${outName}/restartedContigs/${contigName}_restarted.fasta $restarting_genes  > ${outputFolderName}/tmp_${outName}/restart_mapping/${contigName}_afterrestart_unfiltered.minimap 2> ${outputFolderName}/tmp_${outName}/restart_mapping/${contigName}_afterrestart_unfiltered.log
+  #----map own dnaA database
+  if [[ "$dnaA_database" != "N" ]]; then
+    minimap2 ${outputFolderName}/tmp_${outName}/restartedContigs/${contigName}_restarted.fasta $dnaA_database  >> ${outputFolderName}/tmp_${outName}/restart_mapping/${contigName}_afterrestart_unfiltered.minimap 2>> ${outputFolderName}/tmp_${outName}/restart_mapping/${contigName}_afterrestart_unfiltered.log
+  fi
+
   awk -F "\t" '{OFS="\t"}{if($12>50) print $0}' ${outputFolderName}/tmp_${outName}/restart_mapping/${contigName}_afterrestart_unfiltered.minimap > ${outputFolderName}/tmp_${outName}/restart_mapping/${contigName}_afterrestart.minimap
 
   ##--------------------------------------------minimap2 analysis------------------------------------
